@@ -1,5 +1,13 @@
-// src/js/logger.js
+// ┌────────────────────────────────────────────────────────────┐
+// │ Módulo: Logger                                              │
+// │ Script: logger.js                                           │
+// │ Descripción: Registro estructurado de eventos en consola   │
+// │ Autor: Irbing Brizuela                                      │
+// │ Fecha: 2025-11-05                                           │
+// └────────────────────────────────────────────────────────────┘
 
+// ─── Función principal: logEvent ──────────────────────────────
+// Registra eventos en consola con tipo, etiqueta y timestamp
 export function logEvent(type, label, data) {
   const timestamp = new Date().toISOString();
   const prefix = `[${label}] ${timestamp}`;
@@ -18,3 +26,8 @@ export function logEvent(type, label, data) {
       console.log(`${prefix} 🔍`, data);
   }
 }
+
+// ─── Referencias técnicas ─────────────────────────────────────
+// Usado por: login.js, admin.js, menu.js, cliente.js, auditoria.js
+// Tipos de evento: error, warn, info, default
+// Extensible para auditoría en Supabase si se requiere
