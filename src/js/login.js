@@ -53,53 +53,51 @@ form.addEventListener('submit', async (e) => {
 
   logEvent('info', 'Login', `ID de usuario autenticado: ${userId}`);
 
-  // ─── Consulta del rol en la tabla usuario ───────────────────
-  const { data: perfil, error: perfilError, status } = await supabase
-    .from('usuario')
-    .select('rol')
-    .eq('id', userId)
-    .single();
+  // ─── Consulta del rol usando función RPC ─────────────────────
+  const { data: rol, error: rolError } = await supabase.rpc('obtener_rol');
 
-  logEvent('info', 'Login', `Consulta de rol ejecutada con status: ${status}`);
-  logEvent('info', 'Login', `Resultado de perfil: ${JSON.stringify(perfil)}`);
-  if (perfilError) {
-    logEvent('error', 'Login', `Error al consultar rol: ${perfilError.message}`);
+  logEvent('info', 'Login', `Resultado de obtener_rol(): ${JSON.stringify(rol)}`);
+  if (rolError) {
+    logEvent('error', 'Login', `Error al consultar rol: ${rolError.message}`);
+    errorMessage.textContent = 'Error al obtener rol';
+    return;
   }
 
-  if (!perfil || perfilError) {
-    logEvent('warn', 'Login', `Usuario sin rol asignado o error en consulta: ${userId}`);
+  if (!rol) {
+    logEvent('warn', 'Login', `Usuario sin rol asignado: ${userId}`);
     errorMessage.textContent = 'Usuario sin rol asignado';
     return;
   }
 
-  logEvent('info', 'Login', `Usuario autenticado: ${email}, Rol: ${perfil.rol}`);
+  logEvent('info', 'Login', `Usuario autenticado: ${email}, Rol: ${rol}`);
+
+  // ─── Registrar evento de login ──────────────────────────────
+  await supabase.rpc('registrar_evento', {
+    tipo: 'login',
+    modulo: 'login',
+    detalle: `Inicio de sesión para ${email} con rol ${rol}`
+  });
 
   // ─── Redirección según el rol ───────────────────────────────
-  switch (perfil.rol) {
+  switch (rol) {
     case 'super_admin':
     case 'admin':
     case 'gerente':
-      logEvent('info', 'Login', `Redirigiendo a admin.html para rol: ${perfil.rol}`);
+      logEvent('info', 'Login', `Redirigiendo a admin.html para rol: ${rol}`);
       window.location.href = './admin.html';
       break;
     case 'dependiente':
     case 'cocina':
     case 'repartidor':
-      logEvent('info', 'Login', `Redirigiendo a menu.html para rol: ${perfil.rol}`);
+      logEvent('info', 'Login', `Redirigiendo a menu.html para rol: ${rol}`);
       window.location.href = './menu.html';
       break;
     case 'cliente':
-      logEvent('info', 'Login', `Redirigiendo a cliente.html para rol: ${perfil.rol}`);
+      logEvent('info', 'Login', `Redirigiendo a cliente.html para rol: ${rol}`);
       window.location.href = './cliente.html';
       break;
     default:
-      logEvent('warn', 'Login', `Rol no reconocido: ${perfil.rol}`);
+      logEvent('warn', 'Login', `Rol no reconocido: ${rol}`);
       errorMessage.textContent = 'Rol no reconocido';
   }
 });
-
-// ─── Referencias técnicas ─────────────────────────────────────
-// Tablas utilizadas: usuario
-// Funciones RPC: ninguna
-// Estilos aplicados: styles-base.css
-// Dependencias: supabaseClient.js, logger.js
