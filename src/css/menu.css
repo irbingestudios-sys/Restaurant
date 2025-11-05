@@ -1,1 +1,37 @@
+/* Estilos específicos para módulo Menú */
 
+#acciones {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.producto {
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.producto:hover {
+  transform: scale(1.02);
+}
+
+.producto img {
+  width: 100%;
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.etiquetas {
+  font-size: 0.85rem;
+  color: #666;
+}
