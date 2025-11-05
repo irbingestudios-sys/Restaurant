@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (!['super_admin', 'admin', 'gerente'].includes(usuario.rol)) {
       logEvent('warn', 'Menu', `Acceso denegado para rol: ${usuario.rol}`);
-      window.location.href = './login.html';
+      window.location.href = '../../index.html';
       return;
     }
 
@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   } catch (err) {
     logEvent('error', 'Menu', `Error al iniciar módulo: ${err.message}`);
-    window.location.href = './login.html';
+    window.location.href = '../../index.html';
   }
 });
 
