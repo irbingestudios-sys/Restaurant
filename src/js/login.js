@@ -84,7 +84,7 @@ form.addEventListener('submit', async (e) => {
     case 'admin':
     case 'gerente':
       logEvent('info', 'Login', `Redirigiendo a admin.html para rol: ${rol}`);
-      window.location.href = './admin.html';
+      window.location.href = './src/modules/menu.html';
       break;
     case 'dependiente':
     case 'cocina':
