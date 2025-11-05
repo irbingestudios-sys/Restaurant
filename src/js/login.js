@@ -22,6 +22,8 @@ form.addEventListener('submit', async (e) => {
   const password = document.getElementById('password').value.trim();
   errorMessage.textContent = ''; // Limpia errores anteriores
 
+  logEvent('info', 'Login', `Inicio de autenticación para: ${email}`);
+
   // ─── Autenticación con Supabase ─────────────────────────────
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -31,9 +33,17 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
+  logEvent('info', 'Login', `Autenticación exitosa para: ${email}`);
+
   // ─── Obtener ID del usuario autenticado ─────────────────────
-  const { data: userData } = await supabase.auth.getUser();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
   const userId = userData?.user?.id;
+
+  logEvent('info', 'Login', `Resultado de getUser(): ${JSON.stringify(userData)}`);
+
+  if (userError) {
+    logEvent('error', 'Login', `Error al obtener usuario: ${userError.message}`);
+  }
 
   if (!userId) {
     logEvent('error', 'Login', 'No se pudo obtener el ID del usuario autenticado');
@@ -41,15 +51,23 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
+  logEvent('info', 'Login', `ID de usuario autenticado: ${userId}`);
+
   // ─── Consulta del rol en la tabla usuario ───────────────────
-  const { data: perfil, error: perfilError } = await supabase
+  const { data: perfil, error: perfilError, status } = await supabase
     .from('usuario')
     .select('rol')
     .eq('id', userId)
     .single();
 
-  if (perfilError || !perfil) {
-    logEvent('warn', 'Login', `Usuario sin rol asignado: ${userId}`);
+  logEvent('info', 'Login', `Consulta de rol ejecutada con status: ${status}`);
+  logEvent('info', 'Login', `Resultado de perfil: ${JSON.stringify(perfil)}`);
+  if (perfilError) {
+    logEvent('error', 'Login', `Error al consultar rol: ${perfilError.message}`);
+  }
+
+  if (!perfil || perfilError) {
+    logEvent('warn', 'Login', `Usuario sin rol asignado o error en consulta: ${userId}`);
     errorMessage.textContent = 'Usuario sin rol asignado';
     return;
   }
@@ -61,14 +79,17 @@ form.addEventListener('submit', async (e) => {
     case 'super_admin':
     case 'admin':
     case 'gerente':
+      logEvent('info', 'Login', `Redirigiendo a admin.html para rol: ${perfil.rol}`);
       window.location.href = './admin.html';
       break;
     case 'dependiente':
     case 'cocina':
     case 'repartidor':
+      logEvent('info', 'Login', `Redirigiendo a menu.html para rol: ${perfil.rol}`);
       window.location.href = './menu.html';
       break;
     case 'cliente':
+      logEvent('info', 'Login', `Redirigiendo a cliente.html para rol: ${perfil.rol}`);
       window.location.href = './cliente.html';
       break;
     default:
