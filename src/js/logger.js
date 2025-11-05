@@ -1,13 +1,14 @@
 // ┌────────────────────────────────────────────────────────────┐
 // │ Módulo: Logger                                              │
 // │ Script: logger.js                                           │
-// │ Descripción: Registro estructurado de eventos en consola   │
+// │ Descripción: Registro estructurado en consola y Supabase   │
 // │ Autor: Irbing Brizuela                                      │
 // │ Fecha: 2025-11-05                                           │
 // └────────────────────────────────────────────────────────────┘
 
-// ─── Función principal: logEvent ──────────────────────────────
-// Registra eventos en consola con tipo, etiqueta y timestamp
+import { supabase } from './supabaseClient.js';
+
+// ─── Log en consola ───────────────────────────────────────────
 export function logEvent(type, label, data) {
   const timestamp = new Date().toISOString();
   const prefix = `[${label}] ${timestamp}`;
@@ -25,9 +26,34 @@ export function logEvent(type, label, data) {
     default:
       console.log(`${prefix} 🔍`, data);
   }
+
+  // También registrar en Supabase
+  logToSupabase(type, label, data, timestamp);
+}
+
+// ─── Log en Supabase (auditoria_menu) ─────────────────────────
+async function logToSupabase(tipo, modulo, detalle, fecha) {
+  const { data: userData } = await supabase.auth.getUser();
+  const usuario_id = userData?.user?.id || null;
+
+  const { error } = await supabase
+    .from('auditoria_menu')
+    .insert([
+      {
+        tipo,
+        modulo,
+        detalle: typeof detalle === 'string' ? detalle : JSON.stringify(detalle),
+        fecha,
+        usuario_id,
+      },
+    ]);
+
+  if (error) {
+    console.warn(`[Logger] ⚠️ Error al registrar en auditoria_menu: ${error.message}`);
+  }
 }
 
 // ─── Referencias técnicas ─────────────────────────────────────
-// Usado por: login.js, admin.js, menu.js, cliente.js, auditoria.js
-// Tipos de evento: error, warn, info, default
-// Extensible para auditoría en Supabase si se requiere
+// Tablas utilizadas: auditoria_menu
+// Campos requeridos: tipo, modulo, detalle, fecha, usuario_id
+// Usado por: login.js, admin.js, menu.js, cliente.js
