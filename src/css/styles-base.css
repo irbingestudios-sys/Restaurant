@@ -1,3 +1,11 @@
+/* ┌────────────────────────────────────────────────────────────┐
+   │ Módulo: Estilos base                                       │
+   │ Archivo: styles-base.css                                   │
+   │ Descripción: Hoja de estilos unificada para todos los módulos del sistema
+   │ Autor: Irbing Brizuela                                     │
+   │ Fecha: 2025-11-05                                          │
+   └──────────────────────────────────────────────────────────── */
+
 /* === Reset básico === */
 * {
   margin: 0;
@@ -28,13 +36,16 @@ body {
 }
 
 /* === Contenedor principal === */
-.login-container {
+.login-container,
+.admin-container,
+.menu-container,
+.cliente-container {
   background-color: #fff;
   padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 400px;
+  max-width: 480px;
   text-align: center;
 }
 
@@ -42,6 +53,9 @@ body {
 .logo {
   width: 80px;
   margin-bottom: 1rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* === Título === */
@@ -57,8 +71,11 @@ form {
   gap: 1rem;
 }
 
+/* === Inputs === */
 input[type="email"],
-input[type="password"] {
+input[type="password"],
+input[type="text"],
+input[type="number"] {
   padding: 0.75rem;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -94,9 +111,27 @@ button:hover {
   font-size: 0.9rem;
 }
 
+/* === Mensaje de éxito === */
+.success {
+  margin-top: 1rem;
+  color: #2ecc71;
+  font-size: 0.9rem;
+}
+
+/* === Etiquetas y texto auxiliar === */
+label {
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+  display: block;
+  text-align: left;
+}
+
 /* === Responsividad === */
 @media (max-width: 480px) {
-  .login-container {
+  .login-container,
+  .admin-container,
+  .menu-container,
+  .cliente-container {
     padding: 1.5rem;
   }
 
@@ -109,3 +144,8 @@ button:hover {
     font-size: 0.95rem;
   }
 }
+
+/* === Referencias técnicas === */
+/* Usado por: login.html, admin.html, menu.html, cliente.html */
+/* Compatible con: styles específicos por módulo (admin.css, menu.css) */
+/* Extensible para dark mode, animaciones, y componentes reutilizables */
