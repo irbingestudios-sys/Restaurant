@@ -18,10 +18,31 @@
       <button id="btnCrear">➕ Crear nuevo producto</button>
     </div>
 
-    <div id="contenedor-productos">
-      <h3>📋 Productos disponibles</h3>
-      <div id="lista-productos" class="grid"></div>
+    <!-- Filtros -->
+    <div id="filtros">
+      <select id="filtro-destino">
+        <option value="">Todos los destinos</option>
+        <option value="local">Local</option>
+        <option value="reparto">Reparto</option>
+        <option value="especial">Especial</option>
+      </select>
+      <select id="filtro-area">
+        <option value="">Todas las áreas</option>
+        <option value="bar">Bar</option>
+        <option value="cocina">Cocina</option>
+        <option value="cantina">Cantina</option>
+        <option value="diskoteca">Diskoteca</option>
+        <option value="terraza">Terraza</option>
+      </select>
+      <select id="filtro-disponible">
+        <option value="">Todos</option>
+        <option value="true">Solo disponibles</option>
+        <option value="false">Solo no disponibles</option>
+      </select>
     </div>
+
+    <!-- Contenedor de productos -->
+    <div id="contenedor-productos"></div>
   </main>
 
   <script type="module" src="../js/menu.js"></script>
