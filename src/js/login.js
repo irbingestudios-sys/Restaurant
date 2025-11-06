@@ -1,11 +1,3 @@
-// ┌────────────────────────────────────────────────────────────┐
-// │ Módulo: Login                                               │
-// │ Script: login.js                                            │
-// │ Descripción: Autenticación de usuario y redirección por rol│
-// │ Autor: Irbing Brizuela                                      │
-// │ Fecha: 2025-11-06                                           │
-// └────────────────────────────────────────────────────────────┘
-
 import { supabase } from './supabaseClient.js';
 import { logEvent } from './logger.js';
 
@@ -15,21 +7,21 @@ const errorMessage = document.getElementById('error-message');
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const email = document.getElementById('email').value.trim();
+  const correo = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
   errorMessage.textContent = '';
 
-  logEvent('info', 'Login', `Inicio de autenticación para: ${email}`);
+  logEvent('info', 'Login', `Inicio de autenticación para: ${correo}`);
 
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email: correo, password });
 
   if (error) {
-    logEvent('error', 'Login', `Credenciales incorrectas para ${email}: ${error.message}`);
+    logEvent('error', 'Login', `Credenciales incorrectas para ${correo}: ${error.message}`);
     errorMessage.textContent = 'Credenciales incorrectas';
     return;
   }
 
-  logEvent('info', 'Login', `Autenticación exitosa para: ${email}`);
+  logEvent('info', 'Login', `Autenticación exitosa para: ${correo}`);
 
   const { data: userData, error: userError } = await supabase.auth.getUser();
   const userId = userData?.user?.id;
@@ -51,12 +43,12 @@ form.addEventListener('submit', async (e) => {
   const nombre = usuario?.nombre || 'sin nombre';
   const rol = usuario?.rol || 'sin rol';
 
-  logEvent('info', 'Login', `Usuario autenticado: ${email}, Rol: ${rol}`);
+  logEvent('info', 'Login', `Usuario autenticado: ${correo}, Rol: ${rol}`);
 
   await supabase.rpc('registrar_evento', {
     tipo: 'login',
     modulo: 'login',
-    detalle: `Inicio de sesión para ${email} con rol ${rol}`
+    detalle: `Inicio de sesión para ${correo} con rol ${rol}`
   });
 
   switch (rol) {
