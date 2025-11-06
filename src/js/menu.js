@@ -5,7 +5,7 @@
 // │ Autor: Irbing Brizuela                                      │
 // │ Fecha: 2025-11-06                                           │
 // └────────────────────────────────────────────────────────────┘
-
+window.supabase = supabase;
 import { supabase } from './supabaseClient.js';
 import { logEvent } from './logger.js';
 
