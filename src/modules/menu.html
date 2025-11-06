@@ -14,6 +14,7 @@
     <h1>🍽️ Módulo de Menú</h1>
     <h2 id="bienvenida">Cargando perfil...</h2>
 
+    <!-- Acciones -->
     <div id="acciones">
       <button id="btnCrear">➕ Crear nuevo producto</button>
     </div>
@@ -22,17 +23,11 @@
     <div id="filtros">
       <select id="filtro-destino">
         <option value="">Todos los destinos</option>
-        <option value="local">Local</option>
-        <option value="reparto">Reparto</option>
-        <option value="especial">Especial</option>
+        <!-- Se poblará dinámicamente desde Supabase -->
       </select>
       <select id="filtro-area">
         <option value="">Todas las áreas</option>
-        <option value="bar">Bar</option>
-        <option value="cocina">Cocina</option>
-        <option value="cantina">Cantina</option>
-        <option value="diskoteca">Diskoteca</option>
-        <option value="terraza">Terraza</option>
+        <!-- Se poblará dinámicamente desde Supabase -->
       </select>
       <select id="filtro-disponible">
         <option value="">Todos</option>
@@ -42,7 +37,9 @@
     </div>
 
     <!-- Contenedor de productos -->
-    <div id="contenedor-productos"></div>
+    <div id="contenedor-productos">
+      <!-- Se llenará dinámicamente por JS -->
+    </div>
   </main>
 
   <script type="module" src="../js/menu.js"></script>
