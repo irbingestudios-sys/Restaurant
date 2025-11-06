@@ -11,6 +11,7 @@ import { logEvent } from './logger.js';
 
 let productosGlobal = [];
 
+// ── Grupo: Inicialización del módulo ──────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const { data: perfil, error } = await supabase.rpc('obtener_perfil_seguro');
@@ -86,6 +87,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+// ── Grupo: Poblar filtros dinámicos ───────────────────────────
 function poblarFiltrosDesdeProductos(productos) {
   const destinosSet = new Set();
   const areasSet = new Set();
@@ -116,6 +118,39 @@ function poblarFiltrosDesdeProductos(productos) {
   });
 }
 
+// ── Grupo: Mostrar resumen por destino, área y categoría ──────
+function mostrarResumen(productos) {
+  const resumen = {
+    destinos: {},
+    areas: {},
+    categorias: {}
+  };
+
+  productos.forEach(p => {
+    (p.destinos || []).forEach(d => resumen.destinos[d] = (resumen.destinos[d] || 0) + 1);
+    (p.areas || []).forEach(a => resumen.areas[a] = (resumen.areas[a] || 0) + 1);
+    const c = p.categoria || 'Sin categoría';
+    resumen.categorias[c] = (resumen.categorias[c] || 0) + 1;
+  });
+
+  const contenedor = document.getElementById('resumen');
+  contenedor.innerHTML = '';
+
+  const crearBox = (titulo, datos) => {
+    const box = document.createElement('div');
+    box.className = 'resumen-box';
+    box.innerHTML = `<h5>${titulo}</h5><ul>` +
+      Object.entries(datos).map(([k, v]) => `<li>${k}: ${v}</li>`).join('') +
+      `</ul>`;
+    return box;
+  };
+
+  contenedor.appendChild(crearBox('Por destino', resumen.destinos));
+  contenedor.appendChild(crearBox('Por área', resumen.areas));
+  contenedor.appendChild(crearBox('Por categoría', resumen.categorias));
+}
+
+// ── Grupo: Renderizado de productos por categoría ─────────────
 function cargarProductos() {
   const destinoFiltro = document.getElementById('filtro-destino').value;
   const areaFiltro = document.getElementById('filtro-area').value;
@@ -131,25 +166,27 @@ function cargarProductos() {
     (disponibleFiltro === '' || p.disponible === (disponibleFiltro === 'true'))
   );
 
+  mostrarResumen(filtrados);
+
   const agrupados = {};
   filtrados.forEach(p => {
-    p.destinos.forEach(destino => {
-      p.areas.forEach(area => {
-        const clave = `${destino}__${area}`;
-        if (!agrupados[clave]) agrupados[clave] = [];
-        agrupados[clave].push(p);
-      });
-    });
+    const categoria = p.categoria || 'Sin categoría';
+    if (!agrupados[categoria]) agrupados[categoria] = [];
+    agrupados[categoria].push(p);
   });
 
   const contenedor = document.getElementById('contenedor-productos');
   contenedor.innerHTML = '';
 
-  Object.entries(agrupados).forEach(([clave, productos]) => {
-    const [destino, area] = clave.split('__');
+  Object.entries(agrupados).forEach(([categoria, productos]) => {
     const grupo = document.createElement('div');
     grupo.className = 'grupo-productos';
-    grupo.innerHTML = `<h4>${destino.toUpperCase()} → ${area}</h4>`;
+    grupo.innerHTML = `
+      <h4 style="display: flex; justify-content: space-between; align-items: center;">
+        <span>${categoria.toUpperCase()}</span>
+        <button class="btn-toggle-categoria" onclick="toggleCategoria(this)">−</button>
+      </h4>
+    `;
 
     const fila = document.createElement('div');
     fila.className = 'fila-productos';
@@ -172,10 +209,10 @@ function cargarProductos() {
         <span>$${p.precio.toFixed(2)}</span>
         <span>${p.categoria || ''}</span>
         <div class="acciones">
-          <input type="checkbox" ${p.disponible ? 'checked' : ''} onchange="toggleDisponible('${p.id}', this.checked)" />
-          <button onclick="editarProducto('${p.id}')">🖉</button>
-          <button onclick="eliminarProducto('${p.id}')">🗑️</button>
-        </div>
+                <input type="checkbox" ${p.disponible ? 'checked' : ''} onchange="toggleDisponible('${p.id}', this.checked)" />
+        <button onclick="editarProducto('${p.id}')">🖉</button>
+        <button onclick="eliminarProducto('${p.id}')">🗑️</button>
+      </div>
       `;
       fila.appendChild(filaProducto);
     });
@@ -185,6 +222,15 @@ function cargarProductos() {
   });
 }
 
+// ── Grupo: Función para contraer/expandir categoría ───────────
+window.toggleCategoria = (btn) => {
+  const fila = btn.closest('.grupo-productos').querySelector('.fila-productos');
+  const oculto = fila.style.display === 'none';
+  fila.style.display = oculto ? 'block' : 'none';
+  btn.textContent = oculto ? '−' : '+';
+};
+
+// ── Grupo: Acciones sobre productos ───────────────────────────
 window.toggleDisponible = async (id, estado) => {
   const { error } = await supabase.from('menu_item').update({ disponible: estado }).eq('id', id);
   if (error) alert('❌ Error al actualizar disponibilidad');
