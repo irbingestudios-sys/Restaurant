@@ -1,16 +1,27 @@
+// ┌────────────────────────────────────────────────────────────┐
+// │ Módulo: Menú                                                │
+// │ Script: menu.js                                             │
+// │ Descripción: Gestión de productos y acceso por rol         │
+// │ Autor: Irbing Brizuela                                      │
+// │ Fecha: 2025-11-06                                           │
+// └────────────────────────────────────────────────────────────┘
+
 import { supabase } from './supabaseClient.js';
 import { logEvent } from './logger.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const { data: perfil, error } = await supabase.rpc('obtener_perfil');
-    if (error) throw error;
+    const { data: perfil, error } = await supabase.rpc('obtener_perfil_seguro');
+    if (error || !perfil || perfil.length === 0) throw new Error('Perfil no disponible');
 
     const usuario = perfil[0];
-    document.getElementById('bienvenida').textContent = `Bienvenido, ${usuario.nombre} (${usuario.rol})`;
+    const nombre = usuario?.nombre || 'sin nombre';
+    const rol = usuario?.rol || 'sin rol';
 
-    if (!['super_admin', 'admin', 'gerente'].includes(usuario.rol)) {
-      logEvent('warn', 'Menu', `Acceso denegado para rol: ${usuario.rol}`);
+    document.getElementById('bienvenida').textContent = `Bienvenido, ${nombre} (${rol})`;
+
+    if (!['super_admin', 'admin', 'gerente'].includes(rol)) {
+      logEvent('warn', 'Menu', `Acceso denegado para rol: ${rol}`);
       window.location.href = '../../index.html';
       return;
     }
@@ -18,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await supabase.rpc('registrar_evento', {
       tipo: 'acceso',
       modulo: 'menu',
-      detalle: `Ingreso al módulo menú por ${usuario.email} (${usuario.rol})`
+      detalle: `Ingreso al módulo menú por ${nombre} (${rol})`
     });
 
     cargarProductos();
@@ -52,7 +63,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function cargarProductos() {
-  const { data: productos, error } = await supabase.from('menu_item').select('*').order('creado_en', { ascending: false });
+  const { data: productos, error } = await supabase
+    .from('menu_item')
+    .select('*')
+    .order('creado_en', { ascending: false });
+
   if (error) {
     logEvent('error', 'Menu', `Error al cargar productos: ${error.message}`);
     return;
