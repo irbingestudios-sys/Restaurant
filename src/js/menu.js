@@ -71,30 +71,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    cargarProductos();
-
-  } catch (err) {
-    logEvent('error', 'Menu', `Error al iniciar módulo: ${err.message}`);
-    window.location.href = '../../index.html';
-  }
-});
-const encabezado = document.createElement('div');
-encabezado.className = 'producto-lineal encabezado';
-encabezado.innerHTML = `
-  <strong>Nombre</strong>
-  <span>Precio</span>
-  <span>Categoría</span>
-  <span>Áreas</span>
-  <span>Destinos</span>
-  <span>Acciones</span>
-`;
-fila.appendChild(encabezado);
-async function cargarProductos() {
+    async function cargarProductos() {
   const { data: productos, error } = await supabase.from('menu_item').select('*');
   if (error) {
     logEvent('error', 'Menu', `Error al cargar productos: ${error.message}`);
     return;
   }
+
+  // Poblar filtros dinámicamente desde los datos
+  poblarFiltrosDesdeProductos(productos);
 
   const destinoFiltro = document.getElementById('filtro-destino').value;
   const areaFiltro = document.getElementById('filtro-area').value;
@@ -120,6 +105,54 @@ async function cargarProductos() {
       });
     });
   });
+
+  const contenedor = document.getElementById('contenedor-productos');
+  contenedor.innerHTML = '';
+
+  Object.entries(agrupados).forEach(([clave, productos]) => {
+    const [destino, area] = clave.split('__');
+    const grupo = document.createElement('div');
+    grupo.className = 'grupo-productos';
+    grupo.innerHTML = `<h4>${destino.toUpperCase()} → ${area}</h4>`;
+
+    const fila = document.createElement('div');
+    fila.className = 'fila-productos';
+
+    // Encabezado por grupo
+    const encabezado = document.createElement('div');
+    encabezado.className = 'producto-lineal encabezado';
+    encabezado.innerHTML = `
+      <strong>Nombre</strong>
+      <span>Precio</span>
+      <span>Categoría</span>
+      <span>Áreas</span>
+      <span>Destinos</span>
+      <span>Acciones</span>
+    `;
+    fila.appendChild(encabezado);
+
+    productos.forEach(p => {
+      const filaProducto = document.createElement('div');
+      filaProducto.className = 'producto-lineal';
+      filaProducto.innerHTML = `
+        <strong>${p.nombre}</strong>
+        <span>$${p.precio.toFixed(2)}</span>
+        <span>${p.categoria || ''}</span>
+        <span>${p.areas.join(', ')}</span>
+        <span>${p.destinos.join(', ')}</span>
+        <div class="acciones">
+          <input type="checkbox" ${p.disponible ? 'checked' : ''} onchange="toggleDisponible('${p.id}', this.checked)" />
+          <button onclick="editarProducto('${p.id}')">🖉</button>
+          <button onclick="eliminarProducto('${p.id}')">🗑️</button>
+        </div>
+      `;
+      fila.appendChild(filaProducto);
+    });
+
+    grupo.appendChild(fila);
+    contenedor.appendChild(grupo);
+  });
+}
 
   const contenedor = document.getElementById('contenedor-productos');
   contenedor.innerHTML = '';
