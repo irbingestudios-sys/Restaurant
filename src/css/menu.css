@@ -1,5 +1,10 @@
 /* Estilos específicos para módulo Menú */
 
+.menu-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
 #acciones {
   margin: 1rem 0;
   text-align: center;
@@ -35,13 +40,13 @@
 
 .grupo-productos h4 {
   margin-bottom: 0.5rem;
-  font-size: 1.1rem;
-  color: #333;
-  border-bottom: 1px solid #ccc;
+  font-size: 1.2rem;
+  color: #2c3e50;
+  border-bottom: 2px solid #ccc;
   padding-bottom: 0.25rem;
 }
 
-/* ✅ Diseño lineal tipo tabla */
+/* Diseño lineal tipo tabla */
 .fila-productos {
   display: block;
   overflow-x: auto;
@@ -50,12 +55,12 @@
 
 .producto-lineal {
   display: grid;
-  grid-template-columns: 1fr 100px 120px 160px 160px 80px;
+  grid-template-columns: 1fr 100px 120px 160px 160px 100px;
   align-items: center;
-  gap: 1rem;
-  padding: 0.75rem 1rem;
+  gap: 1.25rem;
+  padding: 1rem 1.5rem;
   border-bottom: 1px solid #ddd;
-  font-size: 0.95rem;
+  font-size: 1rem;
 }
 
 .producto-lineal strong {
@@ -65,6 +70,8 @@
 .producto-lineal .acciones {
   display: flex;
   gap: 0.5rem;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .producto-lineal .acciones button {
@@ -77,4 +84,11 @@
 .producto-lineal input[type="checkbox"] {
   transform: scale(1.2);
   cursor: pointer;
+}
+
+/* Encabezado por grupo */
+.producto-lineal.encabezado {
+  font-weight: bold;
+  background-color: #eef2f5;
+  border-bottom: 2px solid #ccc;
 }
