@@ -1,10 +1,3 @@
-// ┌────────────────────────────────────────────────────────────┐
-// │ Módulo: Menú                                                │
-// │ Script: menu.js                                             │
-// │ Descripción: Gestión de productos y acceso por rol         │
-// │ Autor: Irbing Brizuela                                      │
-// │ Fecha: 2025-11-06                                           │
-// └────────────────────────────────────────────────────────────┘
 
 // ┌────────────────────────────────────────────────────────────┐
 // │ Módulo: Menú                                                │
@@ -131,26 +124,21 @@ async function cargarProductos() {
     fila.className = 'fila-productos';
 
     productos.forEach(p => {
-      const card = document.createElement('div');
-      card.className = 'card-producto';
-      card.innerHTML = `
-        <div class="acciones">
-          <button onclick="editarProducto('${p.id}')">🖉</button>
-          <button onclick="eliminarProducto('${p.id}')">🗑️</button>
-        </div>
-        <img src="${p.imagen_url}" alt="${p.nombre}" />
-        <strong>${p.nombre}</strong>
-        $${p.precio.toFixed(2)}<br>
-        ${p.categoria || ''}<br>
-        <p class="etiquetas">${(p.etiquetas || []).join(', ')}</p>
-        <p><strong>Áreas:</strong> ${p.areas.join(', ')}</p>
-        <p><strong>Destinos:</strong> ${p.destinos.join(', ')}</p>
-        <label style="display: flex; align-items: center; gap: 0.25rem; margin-top: 0.5rem;">
-          <input type="checkbox" ${p.disponible ? 'checked' : ''} onchange="toggleDisponible('${p.id}', this.checked)" />
-          <span>${p.disponible ? '✅ Disponible' : '❌ No disponible'}</span>
-        </label>
-      `;
-      fila.appendChild(card);
+const filaProducto = document.createElement('div');
+filaProducto.className = 'producto-lineal';
+filaProducto.innerHTML = `
+  <strong>${p.nombre}</strong>
+  <span>$${p.precio.toFixed(2)}</span>
+  <span>${p.categoria || ''}</span>
+  <span>Áreas: ${p.areas.join(', ')}</span>
+  <span>Destinos: ${p.destinos.join(', ')}</span>
+  <div class="acciones">
+    <input type="checkbox" ${p.disponible ? 'checked' : ''} onchange="toggleDisponible('${p.id}', this.checked)" />
+    <button onclick="editarProducto('${p.id}')">🖉</button>
+    <button onclick="eliminarProducto('${p.id}')">🗑️</button>
+  </div>
+`;
+fila.appendChild(filaProducto);
     });
 
     grupo.appendChild(fila);
