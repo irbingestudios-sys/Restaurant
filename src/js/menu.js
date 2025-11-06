@@ -1,4 +1,3 @@
-
 // ┌────────────────────────────────────────────────────────────┐
 // │ Módulo: Menú                                                │
 // │ Script: menu.js                                             │
@@ -71,14 +70,50 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    async function cargarProductos() {
+    await cargarProductos();
+  } catch (err) {
+    logEvent('error', 'Menu', `Error al iniciar módulo: ${err.message}`);
+    window.location.href = '../../index.html';
+  }
+});
+
+function poblarFiltrosDesdeProductos(productos) {
+  const destinosSet = new Set();
+  const areasSet = new Set();
+
+  productos.forEach(p => {
+    (p.destinos || []).forEach(d => destinosSet.add(d));
+    (p.areas || []).forEach(a => areasSet.add(a));
+  });
+
+  const destinoSelect = document.getElementById('filtro-destino');
+  const areaSelect = document.getElementById('filtro-area');
+
+  destinoSelect.innerHTML = '<option value="">Todos los destinos</option>';
+  areaSelect.innerHTML = '<option value="">Todas las áreas</option>';
+
+  [...destinosSet].sort().forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = d.charAt(0).toUpperCase() + d.slice(1);
+    destinoSelect.appendChild(opt);
+  });
+
+  [...areasSet].sort().forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a;
+    opt.textContent = a.charAt(0).toUpperCase() + a.slice(1);
+    areaSelect.appendChild(opt);
+  });
+}
+
+async function cargarProductos() {
   const { data: productos, error } = await supabase.from('menu_item').select('*');
   if (error) {
     logEvent('error', 'Menu', `Error al cargar productos: ${error.message}`);
     return;
   }
 
-  // Poblar filtros dinámicamente desde los datos
   poblarFiltrosDesdeProductos(productos);
 
   const destinoFiltro = document.getElementById('filtro-destino').value;
@@ -118,7 +153,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fila = document.createElement('div');
     fila.className = 'fila-productos';
 
-    // Encabezado por grupo
     const encabezado = document.createElement('div');
     encabezado.className = 'producto-lineal encabezado';
     encabezado.innerHTML = `
@@ -147,41 +181,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       `;
       fila.appendChild(filaProducto);
-    });
-
-    grupo.appendChild(fila);
-    contenedor.appendChild(grupo);
-  });
-}
-
-  const contenedor = document.getElementById('contenedor-productos');
-  contenedor.innerHTML = '';
-
-  Object.entries(agrupados).forEach(([clave, productos]) => {
-    const [destino, area] = clave.split('__');
-    const grupo = document.createElement('div');
-    grupo.className = 'grupo-productos';
-    grupo.innerHTML = `<h4>${destino.toUpperCase()} → ${area}</h4>`;
-
-    const fila = document.createElement('div');
-    fila.className = 'fila-productos';
-
-    productos.forEach(p => {
-const filaProducto = document.createElement('div');
-filaProducto.className = 'producto-lineal';
-filaProducto.innerHTML = `
-  <strong>${p.nombre}</strong>
-  <span>$${p.precio.toFixed(2)}</span>
-  <span>${p.categoria || ''}</span>
-  <span>Áreas: ${p.areas.join(', ')}</span>
-  <span>Destinos: ${p.destinos.join(', ')}</span>
-  <div class="acciones">
-    <input type="checkbox" ${p.disponible ? 'checked' : ''} onchange="toggleDisponible('${p.id}', this.checked)" />
-    <button onclick="editarProducto('${p.id}')">🖉</button>
-    <button onclick="eliminarProducto('${p.id}')">🗑️</button>
-  </div>
-`;
-fila.appendChild(filaProducto);
     });
 
     grupo.appendChild(fila);
