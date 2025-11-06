@@ -78,7 +78,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = '../../index.html';
   }
 });
-
+const encabezado = document.createElement('div');
+encabezado.className = 'producto-lineal encabezado';
+encabezado.innerHTML = `
+  <strong>Nombre</strong>
+  <span>Precio</span>
+  <span>Categoría</span>
+  <span>Áreas</span>
+  <span>Destinos</span>
+  <span>Acciones</span>
+`;
+fila.appendChild(encabezado);
 async function cargarProductos() {
   const { data: productos, error } = await supabase.from('menu_item').select('*');
   if (error) {
