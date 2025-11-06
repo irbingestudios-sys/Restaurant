@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const usuario = perfil[0];
     const nombre = usuario?.nombre || 'sin nombre';
     const rol = usuario?.rol || 'sin rol';
+    const correo = usuario?.correo || 'sin correo';
 
     document.getElementById('bienvenida').textContent = `Bienvenido, ${nombre} (${rol})`;
 
@@ -29,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await supabase.rpc('registrar_evento', {
       tipo: 'acceso',
       modulo: 'menu',
-      detalle: `Ingreso al módulo menú por ${nombre} (${rol})`
+      detalle: `Ingreso al módulo menú por ${correo} (${rol})`
     });
 
     cargarProductos();
