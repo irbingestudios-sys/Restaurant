@@ -9,6 +9,8 @@
 import { supabase } from './supabaseClient.js';
 import { logEvent } from './logger.js';
 
+let productosGlobal = [];
+
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     const { data: perfil, error } = await supabase.rpc('obtener_perfil_seguro');
@@ -33,7 +35,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       detalle: `Ingreso al módulo menú por ${correo} (${rol})`
     });
 
-    // Inicializar filtros desde localStorage
+    const { data: productos, error: errorProductos } = await supabase.from('menu_item').select('*');
+    if (errorProductos) throw new Error('Error al cargar productos');
+
+    productosGlobal = productos;
+    poblarFiltrosDesdeProductos(productosGlobal);
+
     const filtros = {
       destino: localStorage.getItem('filtro-destino') || '',
       area: localStorage.getItem('filtro-area') || '',
@@ -66,11 +73,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         logEvent('error', 'Menu', `Error al crear producto: ${error.message}`);
       } else {
         logEvent('info', 'Menu', `Producto creado con ID: ${data}`);
+        const { data: nuevos } = await supabase.from('menu_item').select('*');
+        productosGlobal = nuevos;
         cargarProductos();
       }
     });
 
-    await cargarProductos();
+    cargarProductos();
   } catch (err) {
     logEvent('error', 'Menu', `Error al iniciar módulo: ${err.message}`);
     window.location.href = '../../index.html';
@@ -107,15 +116,7 @@ function poblarFiltrosDesdeProductos(productos) {
   });
 }
 
-async function cargarProductos() {
-  const { data: productos, error } = await supabase.from('menu_item').select('*');
-  if (error) {
-    logEvent('error', 'Menu', `Error al cargar productos: ${error.message}`);
-    return;
-  }
-
-  poblarFiltrosDesdeProductos(productos);
-
+function cargarProductos() {
   const destinoFiltro = document.getElementById('filtro-destino').value;
   const areaFiltro = document.getElementById('filtro-area').value;
   const disponibleFiltro = document.getElementById('filtro-disponible').value;
@@ -124,7 +125,7 @@ async function cargarProductos() {
   localStorage.setItem('filtro-area', areaFiltro);
   localStorage.setItem('filtro-disponible', disponibleFiltro);
 
-  const filtrados = productos.filter(p =>
+  const filtrados = productosGlobal.filter(p =>
     (!destinoFiltro || p.destinos.includes(destinoFiltro)) &&
     (!areaFiltro || p.areas.includes(areaFiltro)) &&
     (disponibleFiltro === '' || p.disponible === (disponibleFiltro === 'true'))
@@ -159,8 +160,6 @@ async function cargarProductos() {
       <strong>Nombre</strong>
       <span>Precio</span>
       <span>Categoría</span>
-      <span>Áreas</span>
-      <span>Destinos</span>
       <span>Acciones</span>
     `;
     fila.appendChild(encabezado);
@@ -172,8 +171,6 @@ async function cargarProductos() {
         <strong>${p.nombre}</strong>
         <span>$${p.precio.toFixed(2)}</span>
         <span>${p.categoria || ''}</span>
-        <span>${p.areas.join(', ')}</span>
-        <span>${p.destinos.join(', ')}</span>
         <div class="acciones">
           <input type="checkbox" ${p.disponible ? 'checked' : ''} onchange="toggleDisponible('${p.id}', this.checked)" />
           <button onclick="editarProducto('${p.id}')">🖉</button>
@@ -191,14 +188,22 @@ async function cargarProductos() {
 window.toggleDisponible = async (id, estado) => {
   const { error } = await supabase.from('menu_item').update({ disponible: estado }).eq('id', id);
   if (error) alert('❌ Error al actualizar disponibilidad');
-  else cargarProductos();
+  else {
+    const { data: actualizados } = await supabase.from('menu_item').select('*');
+    productosGlobal = actualizados;
+    cargarProductos();
+  }
 };
 
 window.eliminarProducto = async (id) => {
   if (!confirm('¿Eliminar este producto?')) return;
   const { error } = await supabase.from('menu_item').delete().eq('id', id);
   if (error) alert('❌ Error al eliminar');
-  else cargarProductos();
+  else {
+    const { data: actualizados } = await supabase.from('menu_item').select('*');
+    productosGlobal = actualizados;
+    cargarProductos();
+  }
 };
 
 window.editarProducto = async (id) => {
