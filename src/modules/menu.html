@@ -14,20 +14,18 @@
     <h1>🍽️ Módulo de Menú</h1>
     <h2 id="bienvenida">Cargando perfil...</h2>
 
-    <!-- Acciones -->
+    <!-- ── Grupo: Acciones principales ───────────────────────────── -->
     <div id="acciones">
       <button id="btnCrear">➕ Crear nuevo producto</button>
     </div>
 
-    <!-- Filtros -->
+    <!-- ── Grupo: Filtros de búsqueda ────────────────────────────── -->
     <div id="filtros">
       <select id="filtro-destino">
         <option value="">Todos los destinos</option>
-        <!-- Se poblará dinámicamente desde Supabase -->
       </select>
       <select id="filtro-area">
         <option value="">Todas las áreas</option>
-        <!-- Se poblará dinámicamente desde Supabase -->
       </select>
       <select id="filtro-disponible">
         <option value="">Todos</option>
@@ -36,7 +34,12 @@
       </select>
     </div>
 
-    <!-- Contenedor de productos -->
+    <!-- ── Grupo: Resumen por categoría, destino y área ──────────── -->
+    <div id="resumen" class="resumen-lineal">
+      <!-- Se llenará dinámicamente por JS -->
+    </div>
+
+    <!-- ── Grupo: Contenedor de productos agrupados ──────────────── -->
     <div id="contenedor-productos">
       <!-- Se llenará dinámicamente por JS -->
     </div>
