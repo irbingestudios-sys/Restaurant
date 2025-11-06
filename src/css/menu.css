@@ -5,30 +5,96 @@
   text-align: center;
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+#filtros {
+  display: flex;
   gap: 1rem;
-  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
 }
 
-.producto {
+#filtros select {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  min-width: 160px;
+}
+
+#contenedor-productos {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fafafa;
+}
+
+.grupo-productos {
+  margin-bottom: 2rem;
+}
+
+.grupo-productos h4 {
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+  color: #333;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 0.25rem;
+}
+
+.fila-productos {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.card-producto {
+  min-width: 220px;
   background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 8px;
   padding: 1rem;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   transition: transform 0.2s;
+  position: relative;
+  flex-shrink: 0;
 }
 
-.producto:hover {
+.card-producto:hover {
   transform: scale(1.02);
 }
 
-.producto img {
+.card-producto img {
   width: 100%;
   border-radius: 6px;
   margin-bottom: 0.5rem;
+}
+
+.card-producto strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+
+.card-producto .acciones {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.card-producto .acciones button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.card-producto input[type="checkbox"] {
+  transform: scale(1.2);
+  cursor: pointer;
 }
 
 .etiquetas {
