@@ -55,7 +55,7 @@
 
 .producto-lineal {
   display: grid;
-  grid-template-columns: 1fr 100px 120px 160px 160px 100px;
+  grid-template-columns: 1fr 100px 120px 160px;
   align-items: center;
   gap: 1.25rem;
   padding: 1rem 1.5rem;
