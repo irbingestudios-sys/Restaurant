@@ -79,7 +79,59 @@ document.addEventListener('DOMContentLoaded', async () => {
         cargarProductos();
       }
     });
+// ── Grupo: Modal de creación de producto ──────────────────────
+const modal = document.getElementById('modal-producto');
+const btnCrear = document.getElementById('btnCrear');
+const btnGuardar = document.getElementById('guardar-producto');
+const btnCancelar = document.getElementById('cancelar-producto');
 
+btnCrear.addEventListener('click', () => {
+  modal.style.display = 'flex';
+});
+
+btnCancelar.addEventListener('click', () => {
+  modal.style.display = 'none';
+});
+
+btnGuardar.addEventListener('click', async () => {
+  const nombre = document.getElementById('nombre-producto').value.trim();
+  const precio = parseFloat(document.getElementById('precio-producto').value);
+  const categoria = document.getElementById('categoria-producto').value;
+
+  if (!nombre || isNaN(precio)) {
+    alert('Nombre y precio son obligatorios');
+    return;
+  }
+
+  const nuevo = {
+    nombre,
+    descripcion: 'Nuevo producto creado desde modal',
+    precio,
+    disponible: true,
+    categoria,
+    etiquetas: [],
+    imagen_url: 'https://via.placeholder.com/200',
+    areas: ['cocina'],
+    destinos: ['local']
+  };
+
+  const { data, error } = await supabase.rpc('crear_menu_item', nuevo);
+  if (error) {
+    logEvent('error', 'Menu', `Error al crear producto: ${error.message}`);
+    alert('Error al crear producto');
+  } else {
+    logEvent('info', 'Menu', `Producto creado con ID: ${data}`);
+    await supabase.rpc('registrar_evento', {
+      tipo: 'creación',
+      modulo: 'menu',
+      detalle: `Producto creado: ${nombre} (${categoria}) por $${precio}`
+    });
+    modal.style.display = 'none';
+    const { data: nuevos } = await supabase.from('menu_item').select('*');
+    productosGlobal = nuevos;
+    cargarProductos();
+  }
+});
     cargarProductos();
   } catch (err) {
     logEvent('error', 'Menu', `Error al iniciar módulo: ${err.message}`);
