@@ -1,9 +1,9 @@
 // ┌────────────────────────────────────────────────────────────┐
-// │ Módulo: Menú                                                │
-// │ Script: menu.js                                             │
+// │ Módulo: Menú                                               │
+// │ Script: menu.js                                            │
 // │ Descripción: Gestión de productos y acceso por rol         │
-// │ Autor: Irbing Brizuela                                      │
-// │ Fecha: 2025-11-06                                           │
+// │ Autor: Irbing Brizuela                                     │
+// │ Fecha: 2025-11-06                                          │
 // └────────────────────────────────────────────────────────────┘
 
 import { supabase } from './supabaseClient.js';
@@ -18,6 +18,7 @@ window.supabase = supabase;
 // ── Grupo: Inicialización del módulo ──────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
   try {
+    console.log('🔄 Iniciando módulo de menú...');
     const { data: perfil, error } = await supabase.rpc('obtener_perfil_seguro');
     if (error || !perfil || perfil.length === 0) throw new Error('Perfil no disponible');
 
@@ -26,6 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const rol = usuario?.rol || 'sin rol';
     const correo = usuario?.correo || 'sin correo';
 
+    console.log(`✅ Perfil cargado: ${nombre} (${rol})`);
     document.getElementById('bienvenida').textContent = `Bienvenido, ${nombre} (${rol})`;
 
     if (!['super_admin', 'admin', 'gerente'].includes(rol)) {
@@ -44,6 +46,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (errorProductos) throw new Error('Error al cargar productos');
 
     productosGlobal = productos;
+    console.log(`📦 Productos cargados: ${productosGlobal.length}`);
     poblarFiltrosDesdeProductos(productosGlobal);
 
     const filtros = {
@@ -58,32 +61,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('filtro-disponible').value = filtros.disponible;
     document.getElementById('filtro-stock').value = filtros.stock;
 
-    document.getElementById('filtro-destino').addEventListener('change', e => {
-      localStorage.setItem('filtro-destino', e.target.value);
-      cargarProductos();
-    });
-    document.getElementById('filtro-area').addEventListener('change', e => {
-      localStorage.setItem('filtro-area', e.target.value);
-      cargarProductos();
-    });
-    document.getElementById('filtro-disponible').addEventListener('change', e => {
-      localStorage.setItem('filtro-disponible', e.target.value);
-      cargarProductos();
-    });
-    document.getElementById('filtro-stock').addEventListener('change', e => {
-      localStorage.setItem('filtro-stock', e.target.value);
-      cargarProductos();
+    ['filtro-destino', 'filtro-area', 'filtro-disponible', 'filtro-stock'].forEach(id => {
+      document.getElementById(id).addEventListener('change', e => {
+        localStorage.setItem(id, e.target.value);
+        console.log(`🔍 Filtro actualizado: ${id} = ${e.target.value}`);
+        cargarProductos();
+      });
     });
 
     cargarProductos();
   } catch (err) {
+    console.error('❌ Error al iniciar módulo:', err);
     logEvent('error', 'Menu', `Error al iniciar módulo: ${err.message}`);
     window.location.href = '../../index.html';
   }
 });
-
 // ── Grupo: Poblar filtros dinámicos ───────────────────────────
 function poblarFiltrosDesdeProductos(productos) {
+  console.log('🔧 Poblando filtros desde productos...');
   const destinosSet = new Set();
   const areasSet = new Set();
 
@@ -111,9 +106,12 @@ function poblarFiltrosDesdeProductos(productos) {
     opt.textContent = a.charAt(0).toUpperCase() + a.slice(1);
     areaSelect.appendChild(opt);
   });
+  console.log('✅ Filtros poblados correctamente');
 }
+
 // ── Grupo: Mostrar resumen por destino, área y categoría ──────
 function mostrarResumen(productos) {
+  console.log('📊 Generando resumen de productos...');
   const resumen = {
     destinos: {},
     areas: {},
@@ -142,10 +140,11 @@ function mostrarResumen(productos) {
   contenedor.appendChild(crearBox('Por destino', resumen.destinos));
   contenedor.appendChild(crearBox('Por área', resumen.areas));
   contenedor.appendChild(crearBox('Por categoría', resumen.categorias));
+  console.log('✅ Resumen generado');
 }
-
 // ── Grupo: Renderizado de productos por categoría ─────────────
 function cargarProductos() {
+  console.log('🔄 Renderizando productos con filtros activos...');
   const destinoFiltro = document.getElementById('filtro-destino').value;
   const areaFiltro = document.getElementById('filtro-area').value;
   const disponibleFiltro = document.getElementById('filtro-disponible').value;
@@ -156,14 +155,15 @@ function cargarProductos() {
   localStorage.setItem('filtro-disponible', disponibleFiltro);
   localStorage.setItem('filtro-stock', stockFiltro);
 
-const filtrados = productosGlobal.filter(p => {
-  const cumpleDestino = !destinoFiltro || (p.destinos || []).includes(destinoFiltro);
-  const cumpleArea = !areaFiltro || (p.areas || []).includes(areaFiltro);
-  const cumpleDisponible = disponibleFiltro === '' || p.disponible === (disponibleFiltro === 'true');
-  const cumpleStock = stockFiltro !== 'bajo' || (typeof p.stock === 'number' && p.stock >= 0 && p.stock < 10);
-  return cumpleDestino && cumpleArea && cumpleDisponible && cumpleStock;
-});
+  const filtrados = productosGlobal.filter(p => {
+    const cumpleDestino = !destinoFiltro || (p.destinos || []).includes(destinoFiltro);
+    const cumpleArea = !areaFiltro || (p.areas || []).includes(areaFiltro);
+    const cumpleDisponible = disponibleFiltro === '' || p.disponible === (disponibleFiltro === 'true');
+    const cumpleStock = stockFiltro !== 'bajo' || (typeof p.stock === 'number' && p.stock >= 0 && p.stock < 10);
+    return cumpleDestino && cumpleArea && cumpleDisponible && cumpleStock;
+  });
 
+  console.log(`📦 Productos filtrados: ${filtrados.length}`);
   mostrarResumen(filtrados);
 
   const agrupados = {};
@@ -205,9 +205,9 @@ const filtrados = productosGlobal.filter(p => {
       filaProducto.className = 'producto-lineal';
       filaProducto.innerHTML = `
         <strong>${p.nombre}</strong>
-        <span>$${p.precio.toFixed(2)}</span>
-        <span>${p.categoria || ''}</span>
-        <span>${p.stock ?? 0}</span>
+        <span>$${p.precio?.toFixed(2) ?? '—'}</span>
+        <span>${p.categoria || '—'}</span>
+        <span>${typeof p.stock === 'number' ? p.stock : '—'}</span>
         <div class="acciones">
           <input type="checkbox" ${p.disponible ? 'checked' : ''} onchange="toggleDisponible('${p.id}', this.checked)" />
           <button onclick="editarProducto('${p.id}')">🖋️</button>
@@ -220,6 +220,8 @@ const filtrados = productosGlobal.filter(p => {
     grupo.appendChild(fila);
     contenedor.appendChild(grupo);
   });
+
+  console.log('✅ Renderizado completo');
 }
 
 // ── Grupo: Función para contraer/expandir categoría ───────────
@@ -232,9 +234,13 @@ window.toggleCategoria = (btn) => {
 
 // ── Grupo: Acciones sobre productos ───────────────────────────
 window.toggleDisponible = async (id, estado) => {
+  console.log(`🔁 Actualizando disponibilidad: ID=${id}, Estado=${estado}`);
   const { error } = await supabase.from('menu_item').update({ disponible: estado }).eq('id', id);
-  if (error) alert('❌ Error al actualizar disponibilidad');
-  else {
+  if (error) {
+    console.error('❌ Error al actualizar disponibilidad:', error);
+    alert('❌ Error al actualizar disponibilidad');
+  } else {
+    console.log('✅ Disponibilidad actualizada');
     const { data: actualizados } = await supabase.from('menu_item').select('*');
     productosGlobal = actualizados;
     cargarProductos();
@@ -243,9 +249,13 @@ window.toggleDisponible = async (id, estado) => {
 
 window.eliminarProducto = async (id) => {
   if (!confirm('¿Eliminar este producto?')) return;
+  console.log(`🗑️ Eliminando producto ID=${id}`);
   const { error } = await supabase.from('menu_item').delete().eq('id', id);
-  if (error) alert('❌ Error al eliminar');
-  else {
+  if (error) {
+    console.error('❌ Error al eliminar producto:', error);
+    alert('❌ Error al eliminar');
+  } else {
+    console.log('✅ Producto eliminado');
     const { data: actualizados } = await supabase.from('menu_item').select('*');
     productosGlobal = actualizados;
     cargarProductos();
@@ -253,6 +263,7 @@ window.eliminarProducto = async (id) => {
 };
 
 window.editarProducto = async (id) => {
+  console.log(`🖋️ Editar producto ID=${id}`);
   alert('🖋️ Editar producto: ' + id);
   // Aquí puedes abrir un modal o redirigir a un formulario de edición
 };
@@ -262,8 +273,10 @@ const contenedorFormularios = document.getElementById('contenedor-formularios');
 const btnAgregarProducto = document.getElementById('btnAgregarProducto');
 const btnGuardarTodos = document.getElementById('btnGuardarTodos');
 const btnCancelarModal = document.getElementById('btnCancelarModal');
+const btnCrear = document.getElementById('btnCrear');
 
 btnCrear.addEventListener('click', () => {
+  console.log('🆕 Abriendo modal de creación múltiple');
   productosTemporales = [];
   contenedorFormularios.innerHTML = '';
   agregarFormularioProducto();
@@ -271,10 +284,12 @@ btnCrear.addEventListener('click', () => {
 });
 
 btnAgregarProducto.addEventListener('click', () => {
+  console.log('➕ Agregando nuevo formulario de producto');
   agregarFormularioProducto();
 });
 
 btnCancelarModal.addEventListener('click', () => {
+  console.log('❌ Cancelando creación múltiple');
   modal.style.display = 'none';
 });
 
@@ -295,33 +310,30 @@ function agregarFormularioProducto() {
 
   const div = document.createElement('div');
   div.className = 'formulario-lineal';
-div.innerHTML = `
-  <input type="text" placeholder="Nombre" onchange="actualizarCampo(${index}, 'nombre', this.value); verificarNombre(${index})" />
-  <input type="number" placeholder="Precio" onchange="actualizarCampo(${index}, 'precio', parseFloat(this.value)); verificarPrecio(${index})" />
-  <select onchange="manejarCategoria(this, ${index})">
-    <option value="plato fuerte">Plato fuerte</option>
-    <option value="bebida">Bebida</option>
-    <option value="postre">Postre</option>
-    <option value="otra">Otra...</option>
-  </select>
-  <input type="number" placeholder="Stock" onchange="actualizarCampo(${index}, 'stock', parseInt(this.value)); verificarStock(${index})" />
-
-  <select multiple onchange="actualizarCampo(${index}, 'areas', Array.from(this.selectedOptions).map(o => o.value))">
-    <option value="cocina">Cocina</option>
-    <option value="bar">Bar</option>
-    <option value="cantina">Cantina</option>
-    <option value="diskoteca">Diskoteca</option>
-    <option value="terraza">Terraza</option>
-  </select>
-
-  <select multiple onchange="actualizarCampo(${index}, 'destinos', Array.from(this.selectedOptions).map(o => o.value))">
-    <option value="reparto">Reparto</option>
-    <option value="local">Local</option>
-    <option value="especial">Especial</option>
-  </select>
-
-  <button onclick="abrirDetalle(${index})">📝</button>
-`;
+  div.innerHTML = `
+    <input type="text" placeholder="Nombre" onchange="actualizarCampo(${index}, 'nombre', this.value); verificarNombre(${index})" />
+    <input type="number" placeholder="Precio" onchange="actualizarCampo(${index}, 'precio', parseFloat(this.value)); verificarPrecio(${index})" />
+    <select onchange="manejarCategoria(this, ${index})">
+      <option value="plato fuerte">Plato fuerte</option>
+      <option value="bebida">Bebida</option>
+      <option value="postre">Postre</option>
+      <option value="otra">Otra...</option>
+    </select>
+    <input type="number" placeholder="Stock" onchange="actualizarCampo(${index}, 'stock', parseInt(this.value)); verificarStock(${index})" />
+    <select multiple onchange="actualizarCampo(${index}, 'areas', Array.from(this.selectedOptions).map(o => o.value))">
+      <option value="cocina">Cocina</option>
+      <option value="bar">Bar</option>
+      <option value="cantina">Cantina</option>
+      <option value="diskoteca">Diskoteca</option>
+      <option value="terraza">Terraza</option>
+    </select>
+    <select multiple onchange="actualizarCampo(${index}, 'destinos', Array.from(this.selectedOptions).map(o => o.value))">
+      <option value="reparto">Reparto</option>
+      <option value="local">Local</option>
+      <option value="especial">Especial</option>
+    </select>
+    <button onclick="abrirDetalle(${index})">📝</button>
+  `;
   contenedorFormularios.appendChild(div);
   contenedorFormularios.lastElementChild.scrollIntoView({ behavior: 'smooth' });
 }
@@ -329,21 +341,25 @@ div.innerHTML = `
 // ── Grupo: Validaciones por campo ─────────────────────────────
 window.verificarNombre = (i) => {
   const n = productosTemporales[i].nombre;
-  document.getElementById(`advertencia-nombre-${i}`).textContent = !n ? '⚠️ Nombre vacío' : '';
+  const advertencia = document.getElementById(`advertencia-nombre-${i}`);
+  if (advertencia) advertencia.textContent = !n ? '⚠️ Nombre vacío' : '';
 };
 
 window.verificarPrecio = (i) => {
   const p = productosTemporales[i].precio;
-  document.getElementById(`advertencia-precio-${i}`).textContent = p < 1 || isNaN(p) ? '⚠️ Precio inválido' : '';
+  const advertencia = document.getElementById(`advertencia-precio-${i}`);
+  if (advertencia) advertencia.textContent = p < 1 || isNaN(p) ? '⚠️ Precio inválido' : '';
 };
 
 window.verificarStock = (i) => {
   const s = productosTemporales[i].stock;
-  document.getElementById(`advertencia-stock-${i}`).textContent = s <= 0 || isNaN(s) ? '⚠️ Stock inválido' : '';
+  const advertencia = document.getElementById(`advertencia-stock-${i}`);
+  if (advertencia) advertencia.textContent = s <= 0 || isNaN(s) ? '⚠️ Stock inválido' : '';
 };
 
 // ── Grupo: Guardar todos los productos válidos ────────────────
 btnGuardarTodos.addEventListener('click', async () => {
+  console.log('💾 Guardando todos los productos...');
   let errores = 0;
 
   for (let i = 0; i < productosTemporales.length; i++) {
@@ -351,22 +367,20 @@ btnGuardarTodos.addEventListener('click', async () => {
     const advertencias = [];
 
     if (!p.nombre) {
-      document.getElementById(`advertencia-nombre-${i}`).textContent = '⚠️ Nombre vacío';
       advertencias.push('nombre vacío');
     }
 
     if (isNaN(p.precio) || p.precio < 1) {
-      document.getElementById(`advertencia-precio-${i}`).textContent = '⚠️ Precio inválido';
       advertencias.push('precio inválido');
     }
 
     if (isNaN(p.stock) || p.stock <= 0) {
-      document.getElementById(`advertencia-stock-${i}`).textContent = '⚠️ Stock inválido';
-      advertencias.push('stock cero');
+      advertencias.push('stock inválido');
     }
 
     if (advertencias.length > 0) {
       errores++;
+      console.warn(`⚠️ Producto inválido [${i}]:`, p, advertencias);
       await supabase.rpc('registrar_evento', {
         tipo: 'error',
         modulo: 'menu',
@@ -376,8 +390,15 @@ btnGuardarTodos.addEventListener('click', async () => {
     }
 
     const { data, error } = await supabase.rpc('crear_menu_item', p);
-    if (!error) {
-      logEvent('info', 'Menu', `Producto creado: ${p.nombre}`);
+    if (error) {
+      console.error(`❌ Error al crear producto [${i}]:`, error);
+      await supabase.rpc('registrar_evento', {
+        tipo: 'error',
+        modulo: 'menu',
+        detalle: `Error al crear producto: ${p.nombre} (${error.message})`
+      });
+    } else {
+      console.log(`✅ Producto creado: ${p.nombre}`);
       await supabase.rpc('registrar_evento', {
         tipo: 'creación',
         modulo: 'menu',
@@ -396,10 +417,42 @@ btnGuardarTodos.addEventListener('click', async () => {
   productosGlobal = nuevos;
   cargarProductos();
 });
+// ── Grupo: Modal de detalles (descripción e imagen) ───────────
+const modalDetalle = document.getElementById('modal-detalle');
+const descripcionInput = document.getElementById('descripcion-detalle');
+const imagenInput = document.getElementById('imagen-detalle');
+const btnAplicarDetalle = document.getElementById('btnAplicarDetalle');
+const btnCerrarDetalle = document.getElementById('btnCerrarDetalle');
+
+window.abrirDetalle = (i) => {
+  console.log(`📝 Abriendo detalle para producto temporal [${i}]`);
+  productoActualIndex = i;
+  descripcionInput.value = productosTemporales[i].descripcion || '';
+  imagenInput.value = productosTemporales[i].imagen_url || '';
+  modalDetalle.style.display = 'flex';
+};
+
+btnAplicarDetalle.addEventListener('click', () => {
+  if (productoActualIndex === null || productoActualIndex >= productosTemporales.length) {
+    console.warn('⚠️ Índice inválido al aplicar detalle');
+    return;
+  }
+  productosTemporales[productoActualIndex].descripcion = descripcionInput.value;
+  productosTemporales[productoActualIndex].imagen_url = imagenInput.value;
+  console.log(`✅ Detalle aplicado a producto [${productoActualIndex}]`);
+  modalDetalle.style.display = 'none';
+});
+
+btnCerrarDetalle.addEventListener('click', () => {
+  console.log('❌ Cerrando modal de detalle sin aplicar cambios');
+  modalDetalle.style.display = 'none';
+});
 
 // ── Grupo: Funciones auxiliares ───────────────────────────────
 window.actualizarCampo = (i, campo, valor) => {
+  if (!productosTemporales[i]) return;
   productosTemporales[i][campo] = valor;
+  console.log(`✏️ Campo actualizado: producto[${i}].${campo} =`, valor);
 };
 
 window.manejarCategoria = (select, i) => {
@@ -407,9 +460,11 @@ window.manejarCategoria = (select, i) => {
   if (select.value === 'otra') {
     input.style.display = 'inline-block';
     productosTemporales[i].categoria = '';
+    console.log(`🔧 Activando campo de categoría personalizada para producto[${i}]`);
   } else {
     input.style.display = 'none';
     productosTemporales[i].categoria = select.value;
+    console.log(`✅ Categoría seleccionada: ${select.value} para producto[${i}]`);
   }
 };
 
@@ -423,31 +478,9 @@ window.agregarAreaPersonalizada = (i, valor) => {
     opt.textContent = valor.charAt(0).toUpperCase() + valor.slice(1);
     opt.selected = true;
     select.appendChild(opt);
+    console.log(`➕ Área personalizada agregada: ${valor}`);
   }
   const seleccionadas = Array.from(select.selectedOptions).map(o => o.value);
   productosTemporales[i].areas = seleccionadas;
+  console.log(`✅ Áreas actualizadas para producto[${i}]:`, seleccionadas);
 };
-
-// ── Grupo: Modal de detalles (descripción e imagen) ───────────
-const modalDetalle = document.getElementById('modal-detalle');
-const descripcionInput = document.getElementById('descripcion-detalle');
-const imagenInput = document.getElementById('imagen-detalle');
-const btnAplicarDetalle = document.getElementById('btnAplicarDetalle');
-const btnCerrarDetalle = document.getElementById('btnCerrarDetalle');
-
-window.abrirDetalle = (i) => {
-  productoActualIndex = i;
-  descripcionInput.value = productosTemporales[i].descripcion || '';
-  imagenInput.value = productosTemporales[i].imagen_url || '';
-  modalDetalle.style.display = 'flex';
-};
-
-btnAplicarDetalle.addEventListener('click', () => {
-  productosTemporales[productoActualIndex].descripcion = descripcionInput.value;
-  productosTemporales[productoActualIndex].imagen_url = imagenInput.value;
-  modalDetalle.style.display = 'none';
-});
-
-btnCerrarDetalle.addEventListener('click', () => {
-  modalDetalle.style.display = 'none';
-});
