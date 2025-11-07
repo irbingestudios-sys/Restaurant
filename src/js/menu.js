@@ -238,16 +238,46 @@ window.toggleCategoria = (btn) => {
 // ── Grupo: Acciones sobre productos ───────────────────────────
 window.toggleDisponible = async (id, estado) => {
   console.log(`🔁 Actualizando disponibilidad: ID=${id}, Estado=${estado}`);
-  const { error } = await supabase.from('menu_item').update({ disponible: estado }).eq('id', id);
-  if (error) {
-    console.error('❌ Error al actualizar disponibilidad:', error);
+
+  // Ejecutar el UPDATE
+  const { error: errorUpdate } = await supabase
+    .from('menu_item')
+    .update({ disponible: estado })
+    .eq('id', id);
+
+  if (errorUpdate) {
+    console.error('❌ Error al actualizar disponibilidad:', errorUpdate);
     alert('❌ Error al actualizar disponibilidad');
-  } else {
-    console.log('✅ Disponibilidad actualizada');
-    const { data: actualizados } = await supabase.from('menu_item').select('*');
-    productosGlobal = actualizados;
-    cargarProductos();
+    return;
   }
+
+  console.log('✅ Disponibilidad actualizada');
+
+  // Verificación inmediata del cambio
+  const { data: verificado, error: errorVerificado } = await supabase
+    .from('menu_item')
+    .select('id, nombre, disponible')
+    .eq('id', id);
+
+  if (errorVerificado) {
+    console.error('❌ Error al verificar disponibilidad:', errorVerificado);
+  } else {
+    console.log('🔍 Verificación post-update:', verificado);
+  }
+
+  // Recargar todos los productos
+  const { data: actualizados, error: errorProductos } = await supabase
+    .from('menu_item')
+    .select('*');
+
+  if (errorProductos) {
+    console.error('❌ Error al recargar productos:', errorProductos);
+    alert('❌ Error al recargar productos');
+    return;
+  }
+
+  productosGlobal = actualizados;
+  cargarProductos();
 };
 
 window.eliminarProducto = async (id) => {
