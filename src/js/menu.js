@@ -244,7 +244,7 @@ window.toggleDisponible = async (id, estado) => {
   // Ejecutar el UPDATE
   const { error: errorUpdate } = await supabase
   .from('menu_item')
-  .update({ disponible: estado === true })
+  .update({ disponible: Boolean(estado) })
   .eq('id', id);
 
   if (errorUpdate) {
