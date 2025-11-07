@@ -250,10 +250,10 @@ window.toggleDisponibleDesdeEvento = (e, id) => {
 window.toggleDisponible = async (id, estado) => {
   console.log(`🔁 Actualizando disponibilidad: ID=${id}, Estado=${estado}`);
   console.log('🧪 ID limpio:', typeof id, id);
-
+  console.log('🧪 Estado recibido:', estado, '→ typeof:', typeof estado);
+  
   const { error: errorUpdate } = await supabase
     .from('menu_item')
-    console.log('🧪 Estado recibido:', estado, '→ typeof:', typeof estado);
     .update({ disponible: estado === true })
     .eq('id', id);
 
