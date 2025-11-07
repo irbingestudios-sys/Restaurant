@@ -144,6 +144,13 @@ label {
     font-size: 0.95rem;
   }
 }
+.producto-lineal input[type="number"] {
+  font-size: 0.9rem;
+  padding: 2px 4px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+}
 
 /* === Referencias técnicas === */
 /* Usado por: login.html, admin.html, menu.html, cliente.html */
