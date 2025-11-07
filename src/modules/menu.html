@@ -48,34 +48,46 @@
       <!-- Se llenará dinámicamente por JS -->
     </div>
   </main>
-  <!-- Modal de creación múltiple -->
-<div id="modal-producto" class="modal">
-  <div class="modal-content">
-    <h2>Crear productos</h2>
-    <div id="scroll-productos" class="scroll-area">
-      <div id="contenedor-formularios"></div>
-    </div>
-    <div class="modal-actions">
-      <button id="btnAgregarProducto">➕ Agregar otro producto</button>
-      <button id="btnGuardarTodos">Guardar todos</button>
-      <button id="btnCancelarModal">Cancelar</button>
+
+  <!-- ── Modal: Creación múltiple ───────────────────────────────── -->
+  <div id="modal-producto" class="modal">
+    <div class="modal-content">
+      <h2>Crear productos</h2>
+      <div id="scroll-productos" class="scroll-area">
+        <div class="formulario-lineal encabezado">
+          <strong>Nombre</strong>
+          <span>Precio</span>
+          <span>Categoría</span>
+          <span>Stock</span>
+          <span>Áreas</span>
+          <span>Destinos</span>
+          <span>Detalle</span>
+        </div>
+        <div id="contenedor-formularios"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="btnAgregarProducto">➕ Agregar otro producto</button>
+        <button id="btnGuardarTodos">Guardar todos</button>
+        <button id="btnCancelarModal">Cancelar</button>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Modal secundario para descripción e imagen -->
-<div id="modal-detalle" class="modal">
-  <div class="modal-content">
-    <h3>Detalles del producto</h3>
-    <label>Descripción:</label>
-    <textarea id="descripcion-detalle"></textarea>
-    <label>Imagen URL:</label>
-    <input type="text" id="imagen-detalle" placeholder="https://..." />
-    <button id="btnAplicarDetalle">Aplicar</button>
-    <button id="btnCerrarDetalle">Cerrar</button>
+  <!-- ── Modal: Detalles del producto ───────────────────────────── -->
+  <div id="modal-detalle" class="modal">
+    <div class="modal-content">
+      <h3>Detalles del producto</h3>
+      <label>Descripción:</label>
+      <textarea id="descripcion-detalle"></textarea>
+      <label>Imagen URL:</label>
+      <input type="text" id="imagen-detalle" placeholder="https://..." />
+      <div class="modal-actions">
+        <button id="btnAplicarDetalle">Aplicar</button>
+        <button id="btnCerrarDetalle">Cerrar</button>
+      </div>
+    </div>
   </div>
-</div>
 
-<script type="module" src="../js/menu.js"></script>
+  <script type="module" src="../js/menu.js"></script>
 </body>
 </html>
