@@ -268,3 +268,57 @@
   transform: scale(1.1);
   margin-top: 2px;
 }
+/* ── Grupo: Estilo específico para formularios de producto ───── */
+
+.formulario-producto {
+  margin-bottom: 16px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 1fr 80px 120px 80px 1fr 1fr 40px;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.formulario-producto input,
+.formulario-producto select,
+.formulario-producto textarea {
+  padding: 6px;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.formulario-producto select[multiple] {
+  height: 80px;
+  background-color: #f9f9f9;
+}
+
+.formulario-producto label {
+  font-weight: bold;
+  font-size: 0.85rem;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.formulario-producto button {
+  font-size: 1rem;
+  padding: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.formulario-producto button:hover {
+  color: var(--color-secundario);
+}
+
+.formulario-producto .advertencia {
+  color: var(--color-error);
+  font-size: 0.8rem;
+  grid-column: span 7;
+  margin-top: 4px;
+}
