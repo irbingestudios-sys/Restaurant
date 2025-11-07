@@ -343,8 +343,25 @@ window.eliminarProducto = async (id) => {
 
 window.editarProducto = async (id) => {
   console.log(`🖋️ Editar producto ID=${id}`);
-  alert('🖋️ Editar producto: ' + id);
-  // Aquí puedes abrir un modal o redirigir a un formulario de edición
+
+  const { data, error } = await supabase
+    .from('menu_item')
+    .select('id, nombre, descripcion, imagen_url')
+    .eq('id', id)
+    .single();
+
+  if (error || !data) {
+    console.error('❌ Error al cargar producto para edición:', error);
+    alert('❌ No se pudo cargar el producto');
+    return;
+  }
+
+  // Cargar datos en el modal
+  descripcionInput.value = data.descripcion || '';
+  imagenInput.value = data.imagen_url || '';
+  productoActualIndex = data.id;
+
+  modalDetalle.style.display = 'flex';
 };
 window.actualizarPrecioStock = async (id, campo, valor) => {
   if (!id || (campo !== 'precio' && campo !== 'stock')) return;
@@ -593,11 +610,38 @@ window.abrirDetalle = (i) => {
   modalDetalle.style.display = 'flex';
 };
 
-btnAplicarDetalle.addEventListener('click', () => {
-  if (productoActualIndex === null || productoActualIndex >= productosTemporales.length) {
-    console.warn('⚠️ Índice inválido al aplicar detalle');
+btnAplicarDetalle.addEventListener('click', async () => {
+  if (!productoActualIndex) {
+    console.warn('⚠️ ID inválido al aplicar detalle');
     return;
   }
+
+  const descripcion = descripcionInput.value;
+  const imagen_url = imagenInput.value;
+
+  const { error } = await supabase
+    .from('menu_item')
+    .update({ descripcion, imagen_url })
+    .eq('id', productoActualIndex);
+
+  if (error) {
+    console.error('❌ Error al actualizar detalle:', error);
+    alert('❌ No se pudo guardar el detalle');
+    return;
+  }
+
+  await supabase.rpc('registrar_evento', {
+    tipo: 'modificación',
+    modulo: 'menu',
+    detalle: `Editado detalle de producto ID ${productoActualIndex}`
+  });
+
+  modalDetalle.style.display = 'none';
+
+  const { data: actualizados } = await supabase.from('menu_item').select('*');
+  productosGlobal = actualizados;
+  cargarProductos();
+});
   productosTemporales[productoActualIndex].descripcion = descripcionInput.value;
   productosTemporales[productoActualIndex].imagen_url = imagenInput.value;
   console.log(`✅ Detalle aplicado a producto [${productoActualIndex}]`);
