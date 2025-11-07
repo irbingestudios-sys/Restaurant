@@ -156,12 +156,13 @@ function cargarProductos() {
   localStorage.setItem('filtro-disponible', disponibleFiltro);
   localStorage.setItem('filtro-stock', stockFiltro);
 
-  const filtrados = productosGlobal.filter(p =>
-    (!destinoFiltro || p.destinos.includes(destinoFiltro)) &&
-    (!areaFiltro || p.areas.includes(areaFiltro)) &&
-    (disponibleFiltro === '' || p.disponible === (disponibleFiltro === 'true')) &&
-    (stockFiltro !== 'bajo' || (p.stock >= 0 && p.stock < 10))
-  );
+const filtrados = productosGlobal.filter(p => {
+  const cumpleDestino = !destinoFiltro || (p.destinos || []).includes(destinoFiltro);
+  const cumpleArea = !areaFiltro || (p.areas || []).includes(areaFiltro);
+  const cumpleDisponible = disponibleFiltro === '' || p.disponible === (disponibleFiltro === 'true');
+  const cumpleStock = stockFiltro !== 'bajo' || (typeof p.stock === 'number' && p.stock >= 0 && p.stock < 10);
+  return cumpleDestino && cumpleArea && cumpleDisponible && cumpleStock;
+});
 
   mostrarResumen(filtrados);
 
