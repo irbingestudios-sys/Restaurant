@@ -416,6 +416,118 @@ btnCrear.addEventListener('click', () => {
   modal.style.display = 'flex';
 });
 
+// ── Grupo: Exportar menú como CSV ─────────────────────────────
+document.getElementById('btnExportarMenu').addEventListener('click', () => {
+  const encabezado = ['id', 'nombre', 'precio', 'stock', 'disponible', 'categoria', 'etiquetas', 'areas', 'destinos', 'descripcion', 'imagen_url'];
+  const filas = productosGlobal.map(p => [
+    p.id,
+    `"${p.nombre}"`,
+    p.precio,
+    p.stock,
+    p.disponible,
+    `"${p.categoria}"`,
+    `"${(p.etiquetas || []).join(';')}"`,
+    `"${(p.areas || []).join(';')}"`,
+    `"${(p.destinos || []).join(';')}"`,
+    `"${(p.descripcion || '').replace(/"/g, '""')}"`,
+    `"${p.imagen_url || ''}"`
+  ]);
+
+  const csv = [encabezado.join(','), ...filas.map(f => f.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'menu_exportado.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+// ── Grupo: Importar menú desde CSV ────────────────────────────
+document.getElementById('btnImportarMenu').addEventListener('click', () => {
+  document.getElementById('inputImportarMenu').click();
+});
+
+document.getElementById('inputImportarMenu').addEventListener('change', async (e) => {
+  const archivo = e.target.files[0];
+  if (!archivo) return;
+
+  const texto = await archivo.text();
+  const lineas = texto.trim().split('\n');
+  const [encabezado, ...filas] = lineas;
+  const campos = encabezado.split(',');
+
+  for (const fila of filas) {
+    const valores = fila.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
+    const entrada = Object.fromEntries(campos.map((k, i) => [k, valores[i]]));
+
+    const producto = {
+      nombre: entrada.nombre,
+      precio: parseFloat(entrada.precio),
+      stock: parseInt(entrada.stock),
+      disponible: entrada.disponible === 'true',
+      categoria: entrada.categoria,
+      etiquetas: entrada.etiquetas?.split(';') || [],
+      areas: entrada.areas?.split(';') || [],
+      destinos: entrada.destinos?.split(';') || [],
+      descripcion: entrada.descripcion,
+      imagen_url: entrada.imagen_url
+    };
+
+    if (entrada.id) {
+      const { data: existe } = await supabase
+        .from('menu_item')
+        .select('id')
+        .eq('id', entrada.id);
+
+      if (existe && existe.length > 0) {
+        const { error } = await supabase
+          .from('menu_item')
+          .update(producto)
+          .eq('id', entrada.id);
+
+        if (!error) {
+          await supabase.rpc('registrar_evento', {
+            tipo: 'modificación',
+            modulo: 'menu',
+            detalle: `Actualización masiva: ${producto.nombre} (${entrada.id})`
+          });
+        }
+      } else {
+        const { error } = await supabase
+          .from('menu_item')
+          .insert(producto);
+
+        if (!error) {
+          await supabase.rpc('registrar_evento', {
+            tipo: 'creación',
+            modulo: 'menu',
+            detalle: `Creación masiva: ${producto.nombre} (nuevo)`
+          });
+        }
+      }
+    } else {
+      const { error } = await supabase
+        .from('menu_item')
+        .insert(producto);
+
+      if (!error) {
+        await supabase.rpc('registrar_evento', {
+          tipo: 'creación',
+          modulo: 'menu',
+          detalle: `Creación masiva: ${producto.nombre} (sin ID)`
+        });
+      }
+    }
+  }
+
+  const { data: actualizados } = await supabase.from('menu_item').select('*');
+  productosGlobal = actualizados;
+  cargarProductos();
+  alert('✅ Importación completada');
+});
+
 btnAgregarProducto.addEventListener('click', () => {
   console.log('➕ Agregando nuevo formulario de producto');
   agregarFormularioProducto();
