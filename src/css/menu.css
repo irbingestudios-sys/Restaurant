@@ -225,3 +225,58 @@
   grid-column: span 7;
   margin-top: -8px;
 }
+/* ── Grupo: Diseño mejorado de formularios ───────────────────── */
+
+.formulario-lineal {
+  margin-bottom: 32px;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fefefe;
+  display: grid;
+  grid-template-columns: 1fr 120px 140px 100px 1fr 1fr 60px;
+  gap: 1rem;
+  align-items: start;
+}
+
+.formulario-lineal input,
+.formulario-lineal select,
+.formulario-lineal textarea {
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+}
+
+.formulario-lineal select[multiple] {
+  height: 100px;
+  background-color: #f9f9f9;
+}
+
+.formulario-lineal button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 6px;
+}
+
+.formulario-lineal button:hover {
+  color: #0077cc;
+}
+
+/* ── Grupo: Etiquetas y advertencias ─────────────────────────── */
+
+.formulario-lineal label {
+  font-weight: bold;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.advertencia {
+  color: red;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  grid-column: span 7;
+}
