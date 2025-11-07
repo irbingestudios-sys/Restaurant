@@ -32,6 +32,10 @@
         <option value="true">Solo disponibles</option>
         <option value="false">Solo no disponibles</option>
       </select>
+      <select id="filtro-stock">
+        <option value="">Todos los stocks</option>
+        <option value="bajo">Stock bajo (0–9)</option>
+      </select>
     </div>
 
     <!-- ── Grupo: Resumen por categoría, destino y área ──────────── -->
@@ -44,34 +48,18 @@
       <!-- Se llenará dinámicamente por JS -->
     </div>
   </main>
-
-  <script type="module" src="../js/menu.js"></script>
-  <div id="modal-producto" class="modal">
-  <div class="modal-content">
-    <h2>Nuevo producto</h2>
-    <label>Nombre:</label>
-    <input type="text" id="nombre-producto" placeholder="Ej: Pizza de queso" />
-    <label>Precio:</label>
-    <input type="number" id="precio-producto" placeholder="Ej: 120.00" />
-    <label>Categoría:</label>
-    <select id="categoria-producto">
-      <option value="plato fuerte">Plato fuerte</option>
-      <option value="bebida">Bebida</option>
-      <option value="postre">Postre</option>
-    </select>
-    <div class="modal-actions">
-      <button id="guardar-producto">Guardar</button>
-      <button id="cancelar-producto">Cancelar</button>
-    </div>
-  </div>
-</div>
-  <div id="modal-producto" class="modal">
+  <!-- Modal de creación múltiple -->
+<div id="modal-producto" class="modal">
   <div class="modal-content">
     <h2>Crear productos</h2>
-    <div id="contenedor-formularios"></div>
-    <button id="btnAgregarProducto">➕ Agregar otro producto</button>
-    <button id="btnGuardarTodos">Guardar todos</button>
-    <button id="btnCancelarModal">Cancelar</button>
+    <div id="scroll-productos" class="scroll-area">
+      <div id="contenedor-formularios"></div>
+    </div>
+    <div class="modal-actions">
+      <button id="btnAgregarProducto">➕ Agregar otro producto</button>
+      <button id="btnGuardarTodos">Guardar todos</button>
+      <button id="btnCancelarModal">Cancelar</button>
+    </div>
   </div>
 </div>
 
@@ -87,5 +75,7 @@
     <button id="btnCerrarDetalle">Cerrar</button>
   </div>
 </div>
+
+<script type="module" src="../js/menu.js"></script>
 </body>
 </html>
