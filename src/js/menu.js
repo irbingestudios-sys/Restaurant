@@ -211,7 +211,7 @@ function cargarProductos() {
         <span>${p.categoria || '—'}</span>
         <span>${typeof p.stock === 'number' ? p.stock : '—'}</span>
         <div class="acciones">
-          <input type="checkbox" ${p.disponible ? 'checked' : ''} onchange="toggleDisponible('${p.id}', this.checked)" />
+          <input type="checkbox" ${p.disponible === true || p.disponible === 'true' ? 'checked' : ''} onchange="toggleDisponible('${p.id}', this.checked)" />
           <button onclick="editarProducto('${p.id}')">🖋️</button>
           <button onclick="eliminarProducto('${p.id}')">🗑️</button>
         </div>
