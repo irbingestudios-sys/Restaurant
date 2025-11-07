@@ -353,16 +353,37 @@ function agregarFormularioProducto() {
 
   const div = document.createElement('div');
   div.className = 'formulario-lineal';
-  div.innerHTML = `
+ div.innerHTML = `
+  <div>
+    <label>Nombre</label>
     <input type="text" placeholder="Nombre" onchange="actualizarCampo(${index}, 'nombre', this.value); verificarNombre(${index})" />
+    <div id="advertencia-nombre-${index}" class="advertencia"></div>
+  </div>
+
+  <div>
+    <label>Precio</label>
     <input type="number" placeholder="Precio" onchange="actualizarCampo(${index}, 'precio', parseFloat(this.value)); verificarPrecio(${index})" />
+    <div id="advertencia-precio-${index}" class="advertencia"></div>
+  </div>
+
+  <div>
+    <label>Categoría</label>
     <select onchange="manejarCategoria(this, ${index})">
       <option value="plato fuerte">Plato fuerte</option>
       <option value="bebida">Bebida</option>
       <option value="postre">Postre</option>
       <option value="otra">Otra...</option>
     </select>
+  </div>
+
+  <div>
+    <label>Stock</label>
     <input type="number" placeholder="Stock" onchange="actualizarCampo(${index}, 'stock', parseInt(this.value)); verificarStock(${index})" />
+    <div id="advertencia-stock-${index}" class="advertencia"></div>
+  </div>
+
+  <div>
+    <label>Áreas</label>
     <select multiple onchange="actualizarCampo(${index}, 'areas', Array.from(this.selectedOptions).map(o => o.value))">
       <option value="cocina">Cocina</option>
       <option value="bar">Bar</option>
@@ -370,13 +391,22 @@ function agregarFormularioProducto() {
       <option value="diskoteca">Diskoteca</option>
       <option value="terraza">Terraza</option>
     </select>
+  </div>
+
+  <div>
+    <label>Destinos</label>
     <select multiple onchange="actualizarCampo(${index}, 'destinos', Array.from(this.selectedOptions).map(o => o.value))">
       <option value="reparto">Reparto</option>
       <option value="local">Local</option>
       <option value="especial">Especial</option>
     </select>
+  </div>
+
+  <div>
+    <label>Detalle</label>
     <button onclick="abrirDetalle(${index})">📝</button>
-  `;
+  </div>
+`;
   contenedorFormularios.appendChild(div);
   contenedorFormularios.lastElementChild.scrollIntoView({ behavior: 'smooth' });
 }
