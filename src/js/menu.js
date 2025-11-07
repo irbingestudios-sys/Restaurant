@@ -158,7 +158,11 @@ function cargarProductos() {
   const filtrados = productosGlobal.filter(p => {
     const cumpleDestino = !destinoFiltro || (p.destinos || []).includes(destinoFiltro);
     const cumpleArea = !areaFiltro || (p.areas || []).includes(areaFiltro);
-    const cumpleDisponible = disponibleFiltro === '' || p.disponible === (disponibleFiltro === 'true');
+    const cumpleDisponible =
+  disponibleFiltro === ''
+    || (disponibleFiltro === 'true' && p.disponible === true)
+    || (disponibleFiltro === 'false' && p.disponible === false);
+    console.log(`🔍 Filtro disponible=${disponibleFiltro}, Producto=${p.nombre}, disponible=${p.disponible}`);
     const cumpleStock = stockFiltro !== 'bajo' || (typeof p.stock === 'number' && p.stock >= 0 && p.stock < 10);
     return cumpleDestino && cumpleArea && cumpleDisponible && cumpleStock;
   });
