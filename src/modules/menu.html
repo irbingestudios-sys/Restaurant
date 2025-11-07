@@ -65,5 +65,27 @@
     </div>
   </div>
 </div>
+  <div id="modal-producto" class="modal">
+  <div class="modal-content">
+    <h2>Crear productos</h2>
+    <div id="contenedor-formularios"></div>
+    <button id="btnAgregarProducto">➕ Agregar otro producto</button>
+    <button id="btnGuardarTodos">Guardar todos</button>
+    <button id="btnCancelarModal">Cancelar</button>
+  </div>
+</div>
+
+<!-- Modal secundario para descripción e imagen -->
+<div id="modal-detalle" class="modal">
+  <div class="modal-content">
+    <h3>Detalles del producto</h3>
+    <label>Descripción:</label>
+    <textarea id="descripcion-detalle"></textarea>
+    <label>Imagen URL:</label>
+    <input type="text" id="imagen-detalle" placeholder="https://..." />
+    <button id="btnAplicarDetalle">Aplicar</button>
+    <button id="btnCerrarDetalle">Cerrar</button>
+  </div>
+</div>
 </body>
 </html>
