@@ -212,7 +212,7 @@ function cargarProductos() {
         <span>${p.categoria || '—'}</span>
         <span>${typeof p.stock === 'number' ? p.stock : '—'}</span>
         <div class="acciones">
-          <input type="checkbox" ${p.disponible === true ? 'checked' : ''} onchange="toggleDisponible('${p.id}', this.checked)" />
+          <input type="checkbox" ${p.disponible === true ? 'checked' : ''} onchange="toggleDisponibleDesdeEvento(event, '${p.id}')" />
           <button onclick="editarProducto('${p.id}')">🖋️</button>
           <button onclick="eliminarProducto('${p.id}')">🗑️</button>
         </div>
@@ -240,6 +240,10 @@ window.toggleCategoria = (btn) => {
 window.toggleDisponible = async (id, estado) => {
   console.log(`🔁 Actualizando disponibilidad: ID=${id}, Estado=${estado}`);
   console.log('🧪 ID limpio:', typeof id, id);
+  window.toggleDisponibleDesdeEvento = (e, id) => {
+  const estado = e.target.checked;
+  toggleDisponible(id, estado);
+};
 
   // Ejecutar el UPDATE
   const { error: errorUpdate } = await supabase
