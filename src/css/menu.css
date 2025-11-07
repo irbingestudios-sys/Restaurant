@@ -77,6 +77,9 @@
   color: #2c3e50;
   border-bottom: 2px solid #ccc;
   padding-bottom: 0.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 /* ── Grupo: Botón de expansión por categoría ───────────────── */
@@ -98,7 +101,7 @@
 
 .producto-lineal {
   display: grid;
-  grid-template-columns: 1fr 100px 120px 160px;
+  grid-template-columns: 1fr 100px 120px 80px 160px;
   align-items: center;
   gap: 0.75rem;
   padding: 0.5rem 1rem;
@@ -106,7 +109,6 @@
   font-size: 1rem;
 }
 
-/* Alternancia visual para filas */
 .producto-lineal:nth-child(even) {
   background-color: #f9f9f9;
 }
@@ -129,6 +131,10 @@
   font-size: 1rem;
 }
 
+.producto-lineal .acciones button:hover {
+  color: #0077cc;
+}
+
 .producto-lineal input[type="checkbox"] {
   transform: scale(1.2);
   cursor: pointer;
@@ -141,6 +147,8 @@
   border-bottom: 2px solid #ccc;
   padding: 0.5rem 1rem;
 }
+
+/* ── Grupo: Modales ────────────────────────────────────────── */
 .modal {
   display: none;
   position: fixed;
@@ -151,14 +159,67 @@
   align-items: center;
   z-index: 1000;
 }
+
 .modal-content {
   background: white;
   padding: 20px;
   border-radius: 8px;
-  width: 300px;
+  width: 400px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
+
 .modal-actions {
   margin-top: 10px;
   display: flex;
   justify-content: space-between;
+}
+
+/* ── Grupo: Scroll para formularios ────────────────────────── */
+.scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 60vh;
+  margin-bottom: 10px;
+  padding-right: 6px;
+}
+
+/* ── Grupo: Diseño lineal de formularios ───────────────────── */
+.formulario-lineal {
+  margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: 1fr 80px 120px 80px 160px 160px 40px;
+  gap: 0.5rem;
+  align-items: center;
+  border-bottom: 1px solid #ccc;
+  padding-bottom: 10px;
+}
+
+.formulario-lineal input,
+.formulario-lineal select,
+.formulario-lineal textarea {
+  padding: 6px;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.formulario-lineal button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.formulario-lineal button:hover {
+  color: #0077cc;
+}
+
+/* ── Grupo: Advertencias ───────────────────────────────────── */
+.advertencia {
+  color: red;
+  font-size: 0.85rem;
+  grid-column: span 7;
+  margin-top: -8px;
 }
