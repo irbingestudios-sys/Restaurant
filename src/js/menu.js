@@ -197,8 +197,8 @@ function cargarProductos() {
     encabezado.className = 'producto-lineal encabezado';
     encabezado.innerHTML = `
       <strong>Nombre</strong>
-      <span>Precio</span>
       <span>Categoría</span>
+      <span>Precio</span>
       <span>Stock</span>
       <span>Acciones</span>
     `;
