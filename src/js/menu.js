@@ -202,6 +202,7 @@ function cargarProductos() {
 
     productos.forEach(p => {
   console.log(`🧾 Producto: ${p.nombre}, Stock: ${p.stock}`);
+  console.log(`🧾 Producto: ${p.nombre}, Disponible:`, p.disponible, typeof p.disponible);
   // ... renderizado
       const filaProducto = document.createElement('div');
       filaProducto.className = 'producto-lineal';
