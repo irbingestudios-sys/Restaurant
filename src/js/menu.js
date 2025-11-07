@@ -642,12 +642,7 @@ btnAplicarDetalle.addEventListener('click', async () => {
   productosGlobal = actualizados;
   cargarProductos();
 });
-  productosTemporales[productoActualIndex].descripcion = descripcionInput.value;
-  productosTemporales[productoActualIndex].imagen_url = imagenInput.value;
-  console.log(`✅ Detalle aplicado a producto [${productoActualIndex}]`);
-  modalDetalle.style.display = 'none';
-});
-
+ 
 btnCerrarDetalle.addEventListener('click', () => {
   console.log('❌ Cerrando modal de detalle sin aplicar cambios');
   modalDetalle.style.display = 'none';
