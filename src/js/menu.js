@@ -212,9 +212,18 @@ function cargarProductos() {
       filaProducto.className = 'producto-lineal';
       filaProducto.innerHTML = `
         <strong>${p.nombre}</strong>
-        <span>$${p.precio?.toFixed(2) ?? '—'}</span>
-        <span>${p.categoria || '—'}</span>
-        <span>${typeof p.stock === 'number' ? p.stock : '—'}</span>
+        <span>${p.categoria || '—'}</span>   
+ <span>
+  <input type="number" value="${p.precio}" min="0" step="0.01"
+    onchange="actualizarPrecioStock('${p.id}', 'precio', parseFloat(this.value))"
+    style="width: 80px; padding: 2px;" />
+</span>
+
+<span>
+  <input type="number" value="${p.stock}" min="0" step="1"
+    onchange="actualizarPrecioStock('${p.id}', 'stock', parseInt(this.value))"
+    style="width: 60px; padding: 2px;" />
+</span>
         <div class="acciones">
           <input type="checkbox" ${p.disponible === true ? 'checked' : ''} onchange="toggleDisponibleDesdeEvento(event, '${p.id}')" />
           <button onclick="editarProducto('${p.id}')">🖋️</button>
@@ -336,6 +345,43 @@ window.editarProducto = async (id) => {
   console.log(`🖋️ Editar producto ID=${id}`);
   alert('🖋️ Editar producto: ' + id);
   // Aquí puedes abrir un modal o redirigir a un formulario de edición
+};
+window.actualizarPrecioStock = async (id, campo, valor) => {
+  if (!id || (campo !== 'precio' && campo !== 'stock')) return;
+
+  if (isNaN(valor) || valor < 0) {
+    alert(`⚠️ Valor inválido para ${campo}`);
+    return;
+  }
+
+  console.log(`✏️ Actualizando ${campo} de producto ${id} a ${valor}`);
+
+  const { error } = await supabase
+    .from('menu_item')
+    .update({ [campo]: valor })
+    .eq('id', id);
+
+  if (error) {
+    console.error(`❌ Error al actualizar ${campo}:`, error);
+    alert(`❌ Error al actualizar ${campo}`);
+    return;
+  }
+
+  await supabase.rpc('registrar_evento', {
+    tipo: 'modificación',
+    modulo: 'menu',
+    detalle: `Actualizado ${campo} de producto ID ${id} a ${valor}`
+  });
+
+  const { data: actualizados, error: errorActualizados } = await supabase.from('menu_item').select('*');
+  if (errorActualizados) {
+    console.error('❌ Error al recargar productos:', errorActualizados);
+    alert('❌ Error al recargar productos');
+    return;
+  }
+
+  productosGlobal = actualizados;
+  cargarProductos();
 };
 // ── Grupo: Modal de creación múltiple ─────────────────────────
 const modal = document.getElementById('modal-producto');
