@@ -339,18 +339,18 @@ btnCancelarModal.addEventListener('click', () => {
 // ── Grupo: Agregar formulario dinámico ────────────────────────
 function agregarFormularioProducto() {
   const index = productosTemporales.length;
-  productosTemporales.push({
-    nombre: '',
-    precio: 0,
-    categoria: 'plato fuerte',
-    descripcion: '',
-    imagen_url: '',
-    disponible: false,
-    stock: 0,
-    areas: [],
-    destinos: []
-    etiquetas: []
-  });
+productosTemporales.push({
+  nombre: '',
+  precio: 0,
+  categoria: 'plato fuerte',
+  descripcion: '',
+  imagen_url: '',
+  disponible: false,
+  stock: 0,
+  areas: [],
+  destinos: [],
+  etiquetas: [] // ← necesario
+});
 
   const div = document.createElement('div');
   div.className = 'formulario-lineal';
