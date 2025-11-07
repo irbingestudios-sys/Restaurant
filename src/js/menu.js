@@ -426,7 +426,7 @@ productosTemporales.push({
 });
 
   const div = document.createElement('div');
-  div.className = 'formulario-lineal';
+  div.className = 'formulario-lineal formulario-producto';
  div.innerHTML = `
   <div>
     <label>Nombre</label>
