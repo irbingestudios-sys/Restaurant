@@ -201,6 +201,9 @@ function cargarProductos() {
     fila.appendChild(encabezado);
 
     productos.forEach(p => {
+  console.log(`🧾 Producto: ${p.nombre}, Stock: ${p.stock}`);
+  // ... renderizado
+});
       const filaProducto = document.createElement('div');
       filaProducto.className = 'producto-lineal';
       filaProducto.innerHTML = `
@@ -213,7 +216,8 @@ function cargarProductos() {
           <button onclick="editarProducto('${p.id}')">🖋️</button>
           <button onclick="eliminarProducto('${p.id}')">🗑️</button>
         </div>
-      `;
+      `
+        ;
       fila.appendChild(filaProducto);
     });
 
