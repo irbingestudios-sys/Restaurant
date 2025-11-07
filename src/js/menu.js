@@ -237,19 +237,20 @@ window.toggleCategoria = (btn) => {
 };
 
 // ── Grupo: Acciones sobre productos ───────────────────────────
-window.toggleDisponible = async (id, estado) => {
-  console.log(`🔁 Actualizando disponibilidad: ID=${id}, Estado=${estado}`);
-  console.log('🧪 ID limpio:', typeof id, id);
-  window.toggleDisponibleDesdeEvento = (e, id) => {
+
+window.toggleDisponibleDesdeEvento = (e, id) => {
   const estado = e.target.checked;
   toggleDisponible(id, estado);
 };
 
-  // Ejecutar el UPDATE
+window.toggleDisponible = async (id, estado) => {
+  console.log(`🔁 Actualizando disponibilidad: ID=${id}, Estado=${estado}`);
+  console.log('🧪 ID limpio:', typeof id, id);
+
   const { error: errorUpdate } = await supabase
-  .from('menu_item')
-  .update({ disponible: Boolean(estado) })
-  .eq('id', id);
+    .from('menu_item')
+    .update({ disponible: Boolean(estado) })
+    .eq('id', id);
 
   if (errorUpdate) {
     console.error('❌ Error al actualizar disponibilidad:', errorUpdate);
@@ -259,7 +260,6 @@ window.toggleDisponible = async (id, estado) => {
 
   console.log('✅ Disponibilidad actualizada');
 
-  // Verificación inmediata del cambio
   const { data: verificado, error: errorVerificado } = await supabase
     .from('menu_item')
     .select('id, nombre, disponible')
@@ -271,7 +271,6 @@ window.toggleDisponible = async (id, estado) => {
     console.log('🔍 Verificación post-update:', verificado);
   }
 
-  // Recargar todos los productos
   const { data: actualizados, error: errorProductos } = await supabase
     .from('menu_item')
     .select('*');
