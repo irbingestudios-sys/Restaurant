@@ -203,7 +203,6 @@ function cargarProductos() {
     productos.forEach(p => {
   console.log(`🧾 Producto: ${p.nombre}, Stock: ${p.stock}`);
   // ... renderizado
-});
       const filaProducto = document.createElement('div');
       filaProducto.className = 'producto-lineal';
       filaProducto.innerHTML = `
