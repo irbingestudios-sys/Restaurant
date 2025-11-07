@@ -367,13 +367,23 @@ function agregarFormularioProducto() {
   </div>
 
   <div>
-    <label>Categoría</label>
-    <select onchange="manejarCategoria(this, ${index})">
-      <option value="plato fuerte">Plato fuerte</option>
-      <option value="bebida">Bebida</option>
-      <option value="postre">Postre</option>
-      <option value="otra">Otra...</option>
-    </select>
+   window.manejarCategoria = (select, i) => {
+  const input = select.nextElementSibling;
+  if (!input) {
+    console.warn('⚠️ No se encontró input para categoría personalizada');
+    return;
+  }
+
+  if (select.value === 'otra') {
+    input.style.display = 'inline-block';
+    productosTemporales[i].categoria = '';
+    console.log(`🔧 Activando campo de categoría personalizada para producto[${i}]`);
+  } else {
+    input.style.display = 'none';
+    productosTemporales[i].categoria = select.value;
+    console.log(`✅ Categoría seleccionada: ${select.value} para producto[${i}]`);
+  }
+};
   </div>
 
   <div>
