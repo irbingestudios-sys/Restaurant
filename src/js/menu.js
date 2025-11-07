@@ -238,6 +238,7 @@ window.toggleCategoria = (btn) => {
 // ── Grupo: Acciones sobre productos ───────────────────────────
 window.toggleDisponible = async (id, estado) => {
   console.log(`🔁 Actualizando disponibilidad: ID=${id}, Estado=${estado}`);
+  console.log('🧪 ID limpio:', typeof id, id);
 
   // Ejecutar el UPDATE
   const { error: errorUpdate } = await supabase
