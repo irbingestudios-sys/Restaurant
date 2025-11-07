@@ -291,18 +291,45 @@ window.toggleDisponible = async (id, estado) => {
 };
 
 window.eliminarProducto = async (id) => {
+  if (!id || typeof id !== 'string') {
+    console.warn('⚠️ ID inválido para eliminación:', id);
+    alert('⚠️ No se puede eliminar: ID inválido');
+    return;
+  }
+
   if (!confirm('¿Eliminar este producto?')) return;
+
   console.log(`🗑️ Eliminando producto ID=${id}`);
-  const { error } = await supabase.from('menu_item').delete().eq('id', id);
+
+  const { data, error } = await supabase
+    .from('menu_item')
+    .delete()
+    .eq('id', id)
+    .select(); // ← devuelve las filas eliminadas
+
   if (error) {
     console.error('❌ Error al eliminar producto:', error);
     alert('❌ Error al eliminar');
-  } else {
-    console.log('✅ Producto eliminado');
-    const { data: actualizados } = await supabase.from('menu_item').select('*');
-    productosGlobal = actualizados;
-    cargarProductos();
+    return;
   }
+
+  if (!data || data.length === 0) {
+    console.warn('⚠️ No se encontró producto con ese ID:', id);
+    alert('⚠️ Producto no encontrado o ya eliminado');
+    return;
+  }
+
+  console.log('✅ Producto eliminado:', data[0]);
+
+  const { data: actualizados, error: errorActualizados } = await supabase.from('menu_item').select('*');
+  if (errorActualizados) {
+    console.error('❌ Error al recargar productos:', errorActualizados);
+    alert('❌ Error al recargar productos');
+    return;
+  }
+
+  productosGlobal = actualizados;
+  cargarProductos();
 };
 
 window.editarProducto = async (id) => {
