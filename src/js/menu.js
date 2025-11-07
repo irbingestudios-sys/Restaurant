@@ -295,41 +295,33 @@ function agregarFormularioProducto() {
 
   const div = document.createElement('div');
   div.className = 'formulario-lineal';
-  div.innerHTML = `
-    <input type="text" placeholder="Nombre" onchange="actualizarCampo(${index}, 'nombre', this.value); verificarNombre(${index})" />
-    <div id="advertencia-nombre-${index}" class="advertencia"></div>
+div.innerHTML = `
+  <input type="text" placeholder="Nombre" onchange="actualizarCampo(${index}, 'nombre', this.value); verificarNombre(${index})" />
+  <input type="number" placeholder="Precio" onchange="actualizarCampo(${index}, 'precio', parseFloat(this.value)); verificarPrecio(${index})" />
+  <select onchange="manejarCategoria(this, ${index})">
+    <option value="plato fuerte">Plato fuerte</option>
+    <option value="bebida">Bebida</option>
+    <option value="postre">Postre</option>
+    <option value="otra">Otra...</option>
+  </select>
+  <input type="number" placeholder="Stock" onchange="actualizarCampo(${index}, 'stock', parseInt(this.value)); verificarStock(${index})" />
 
-    <input type="number" placeholder="Precio" onchange="actualizarCampo(${index}, 'precio', parseFloat(this.value)); verificarPrecio(${index})" />
-    <div id="advertencia-precio-${index}" class="advertencia"></div>
+  <select multiple onchange="actualizarCampo(${index}, 'areas', Array.from(this.selectedOptions).map(o => o.value))">
+    <option value="cocina">Cocina</option>
+    <option value="bar">Bar</option>
+    <option value="cantina">Cantina</option>
+    <option value="diskoteca">Diskoteca</option>
+    <option value="terraza">Terraza</option>
+  </select>
 
-    <select onchange="manejarCategoria(this, ${index})">
-      <option value="plato fuerte">Plato fuerte</option>
-      <option value="bebida">Bebida</option>
-      <option value="postre">Postre</option>
-      <option value="otra">Otra...</option>
-    </select>
-    <input type="text" placeholder="Nueva categoría" style="display:none" onchange="actualizarCampo(${index}, 'categoria', this.value)" />
+  <select multiple onchange="actualizarCampo(${index}, 'destinos', Array.from(this.selectedOptions).map(o => o.value))">
+    <option value="reparto">Reparto</option>
+    <option value="local">Local</option>
+    <option value="especial">Especial</option>
+  </select>
 
-    <input type="number" placeholder="Stock" onchange="actualizarCampo(${index}, 'stock', parseInt(this.value)); verificarStock(${index})" />
-    <div id="advertencia-stock-${index}" class="advertencia"></div>
-
-    <select multiple onchange="actualizarCampo(${index}, 'areas', Array.from(this.selectedOptions).map(o => o.value))">
-      <option value="cocina">Cocina</option>
-      <option value="bar">Bar</option>
-      <option value="cantina">Cantina</option>
-      <option value="diskoteca">Diskoteca</option>
-      <option value="terraza">Terraza</option>
-    </select>
-    <input type="text" placeholder="Nueva área" onchange="agregarAreaPersonalizada(${index}, this.value)" />
-
-    <select multiple onchange="actualizarCampo(${index}, 'destinos', Array.from(this.selectedOptions).map(o => o.value))">
-      <option value="reparto">Reparto</option>
-      <option value="local">Local</option>
-      <option value="especial">Especial</option>
-    </select>
-
-    <button onclick="abrirDetalle(${index})">📝</button>
-  `;
+  <button onclick="abrirDetalle(${index})">📝</button>
+`;
   contenedorFormularios.appendChild(div);
   contenedorFormularios.lastElementChild.scrollIntoView({ behavior: 'smooth' });
 }
