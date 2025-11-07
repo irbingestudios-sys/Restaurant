@@ -349,6 +349,7 @@ function agregarFormularioProducto() {
     stock: 0,
     areas: [],
     destinos: []
+    etiquetas: []
   });
 
   const div = document.createElement('div');
@@ -466,7 +467,17 @@ btnGuardarTodos.addEventListener('click', async () => {
       continue;
     }
 
-    const { data, error } = await supabase.rpc('crear_menu_item', p);
+    const { data, error } = await supabase.rpc('crear_menu_item', {
+  nombre: p.nombre,
+  descripcion: p.descripcion,
+  precio: p.precio,
+  disponible: p.disponible,
+  categoria: p.categoria,
+  etiquetas: p.etiquetas || [], // ← asegúrate de incluir esto
+  imagen_url: p.imagen_url,
+  areas: p.areas,
+  destinos: p.destinos
+});
     if (error) {
       console.error(`❌ Error al crear producto [${i}]:`, error);
       await supabase.rpc('registrar_evento', {
