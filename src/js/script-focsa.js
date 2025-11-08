@@ -279,7 +279,13 @@ window.enviarPedido = async function () {
   }
 
   console.log("✅ Pedido registrado:", data);
-  document.getElementById("resumen").innerHTML = resumenHTML + `<p><strong>Total:</strong> ${total} CUP</p>`;
+ resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
+document.getElementById("resumen").innerHTML = `
+  <h3 style="color:#a52a2a;">Resumen detallado</h3>
+  ${resumenHTML}
+  <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
+  <button onclick="cancelar()" class="btn-secundario">❌ Cancelar</button>
+`;
   document.getElementById("confirmacion").style.display = "block";
   window.mensajeWhatsApp = mensaje;
 };
