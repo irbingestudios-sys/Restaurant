@@ -89,5 +89,18 @@
   </div>
 
   <script type="module" src="https://irbingestudios-sys.github.io/Restaurant/src/js/script-focsa.js"></script>
+ 
+  <!-- Modal: Vista previa del pedido -->
+<div id="modal-resumen" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span id="modal-close-resumen">&times;</span>
+    <h3 style="color:#a52a2a;">🧾 Vista previa del pedido</h3>
+    <div id="contenido-resumen"></div>
+    <div style="margin-top:20px;">
+      <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
+      <button onclick="cancelarResumen()" class="btn-secundario">❌ Cancelar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
