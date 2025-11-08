@@ -104,7 +104,7 @@ async function cargarEnvases() {
   const { data, error } = await supabase
     .from("menu_item")
     .select("*")
-    .eq("categoria", "envases")
+    .eq("categoria", "Envases")
     .eq("disponible", true)
     .gt("stock", 0)
     .order("precio", { ascending: true });
