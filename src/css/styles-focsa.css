@@ -76,13 +76,11 @@ header p {
   font-weight: 600;
 }
 
-.producto-lineal input[type="number"] {
+.scrollable-menu .producto-lineal input[type="number"] {
   width: 70px;
   padding: 4px;
   font-size: 0.95rem;
   text-align: right;
-  border: 1px solid #ccc;
-  border-radius: 4px;
 }
 
 /* Encabezado de tabla */
