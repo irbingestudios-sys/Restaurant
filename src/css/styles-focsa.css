@@ -13,10 +13,45 @@ header p {
   color: #555;
 }
 
+/* Contenedor principal */
+.menu-container {
+  max-width: 960px;
+  width: 100%;
+  margin: auto;
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Logo */
+.logo-login {
+  width: 64px;
+  margin-bottom: 1rem;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Filtro de categoría */
+#filtro {
+  width: 100%;
+  max-width: 320px;
+  padding: 8px;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
 /* Scroll de menú y envases */
-#menu-especial, #envases-contenedor {
+.scrollable-menu,
+#menu-especial,
+#envases-contenedor {
   max-height: 400px;
   overflow-y: auto;
+  overflow-x: hidden;
   border: 1px solid #ccc;
   padding: 10px;
   background-color: #fff;
@@ -24,19 +59,48 @@ header p {
   margin-bottom: 20px;
 }
 
-/* Ítems del menú */
-#menu-especial div, #envases-contenedor div {
-  display: flex;
-  justify-content: space-between;
+/* Estructura tipo tabla */
+.producto-lineal {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
   align-items: center;
-  margin-bottom: 8px;
   gap: 10px;
+  padding: 8px;
+  border-bottom: 1px solid #eee;
 }
 
-#menu-especial input[type="number"],
-#envases-contenedor input[type="number"] {
-  width: 60px;
+.producto-lineal strong {
+  font-weight: 600;
+}
+
+.producto-lineal input[type="number"] {
+  width: 100%;
   padding: 6px;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Encabezado de tabla */
+.producto-lineal.encabezado {
+  font-weight: bold;
+  background-color: #f9f9f9;
+  border-bottom: 2px solid #ccc;
+}
+
+/* Botón secundario */
+.btn-secundario {
+  background-color: var(--color-acento);
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-secundario:hover {
+  background-color: var(--color-secundario);
 }
 
 /* Ventajas del grupo */
@@ -82,60 +146,15 @@ header p {
 
 /* Responsive */
 @media screen and (max-width: 700px) {
-  #menu-especial div, #envases-contenedor div {
-    flex-direction: column;
-    align-items: flex-start;
+  .producto-lineal {
+    grid-template-columns: 1fr;
   }
 
-  #menu-especial input[type="number"],
-  #envases-contenedor input[type="number"] {
+  .producto-lineal input[type="number"] {
     width: 100%;
   }
-}
-.scrollable-menu {
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 10px;
-  background-color: #fff;
-  border-radius: 6px;
-  margin-bottom: 20px;
-}
 
-/* Estructura tipo tabla */
-.producto-lineal {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
-  align-items: center;
-  gap: 10px;
-  padding: 8px;
-  border-bottom: 1px solid #eee;
-}
-
-.producto-lineal strong {
-  font-weight: 600;
-}
-
-.producto-lineal input[type="number"] {
-  width: 100%;
-  padding: 6px;
-  font-size: 0.95rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-.menu-container {
-  max-width: 960px;
-  width: 100%;
-  margin: auto;
-  background-color: #fff;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-.logo-login {
-  width: 64px;
-  margin-bottom: 1rem;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
+  #filtro {
+    max-width: 100%;
+  }
 }
