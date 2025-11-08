@@ -458,6 +458,10 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
   const [encabezado, ...filas] = lineas;
   const campos = encabezado.split(',');
 
+  let creados = 0;
+  let actualizados = 0;
+  let errores = 0;
+
   for (const fila of filas) {
     const valores = fila.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.replace(/^"|"$/g, '').trim());
     const entrada = Object.fromEntries(campos.map((k, i) => [k, valores[i]]));
@@ -475,57 +479,111 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
       imagen_url: entrada.imagen_url
     };
 
-    if (entrada.id) {
-      const { data: existe } = await supabase
-        .from('menu_item')
-        .select('id')
-        .eq('id', entrada.id);
-
-      if (existe && existe.length > 0) {
-        const { error } = await supabase
+    try {
+      if (entrada.id) {
+        const { data: existe } = await supabase
           .from('menu_item')
-          .update(producto)
+          .select('id')
           .eq('id', entrada.id);
 
-        if (!error) {
-          await supabase.rpc('registrar_evento', {
-            tipo: 'modificación',
-            modulo: 'menu',
-            detalle: `Actualización masiva: ${producto.nombre} (${entrada.id})`
+        if (existe && existe.length > 0) {
+          const { error } = await supabase
+            .from('menu_item')
+            .update(producto)
+            .eq('id', entrada.id);
+
+          if (error) {
+            errores++;
+            console.error(`❌ Error al actualizar producto: ${producto.nombre}`, error.message);
+            await supabase.rpc('registrar_evento', {
+              tipo: 'error',
+              modulo: 'menu',
+              detalle: `Error al actualizar producto: ${producto.nombre} (${error.message})`
+            });
+          } else {
+            actualizados++;
+            await supabase.rpc('registrar_evento', {
+              tipo: 'modificación',
+              modulo: 'menu',
+              detalle: `Actualización masiva: ${producto.nombre} (${entrada.id})`
+            });
+          }
+        } else {
+          const { error } = await supabase.rpc('crear_menu_item', {
+            nombre: producto.nombre,
+            descripcion: producto.descripcion,
+            precio: producto.precio,
+            disponible: producto.disponible,
+            categoria: producto.categoria,
+            etiquetas: producto.etiquetas,
+            imagen_url: producto.imagen_url,
+            areas: producto.areas,
+            destinos: producto.destinos
           });
+
+          if (error) {
+            errores++;
+            console.error(`❌ Error al crear producto: ${producto.nombre}`, error.message);
+            await supabase.rpc('registrar_evento', {
+              tipo: 'error',
+              modulo: 'menu',
+              detalle: `Error al crear producto: ${producto.nombre} (${error.message})`
+            });
+          } else {
+            creados++;
+            await supabase.rpc('registrar_evento', {
+              tipo: 'creación',
+              modulo: 'menu',
+              detalle: `Creación masiva: ${producto.nombre} (nuevo)`
+            });
+          }
         }
       } else {
-        const { error } = await supabase
-          .from('menu_item')
-          .insert(producto);
+        const { error } = await supabase.rpc('crear_menu_item', {
+          nombre: producto.nombre,
+          descripcion: producto.descripcion,
+          precio: producto.precio,
+          disponible: producto.disponible,
+          categoria: producto.categoria,
+          etiquetas: producto.etiquetas,
+          imagen_url: producto.imagen_url,
+          areas: producto.areas,
+          destinos: producto.destinos
+        });
 
-        if (!error) {
+        if (error) {
+          errores++;
+          console.error(`❌ Error al crear producto: ${producto.nombre}`, error.message);
+          await supabase.rpc('registrar_evento', {
+            tipo: 'error',
+            modulo: 'menu',
+            detalle: `Error al crear producto: ${producto.nombre} (${error.message})`
+          });
+        } else {
+          creados++;
           await supabase.rpc('registrar_evento', {
             tipo: 'creación',
             modulo: 'menu',
-            detalle: `Creación masiva: ${producto.nombre} (nuevo)`
+            detalle: `Creación masiva: ${producto.nombre} (sin ID)`
           });
         }
       }
-    } else {
-      const { error } = await supabase
-        .from('menu_item')
-        .insert(producto);
-
-      if (!error) {
-        await supabase.rpc('registrar_evento', {
-          tipo: 'creación',
-          modulo: 'menu',
-          detalle: `Creación masiva: ${producto.nombre} (sin ID)`
-        });
-      }
+    } catch (err) {
+      errores++;
+      console.error(`❌ Error inesperado con producto: ${producto.nombre}`, err.message);
+      await supabase.rpc('registrar_evento', {
+        tipo: 'error',
+        modulo: 'menu',
+        detalle: `Error inesperado con producto: ${producto.nombre} (${err.message})`
+      });
     }
   }
 
-  const { data: actualizados } = await supabase.from('menu_item').select('*');
-  productosGlobal = actualizados;
+  const { data: actualizadosFinal } = await supabase.from('menu_item').select('*');
+  productosGlobal = actualizadosFinal;
   cargarProductos();
-  alert('✅ Importación completada');
+
+  alert(`✅ Importación completada\n\n🆕 Creados: ${creados}\n✏️ Actualizados: ${actualizados}\n❌ Errores: ${errores}`);
 });
 
 btnAgregarProducto.addEventListener('click', () => {
