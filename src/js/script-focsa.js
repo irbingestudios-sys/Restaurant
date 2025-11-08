@@ -289,7 +289,63 @@ document.getElementById("resumen").innerHTML = `
   document.getElementById("confirmacion").style.display = "block";
   window.mensajeWhatsApp = mensaje;
 };
+window.revisarPedido = function () {
+  const cliente = document.getElementById("cliente").value.trim();
+  const piso = document.getElementById("piso").value.trim();
+  const apartamento = document.getElementById("apartamento").value.trim();
 
+  if (!cliente || !piso || !apartamento) {
+    alert("⚠️ Completa nombre, piso y apartamento antes de revisar el pedido");
+    return;
+  }
+
+  const items = [];
+  let html = `<p><strong>Cliente:</strong> ${cliente}<br><strong>Piso:</strong> ${piso}<br><strong>Apartamento:</strong> ${apartamento}</p><ul>`;
+  let mensaje = `Pedido para: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\n\n`;
+  let total = 0;
+
+  for (const nombre in cantidades) {
+    const cant = cantidades[nombre];
+    const item = menu.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      const subtotal = cant * item.precio;
+      items.push({ nombre, cantidad: cant, subtotal });
+      html += `<li>${nombre} x${cant} = ${subtotal} CUP</li>`;
+      mensaje += `- ${nombre} x${cant} = ${subtotal} CUP\n`;
+      total += subtotal;
+    }
+  }
+
+  for (const nombre in cantidadesEnvases) {
+    const cant = cantidadesEnvases[nombre];
+    const item = envases.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      const subtotal = cant * item.precio;
+      items.push({ nombre, cantidad: cant, subtotal });
+      html += `<li>${nombre} x${cant} = ${subtotal} CUP</li>`;
+      mensaje += `- ${nombre} x${cant} = ${subtotal} CUP\n`;
+      total += subtotal;
+    }
+  }
+
+  if (items.length === 0) {
+    alert("⚠️ No has seleccionado ningún producto");
+    return;
+  }
+
+  html += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
+  document.getElementById("contenido-resumen").innerHTML = html;
+  document.getElementById("modal-resumen").style.display = "flex";
+  window.mensajeWhatsApp = mensaje;
+};
+
+window.cancelarResumen = function () {
+  document.getElementById("modal-resumen").style.display = "none";
+};
+
+document.getElementById("modal-close-resumen").addEventListener("click", () => {
+  document.getElementById("modal-resumen").style.display = "none";
+});
 // ── Grupo: Enviar por WhatsApp ────────────────────────────────
 window.enviarWhatsApp = function () {
   const numero = "5350971023";
