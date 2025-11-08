@@ -468,16 +468,19 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
 
     const producto = {
       nombre: entrada.nombre,
-      descripcion: entrada.descripcion,
+      descripcion: entrada.descripcion || '',
       precio: parseFloat(entrada.precio),
       disponible: entrada.disponible === 'true',
       categoria: entrada.categoria,
       etiquetas: entrada.etiquetas?.split(';') || [],
-      imagen_url: entrada.imagen_url,
+      imagen_url: entrada.imagen_url || '',
       areas: entrada.areas?.split(';') || [],
       destinos: entrada.destinos?.split(';') || [],
       stock: parseInt(entrada.stock)
     };
+
+    console.group(`📦 Procesando producto: ${producto.nombre}`);
+    console.log('🧪 Datos recibidos:', producto);
 
     const valido =
       typeof producto.nombre === 'string' &&
@@ -490,23 +493,26 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
 
     if (!valido) {
       errores++;
-      console.warn(`⚠️ Producto inválido: ${producto.nombre}`, producto);
+      console.warn('⚠️ Producto inválido. Se omite RPC.');
       await supabase.rpc('registrar_evento', {
         tipo: 'error',
         modulo: 'menu',
         detalle: `Producto inválido: ${producto.nombre || 'sin nombre'}`
       });
+      console.groupEnd();
       continue;
     }
 
     try {
       if (entrada.id) {
+        console.log(`🔍 Producto tiene ID: ${entrada.id}`);
         const { data: existe } = await supabase
           .from('menu_item')
           .select('id')
           .eq('id', entrada.id);
 
         if (existe && existe.length > 0) {
+          console.log('✏️ Actualizando producto existente...');
           const { error } = await supabase
             .from('menu_item')
             .update(producto)
@@ -514,7 +520,7 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
 
           if (error) {
             errores++;
-            console.error(`❌ Error al actualizar producto: ${producto.nombre}`, error.message);
+            console.error(`❌ Error al actualizar: ${error.message}`);
             await supabase.rpc('registrar_evento', {
               tipo: 'error',
               modulo: 'menu',
@@ -522,6 +528,7 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
             });
           } else {
             actualizados++;
+            console.log('✅ Producto actualizado');
             await supabase.rpc('registrar_evento', {
               tipo: 'modificación',
               modulo: 'menu',
@@ -529,6 +536,7 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
             });
           }
         } else {
+          console.log('🆕 ID no encontrado. Creando nuevo producto...');
           const { error } = await supabase.rpc('crear_menu_item', {
             nombre: producto.nombre,
             descripcion: producto.descripcion,
@@ -543,7 +551,7 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
 
           if (error) {
             errores++;
-            console.error(`❌ Error al crear producto: ${producto.nombre}`, error.message);
+            console.error(`❌ Error al crear: ${error.message}`);
             await supabase.rpc('registrar_evento', {
               tipo: 'error',
               modulo: 'menu',
@@ -551,6 +559,7 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
             });
           } else {
             creados++;
+            console.log('✅ Producto creado');
             await supabase.rpc('registrar_evento', {
               tipo: 'creación',
               modulo: 'menu',
@@ -559,6 +568,7 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
           }
         }
       } else {
+        console.log('🆕 Producto sin ID. Creando nuevo producto...');
         const { error } = await supabase.rpc('crear_menu_item', {
           nombre: producto.nombre,
           descripcion: producto.descripcion,
@@ -573,7 +583,7 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
 
         if (error) {
           errores++;
-          console.error(`❌ Error al crear producto: ${producto.nombre}`, error.message);
+          console.error(`❌ Error al crear: ${error.message}`);
           await supabase.rpc('registrar_evento', {
             tipo: 'error',
             modulo: 'menu',
@@ -581,6 +591,7 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
           });
         } else {
           creados++;
+          console.log('✅ Producto creado');
           await supabase.rpc('registrar_evento', {
             tipo: 'creación',
             modulo: 'menu',
@@ -590,13 +601,15 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
       }
     } catch (err) {
       errores++;
-      console.error(`❌ Error inesperado con producto: ${producto.nombre}`, err.message);
+      console.error(`❌ Error inesperado: ${err.message}`);
       await supabase.rpc('registrar_evento', {
         tipo: 'error',
         modulo: 'menu',
         detalle: `Error inesperado con producto: ${producto.nombre} (${err.message})`
       });
     }
+
+    console.groupEnd();
   }
 
   const { data: actualizadosFinal } = await supabase.from('menu_item').select('*');
