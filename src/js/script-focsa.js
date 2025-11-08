@@ -76,12 +76,12 @@ function renderMenuEspecial(lista) {
     agrupado[categoria].forEach(item => {
       const div = document.createElement("div");
       div.className = "producto-lineal";
-      div.innerHTML = `
-        <strong>${item.nombre}</strong>
-        <span>${item.precio} CUP</span>
-        <button class="btn-secundario" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">Descripción</button>
-        <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
-      `;
+div.innerHTML = `
+  <strong>${item.nombre}</strong>
+  <span>${item.precio} CUP</span>
+  <button class="btn-secundario" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">Descripción</button>
+  <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
+`;
       grupo.appendChild(div);
     });
 
