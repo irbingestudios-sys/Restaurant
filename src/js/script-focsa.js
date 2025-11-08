@@ -1,18 +1,26 @@
+// ┌────────────────────────────────────────────────────────────┐
+// │ Módulo: FOCSA                                              │
+// │ Script: script-focsa.js                                    │
+// │ Descripción: Menú especial para clientes del edificio FOCSA│
+// │ Autor: Irbing Brizuela                                     │
+// │ Fecha: 2025-11-08                                          │
+// └────────────────────────────────────────────────────────────┘
+
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// === Inicializar Supabase ===
+// ── Grupo: Inicialización Supabase ────────────────────────────
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw" // ← tu anon key
 );
 
-// === Variables globales ===
+// ── Grupo: Variables globales ─────────────────────────────────
 let menu = [];
 let envases = [];
 const cantidades = {};
 const cantidadesEnvases = {};
 
-// === Cargar menú especial ===
+// ── Grupo: Cargar menú especial ───────────────────────────────
 async function cargarMenuEspecial() {
   console.log("🔄 Cargando menú especial...");
   const { data, error } = await supabase.rpc("obtener_menu_focsa");
@@ -25,7 +33,7 @@ async function cargarMenuEspecial() {
   renderMenuEspecial(menu);
 }
 
-// === Renderizar filtro de categorías ===
+// ── Grupo: Filtro por categoría ───────────────────────────────
 function renderFiltroCategorias() {
   const filtro = document.getElementById("filtro");
   const categorias = [...new Set(menu.map(item => item.categoria).filter(Boolean))];
@@ -38,7 +46,6 @@ function renderFiltroCategorias() {
   });
 }
 
-// === Filtrar menú por categoría ===
 window.filtrarMenu = function () {
   const seleccion = document.getElementById("filtro").value;
   const filtrado = seleccion === "todos"
@@ -46,9 +53,9 @@ window.filtrarMenu = function () {
     : menu.filter(item => item.categoria === seleccion);
   renderMenuEspecial(filtrado);
 };
-// === Renderizar menú especial ===
+
+// ── Grupo: Renderizar menú especial ───────────────────────────
 function renderMenuEspecial(lista) {
-  console.log("🎨 Renderizando menú especial...");
   const contenedor = document.getElementById("menu-especial");
   contenedor.innerHTML = "";
 
@@ -68,8 +75,10 @@ function renderMenuEspecial(lista) {
 
     agrupado[categoria].forEach(item => {
       const div = document.createElement("div");
+      div.className = "producto-lineal";
       div.innerHTML = `
-        <strong>${item.nombre}</strong> - ${item.precio} CUP
+        <strong>${item.nombre}</strong>
+        <span>${item.precio} CUP</span>
         <button class="btn-secundario" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">Descripción</button>
         <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
       `;
@@ -89,25 +98,7 @@ function renderMenuEspecial(lista) {
   });
 }
 
-// === Mostrar descripción en modal ===
-window.mostrarDescripcion = function (texto, imagen) {
-  console.log("📝 Mostrando descripción:", texto);
-  document.getElementById("modal-texto").textContent = texto || "Sin descripción disponible.";
-  const img = document.getElementById("modal-imagen");
-  if (imagen) {
-    img.src = imagen;
-    img.style.display = "block";
-  } else {
-    img.style.display = "none";
-  }
-  document.getElementById("modal-descripcion").style.display = "flex";
-};
-
-document.getElementById("modal-close").addEventListener("click", () => {
-  document.getElementById("modal-descripcion").style.display = "none";
-});
-
-// === Cargar envases ===
+// ── Grupo: Renderizar envases ─────────────────────────────────
 async function cargarEnvases() {
   console.log("📦 Cargando envases...");
   const { data, error } = await supabase
@@ -124,21 +115,18 @@ async function cargarEnvases() {
   }
 
   envases = data;
-  renderEnvases(envases);
-}
-
-// === Renderizar envases ===
-function renderEnvases(lista) {
   const contenedor = document.getElementById("envases-contenedor");
   contenedor.innerHTML = "";
 
-  lista.forEach((item, index) => {
+  envases.forEach((item, index) => {
     const div = document.createElement("div");
+    div.className = "producto-lineal";
     const cantidadInicial = index === 0 ? 1 : 0;
     cantidadesEnvases[item.nombre] = cantidadInicial;
 
     div.innerHTML = `
-      <strong>${item.nombre}</strong> - ${item.precio} CUP
+      <strong>${item.nombre}</strong>
+      <span>${item.precio} CUP</span>
       <input type="number" min="0" value="${cantidadInicial}" data-name="${item.nombre}" data-price="${item.precio}" />
     `;
     contenedor.appendChild(div);
@@ -153,7 +141,8 @@ function renderEnvases(lista) {
     });
   });
 }
-// === Calcular totales ===
+
+// ── Grupo: Cálculo de totales ─────────────────────────────────
 function calcularTotales() {
   let total = 0;
   let cantidad = 0;
@@ -180,28 +169,41 @@ function calcularTotales() {
   document.getElementById("total-items").textContent = cantidad;
 }
 
-// === Limpiar selección ===
+// ── Grupo: Modal de descripción ───────────────────────────────
+window.mostrarDescripcion = function (texto, imagen) {
+  document.getElementById("modal-texto").textContent = texto || "Sin descripción disponible.";
+  const img = document.getElementById("modal-imagen");
+  if (imagen) {
+    img.src = imagen;
+    img.style.display = "block";
+  } else {
+    img.style.display = "none";
+  }
+  document.getElementById("modal-descripcion").style.display = "flex";
+};
+
+document.getElementById("modal-close").addEventListener("click", () => {
+  document.getElementById("modal-descripcion").style.display = "none";
+});
+
+// ── Grupo: Acciones de interfaz ───────────────────────────────
 document.getElementById("btn-limpiar").addEventListener("click", () => {
   Object.keys(cantidades).forEach(k => cantidades[k] = 0);
   Object.keys(cantidadesEnvases).forEach(k => cantidadesEnvases[k] = 0);
   document.querySelectorAll("input[type='number']").forEach(input => input.value = 0);
   calcularTotales();
-  console.log("🧹 Selección limpiada");
 });
 
-// === Mostrar ventajas del grupo ===
 document.getElementById("infoGrupo").addEventListener("click", () => {
   const bloque = document.getElementById("ventajasGrupo");
   bloque.style.display = bloque.style.display === "none" ? "block" : "none";
 });
 
-// === Cancelar confirmación ===
+// ── Grupo: Confirmación y WhatsApp ────────────────────────────
 window.cancelar = function () {
   document.getElementById("confirmacion").style.display = "none";
-  console.log("❌ Pedido cancelado");
 };
 
-// === Enviar pedido ===
 window.enviarPedido = async function () {
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
@@ -224,19 +226,7 @@ window.enviarPedido = async function () {
     const item = menu.find(p => p.nombre === nombre);
     if (item && cant > 0) {
       const subtotal = cant * item.precio;
-      items.push({ nombre, cantidad: cant, subtotal });
-      resumenHTML += `<li>${nombre} x${cant} = ${subtotal} CUP</li>`;
-      mensaje += `- ${nombre} x${cant} = ${subtotal} CUP\n`;
-      total += subtotal;
-    }
-  }
-
-  for (const nombre in cantidadesEnvases) {
-    const cant = cantidadesEnvases[nombre];
-    const item = envases.find(p => p.nombre === nombre);
-    if (item && cant > 0) {
-      const subtotal = cant * item.precio;
-      items.push({ nombre, cantidad: cant, subtotal });
+    items.push({ nombre, cantidad: cant, subtotal });
       resumenHTML += `<li>${nombre} x${cant} = ${subtotal} CUP</li>`;
       mensaje += `- ${nombre} x${cant} = ${subtotal} CUP\n`;
       total += subtotal;
@@ -272,7 +262,7 @@ window.enviarPedido = async function () {
   window.mensajeWhatsApp = mensaje;
 };
 
-// === Enviar por WhatsApp ===
+// ── Grupo: Enviar por WhatsApp ────────────────────────────────
 window.enviarWhatsApp = function () {
   const numero = "5350971023";
   const url = `https://wa.me/${numero}?text=${encodeURIComponent(window.mensajeWhatsApp)}`;
@@ -281,6 +271,6 @@ window.enviarWhatsApp = function () {
   console.log("📤 Pedido enviado por WhatsApp");
 };
 
-// === Inicializar módulo ===
+// ── Grupo: Inicialización del módulo ──────────────────────────
 cargarMenuEspecial();
 cargarEnvases();
