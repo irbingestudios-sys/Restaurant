@@ -468,16 +468,36 @@ document.getElementById('inputImportarMenu').addEventListener('change', async (e
 
     const producto = {
       nombre: entrada.nombre,
+      descripcion: entrada.descripcion,
       precio: parseFloat(entrada.precio),
-      stock: parseInt(entrada.stock),
       disponible: entrada.disponible === 'true',
       categoria: entrada.categoria,
       etiquetas: entrada.etiquetas?.split(';') || [],
+      imagen_url: entrada.imagen_url,
       areas: entrada.areas?.split(';') || [],
       destinos: entrada.destinos?.split(';') || [],
-      descripcion: entrada.descripcion,
-      imagen_url: entrada.imagen_url
+      stock: parseInt(entrada.stock)
     };
+
+    const valido =
+      typeof producto.nombre === 'string' &&
+      typeof producto.precio === 'number' &&
+      typeof producto.stock === 'number' &&
+      typeof producto.disponible === 'boolean' &&
+      Array.isArray(producto.etiquetas) &&
+      Array.isArray(producto.areas) &&
+      Array.isArray(producto.destinos);
+
+    if (!valido) {
+      errores++;
+      console.warn(`⚠️ Producto inválido: ${producto.nombre}`, producto);
+      await supabase.rpc('registrar_evento', {
+        tipo: 'error',
+        modulo: 'menu',
+        detalle: `Producto inválido: ${producto.nombre || 'sin nombre'}`
+      });
+      continue;
+    }
 
     try {
       if (entrada.id) {
