@@ -173,3 +173,10 @@ header p {
   color: var(--color-secundario, #7a1c1c);
   transform: scale(1.1);
 }
+.categoria-grupo h3 {
+  text-transform: uppercase;
+  color: #a52a2a; /* mismo color que "Menú Especial FOCSA" */
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
