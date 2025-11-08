@@ -13,7 +13,7 @@
     <!-- Logo y encabezado -->
     <header>
       <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/logo.png" alt="Logo La Casona de 17" class="logo-login" />
-      <h1>Menú Especial FOCSA</h1>
+      <h1>MENÚ ESPECIAL FOCSA</h1>
       <p>Clientes del Edificio FOCSA</p>
     </header>
 
@@ -27,27 +27,28 @@
 
     <!-- Menú especial -->
     <section>
-      <h2>Productos Especiales</h2>
+      <h2 style="text-transform: uppercase; color: #a52a2a;">Productos Especiales</h2>
       <div id="menu-especial" class="scrollable-menu"></div>
     </section>
 
     <!-- Envases -->
     <section>
-      <h2>Envases</h2>
+      <h2 style="text-transform: uppercase; color: #a52a2a;">Envases</h2>
       <div id="envases-contenedor" class="scrollable-menu"></div>
     </section>
 
     <!-- Resumen del pedido -->
     <section id="totales">
-      <h2>Resumen del Pedido</h2>
+      <h2 style="text-transform: uppercase; color: #a52a2a;">Resumen del Pedido</h2>
       <p>Total: <span id="total-cup">0</span> CUP</p>
       <p>Cantidad de ítems: <span id="total-items">0</span></p>
       <button id="btn-limpiar">Limpiar selección</button>
+      <button onclick="revisarPedido()" class="btn-secundario">🕵️ Revisar pedido</button>
     </section>
 
     <!-- Datos del cliente -->
     <section>
-      <h2>Datos del Cliente</h2>
+      <h2 style="text-transform: uppercase; color: #a52a2a;">Datos del Cliente</h2>
       <input type="text" id="cliente" placeholder="Nombre del cliente" />
       <input type="text" id="piso" placeholder="Piso (ej. 14)" />
       <input type="text" id="apartamento" placeholder="Apartamento (ej. 1405)" />
@@ -71,10 +72,10 @@
 
     <!-- Confirmación -->
     <section id="confirmacion" style="display:none; margin-top:30px;">
-      <h2>Confirmación del Pedido</h2>
+      <h2 style="text-transform: uppercase; color: #a52a2a;">Confirmación del Pedido</h2>
       <div id="resumen"></div>
-      <button onclick="enviarWhatsApp()">Confirmar y enviar</button>
-      <button onclick="cancelar()">Cancelar</button>
+      <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
+      <button onclick="cancelar()" class="btn-secundario">❌ Cancelar</button>
     </section>
   </div>
 
@@ -88,20 +89,19 @@
     </div>
   </div>
 
-  <script type="module" src="https://irbingestudios-sys.github.io/Restaurant/src/js/script-focsa.js"></script>
- 
   <!-- Modal: Vista previa del pedido -->
-<div id="modal-resumen" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span id="modal-close-resumen">&times;</span>
-    <h3 style="color:#a52a2a;">🧾 Vista previa del pedido</h3>
-    <div id="contenido-resumen"></div>
-    <div style="margin-top:20px;">
-      <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
-      <button onclick="cancelarResumen()" class="btn-secundario">❌ Cancelar</button>
-      <button onclick="revisarPedido()" class="btn-secundario">🕵️ Revisar pedido</button>
+  <div id="modal-resumen" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span id="modal-close-resumen">&times;</span>
+      <h3 style="color:#a52a2a;">🧾 Vista previa del pedido</h3>
+      <div id="contenido-resumen"></div>
+      <div style="margin-top:20px;">
+        <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
+        <button onclick="cancelarResumen()" class="btn-secundario">❌ Cancelar</button>
+      </div>
     </div>
   </div>
-</div>
+
+  <script type="module" src="https://irbingestudios-sys.github.io/Restaurant/src/js/script-focsa.js"></script>
 </body>
 </html>
