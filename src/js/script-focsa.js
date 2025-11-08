@@ -73,15 +73,26 @@ function renderMenuEspecial(lista) {
     titulo.textContent = categoria;
     grupo.appendChild(titulo);
 
+    // Encabezado tipo tabla
+    const encabezado = document.createElement("div");
+    encabezado.className = "producto-lineal encabezado";
+    encabezado.innerHTML = `
+      <strong>Producto</strong>
+      <span>Precio</span>
+      <span>Descripción</span>
+      <span>Cantidad</span>
+    `;
+    grupo.appendChild(encabezado);
+
     agrupado[categoria].forEach(item => {
       const div = document.createElement("div");
       div.className = "producto-lineal";
-div.innerHTML = `
-  <strong>${item.nombre}</strong>
-  <span>${item.precio} CUP</span>
-  <button class="btn-secundario" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">Descripción</button>
-  <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
-`;
+      div.innerHTML = `
+        <strong>${item.nombre}</strong>
+        <span>${item.precio} CUP</span>
+        <button class="btn-icono" title="Ver descripción" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">🛈</button>
+        <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
+      `;
       grupo.appendChild(div);
     });
 
@@ -118,6 +129,17 @@ async function cargarEnvases() {
   const contenedor = document.getElementById("envases-contenedor");
   contenedor.innerHTML = "";
 
+  // Encabezado tipo tabla
+  const encabezado = document.createElement("div");
+  encabezado.className = "producto-lineal encabezado";
+  encabezado.innerHTML = `
+    <strong>Envase</strong>
+    <span>Precio</span>
+    <span></span>
+    <span>Cantidad</span>
+  `;
+  contenedor.appendChild(encabezado);
+
   envases.forEach((item, index) => {
     const div = document.createElement("div");
     div.className = "producto-lineal";
@@ -127,6 +149,7 @@ async function cargarEnvases() {
     div.innerHTML = `
       <strong>${item.nombre}</strong>
       <span>${item.precio} CUP</span>
+      <span></span>
       <input type="number" min="0" value="${cantidadInicial}" data-name="${item.nombre}" data-price="${item.precio}" />
     `;
     contenedor.appendChild(div);
@@ -141,7 +164,6 @@ async function cargarEnvases() {
     });
   });
 }
-
 // ── Grupo: Cálculo de totales ─────────────────────────────────
 function calcularTotales() {
   let total = 0;
