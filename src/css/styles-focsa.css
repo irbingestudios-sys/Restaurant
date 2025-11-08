@@ -17,7 +17,8 @@ header p {
 .menu-container {
   max-width: 960px;
   width: 100%;
-  margin: auto;
+  margin-left: 0;
+  margin-right: auto;
   background-color: #fff;
   padding: 2rem;
   border-radius: 12px;
@@ -74,9 +75,10 @@ header p {
 }
 
 .producto-lineal input[type="number"] {
-  width: 100%;
-  padding: 6px;
+  width: 70px;
+  padding: 4px;
   font-size: 0.95rem;
+  text-align: right;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
