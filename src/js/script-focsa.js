@@ -9,17 +9,21 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
 
-let menu = [];
-let envases = [];
-const cantidades = {};
-const cantidadesEnvases = {};
+let menu = [], envases = [];
+const cantidades = {}, cantidadesEnvases = {};
+let mensajeWhatsApp = "";
+
+document.addEventListener("DOMContentLoaded", () => {
+  cargarMenuEspecial();
+  cargarEnvases();
+});
 
 async function cargarMenuEspecial() {
   const { data, error } = await supabase.rpc("obtener_menu_focsa");
-  if (error) return console.error("❌ Error al cargar menú especial:", error);
+  if (error) return console.error("❌ Error al cargar menú:", error);
   menu = data;
   renderFiltroCategorias();
   renderMenuEspecial(menu);
@@ -37,7 +41,7 @@ function renderFiltroCategorias() {
   });
 }
 
-window.filtrarMenu = function () {
+window.filtrarMenu = () => {
   const seleccion = document.getElementById("filtro").value;
   const filtrado = seleccion === "todos" ? menu : menu.filter(item => item.categoria === seleccion);
   renderMenuEspecial(filtrado);
@@ -56,7 +60,6 @@ function renderMenuEspecial(lista) {
   for (const categoria in agrupado) {
     const grupo = document.createElement("div");
     grupo.className = "categoria-grupo";
-
     grupo.innerHTML += `<h3>${categoria}</h3>
       <div class="producto-lineal encabezado">
         <strong>Producto</strong><span>Precio</span><span>Descripción</span><span>Cantidad</span>
@@ -67,7 +70,7 @@ function renderMenuEspecial(lista) {
         <div class="producto-lineal">
           <strong>${item.nombre}</strong>
           <span>${item.precio} CUP</span>
-          <button class="btn-icono" title="Ver descripción" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">🛈</button>
+          <button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">🛈</button>
           <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
         </div>`;
     });
@@ -77,9 +80,7 @@ function renderMenuEspecial(lista) {
 
   document.querySelectorAll("#menu-especial input[type='number']").forEach(input => {
     input.addEventListener("input", () => {
-      const nombre = input.dataset.name;
-      const cantidad = parseInt(input.value) || 0;
-      cantidades[nombre] = cantidad;
+      cantidades[input.dataset.name] = parseInt(input.value) || 0;
       calcularTotales();
     });
   });
@@ -95,8 +96,8 @@ async function cargarEnvases() {
     .order("precio", { ascending: true });
 
   if (error) return console.error("❌ Error al cargar envases:", error);
-
   envases = data;
+
   const contenedor = document.getElementById("envases-contenedor");
   contenedor.innerHTML = `
     <div class="producto-lineal encabezado">
@@ -117,9 +118,7 @@ async function cargarEnvases() {
 
   document.querySelectorAll("#envases-contenedor input[type='number']").forEach(input => {
     input.addEventListener("input", () => {
-      const nombre = input.dataset.name;
-      const cantidad = parseInt(input.value) || 0;
-      cantidadesEnvases[nombre] = cantidad;
+      cantidadesEnvases[input.dataset.name] = parseInt(input.value) || 0;
       calcularTotales();
     });
   });
@@ -150,7 +149,7 @@ function calcularTotales() {
   document.getElementById("total-items").textContent = cantidad;
 }
 
-window.mostrarDescripcion = function (texto, imagen) {
+window.mostrarDescripcion = (texto, imagen) => {
   document.getElementById("modal-texto").textContent = texto || "Sin descripción disponible.";
   const img = document.getElementById("modal-imagen");
   img.src = imagen || "";
@@ -169,23 +168,30 @@ document.getElementById("btn-limpiar").addEventListener("click", () => {
   calcularTotales();
 });
 
-document.getElementById("infoGrupo").addEventListener("click", () => {
+window.toggleVentajasGrupo = () => {
   const bloque = document.getElementById("ventajasGrupo");
   bloque.style.display = bloque.style.display === "none" ? "block" : "none";
-});
+};
 
-window.cancelar = function () {
+window.cancelar = () => {
   document.getElementById("confirmacion").style.display = "none";
 };
 
-window.enviarPedido = async function () {
+window.enviarWhatsApp = () => {
+  const numero = "5350971023";
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensajeWhatsApp)}`;
+  window.open(url, "_blank");
+  document.getElementById("confirmacion").style.display = "none";
+};
+
+window.enviarPedido = async () => {
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
   const apartamento = document.getElementById("apartamento").value.trim();
   const telefono = document.getElementById("telefono").value.trim();
   const unirse = document.getElementById("unirseGrupo").checked;
 
-  if (!cliente || !piso || !apartamento) return alert("⚠️ Por favor completa nombre, piso y apartamento");
+  if (!cliente || !piso || !apartamento) return alert("⚠️ Completa nombre, piso y apartamento");
 
   const items = [];
   let resumenHTML = `<p><strong>Cliente:</strong> ${cliente}<br><strong>Piso:</strong> ${piso}<br><strong>Apartamento:</strong> ${apartamento}</p><ul>`;
@@ -204,10 +210,22 @@ window.enviarPedido = async function () {
     }
   }
 
+  for (const nombre in cantidadesEnvases) {
+    const cant = cantidadesEnvases[nombre];
+    const item = envases.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      const subtotal = cant * item.precio;
+      items.push({ nombre, cantidad: cant, subtotal });
+      resumenHTML += `<li>${nombre} x${cant} = ${subtotal} CUP</li>`;
+      mensaje += `- ${nombre} x${cant} = ${subtotal} CUP\n`;
+      total += subtotal;
+    }
+  }
+
   if (items.length === 0) return alert("⚠️ Selecciona al menos un producto");
 
   mensaje += `\nTotal: ${total} CUP`;
-
+  mensajeWhatsApp
     const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
     p_cliente: cliente,
     p_piso: piso,
@@ -227,24 +245,16 @@ window.enviarPedido = async function () {
   console.log("✅ Pedido registrado:", data);
   resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
   document.getElementById("resumen").innerHTML = `
-    <h3 style="color:#a52a2a;">Resumen detallado</h3>
+    <h3 class="titulo-seccion">Resumen detallado</h3>
     ${resumenHTML}
     <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
     <button onclick="cancelar()" class="btn-secundario">❌ Cancelar</button>
   `;
   document.getElementById("confirmacion").style.display = "block";
-  window.mensajeWhatsApp = mensaje;
+  mensajeWhatsApp = mensaje;
 };
 
-window.enviarWhatsApp = function () {
-  const numero = "5350971023";
-  const url = `https://wa.me/${numero}?text=${encodeURIComponent(window.mensajeWhatsApp)}`;
-  window.open(url, "_blank");
-  document.getElementById("confirmacion").style.display = "none";
-  console.log("📤 Pedido enviado por WhatsApp");
-};
-
-window.revisarPedido = function () {
+window.revisarPedido = () => {
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
   const apartamento = document.getElementById("apartamento").value.trim();
@@ -291,17 +301,13 @@ window.revisarPedido = function () {
   html += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
   document.getElementById("contenido-resumen").innerHTML = html;
   document.getElementById("modal-resumen").style.display = "flex";
-  window.mensajeWhatsApp = mensaje;
+  mensajeWhatsApp = mensaje;
 };
 
-window.cancelarResumen = function () {
+window.cancelarResumen = () => {
   document.getElementById("modal-resumen").style.display = "none";
 };
 
 document.getElementById("modal-close-resumen").addEventListener("click", () => {
   document.getElementById("modal-resumen").style.display = "none";
 });
-
-// ── Inicialización ─────────────────────────────────────────────
-cargarMenuEspecial();
-cargarEnvases();
