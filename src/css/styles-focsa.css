@@ -73,31 +73,29 @@ header p {
 
 .producto-lineal {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  padding: 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px;
   border-bottom: 1px solid #eee;
-  gap: 6px;
-  background-color: #fff;
-  border-radius: 6px;
-  margin-bottom: 10px;
+  flex-wrap: wrap;
 }
-.producto-lineal strong,
-.producto-lineal span {
-  width: 100%;
-  text-align: justify;
+
+.producto-lineal strong {
   font-size: 1rem;
+  font-weight: 600;
   color: #333;
 }
 
 .producto-lineal input[type="number"] {
-  width: 100px;
+  width: 80px;
   padding: 6px;
   font-size: 0.95rem;
   border: 1px solid #ccc;
   border-radius: 6px;
+  text-align: right;
 }
+
 .producto-lineal.encabezado {
   font-weight: bold;
   background-color: #f1f1f1;
@@ -212,13 +210,29 @@ header p {
     grid-template-columns: 1fr;
   }
 
-  .producto-lineal input[type="number"],
-  #filtro {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .btn-secundario,
+.producto-lineal input[type="number"] {
+  width: 80px;
+  padding: 6px;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  text-align: right;
+}
+  .producto-nombre {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 200px;
+  text-align: justify;
+}
+.producto-precio {
+  font-size: 0.95rem;
+  color: #555;
+  min-width: 80px;
+  text-align: right;
+}
+ .btn-secundario,
   .btn-icono {
     width: 100%;
     font-size: 1rem;
@@ -249,4 +263,3 @@ header p {
   .scrollable-menu {
     max-height: 300px;
   }
-}
