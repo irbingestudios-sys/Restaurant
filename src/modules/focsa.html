@@ -48,11 +48,16 @@
       <input type="text" id="apartamento" placeholder="Apartamento (ej. 1405)" required />
       <input type="text" id="telefono" placeholder="Teléfono (opcional)" />
 
-      <label>
-        <input type="checkbox" id="unirseGrupo" />
-        ¿Desea unirse al grupo de La Casona?
-        <button class="btn-icono" onclick="toggleVentajasGrupo()">ℹ️</button>
-      </label>
+      <div class="grupo-checkbox">
+        <label for="unirseGrupo">
+          <input type="checkbox" id="unirseGrupo" />
+          ¿Desea unirse al grupo de La Casona?
+        </label>
+        <button class="btn-icono" onclick="toggleVentajasGrupo()">
+          <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/info-icon.svg" alt="Ventajas" />
+        </button>
+      </div>
+
       <div id="ventajasGrupo" class="acordeon" style="display:none;">
         <ul>
           <li>Promociones exclusivas</li>
@@ -62,16 +67,7 @@
         </ul>
       </div>
     </section>
-
-    <section id="confirmacion" style="display:none; margin-top:30px;">
-      <h2 class="titulo-seccion">Confirmación del Pedido</h2>
-      <div id="resumen"></div>
-      <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
-      <button onclick="cancelar()" class="btn-secundario">❌ Cancelar</button>
-    </section>
-  </div>
-
-  <!-- Modal de descripción -->
+      <!-- Modal de descripción -->
   <div id="modal-descripcion" class="modal" role="dialog" aria-label="Descripción del producto" style="display:none;">
     <div class="modal-content">
       <span id="modal-close">&times;</span>
@@ -93,6 +89,19 @@
       </div>
     </div>
   </div>
+
+  <!-- Footer con redes sociales -->
+  <footer class="footer-redes">
+    <a href="https://facebook.com" target="_blank">
+      <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/facebook.svg" alt="Facebook" />
+    </a>
+    <a href="https://instagram.com" target="_blank">
+      <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/instagram.svg" alt="Instagram" />
+    </a>
+    <a href="https://lacasona17.com" target="_blank">
+      <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/web.svg" alt="Sitio Web" />
+    </a>
+  </footer>
 
   <script type="module" src="https://irbingestudios-sys.github.io/Restaurant/src/js/script-focsa.js"></script>
 </body>
