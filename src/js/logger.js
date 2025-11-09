@@ -8,45 +8,31 @@
 
 import { supabase } from './supabaseClient.js';
 
-// ─── Log en consola ───────────────────────────────────────────
 export function logEvent(type, label, data) {
   const timestamp = new Date().toISOString();
   const prefix = `[${label}] ${timestamp}`;
 
   switch (type) {
-    case 'error':
-      console.error(`${prefix} ❌`, data);
-      break;
-    case 'warn':
-      console.warn(`${prefix} ⚠️`, data);
-      break;
-    case 'info':
-      console.info(`${prefix} ℹ️`, data);
-      break;
-    default:
-      console.log(`${prefix} 🔍`, data);
+    case 'error': console.error(`${prefix} ❌`, data); break;
+    case 'warn': console.warn(`${prefix} ⚠️`, data); break;
+    case 'info': console.info(`${prefix} ℹ️`, data); break;
+    default: console.log(`${prefix} 🔍`, data);
   }
 
-  // También registrar en Supabase
   logToSupabase(type, label, data, timestamp);
 }
 
-// ─── Log en Supabase (auditoria_menu) ─────────────────────────
 async function logToSupabase(tipo, modulo, detalle, fecha) {
   const { data: userData } = await supabase.auth.getUser();
   const usuario_id = userData?.user?.id || null;
 
-  const { error } = await supabase
-    .from('auditoria_menu')
-    .insert([
-      {
-        tipo,
-        modulo,
-        detalle: typeof detalle === 'string' ? detalle : JSON.stringify(detalle),
-        fecha,
-        usuario_id,
-      },
-    ]);
+  const { error } = await supabase.from('auditoria_menu').insert([{
+    tipo,
+    modulo,
+    detalle: typeof detalle === 'string' ? detalle : JSON.stringify(detalle),
+    fecha,
+    usuario_id,
+  }]);
 
   if (error) {
     console.warn(`[Logger] ⚠️ Error al registrar en auditoria_menu: ${error.message}`);
