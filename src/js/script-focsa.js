@@ -7,33 +7,24 @@
 // └────────────────────────────────────────────────────────────┘
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-// ── Grupo: Inicialización Supabase ────────────────────────────
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw" // ← tu anon key
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
 );
 
-// ── Grupo: Variables globales ─────────────────────────────────
 let menu = [];
 let envases = [];
 const cantidades = {};
 const cantidadesEnvases = {};
 
-// ── Grupo: Cargar menú especial ───────────────────────────────
 async function cargarMenuEspecial() {
-  console.log("🔄 Cargando menú especial...");
   const { data, error } = await supabase.rpc("obtener_menu_focsa");
-  if (error) {
-    console.error("❌ Error al cargar menú especial:", error);
-    return;
-  }
+  if (error) return console.error("❌ Error al cargar menú especial:", error);
   menu = data;
   renderFiltroCategorias();
   renderMenuEspecial(menu);
 }
 
-// ── Grupo: Filtro por categoría ───────────────────────────────
 function renderFiltroCategorias() {
   const filtro = document.getElementById("filtro");
   const categorias = [...new Set(menu.map(item => item.categoria).filter(Boolean))];
@@ -48,13 +39,10 @@ function renderFiltroCategorias() {
 
 window.filtrarMenu = function () {
   const seleccion = document.getElementById("filtro").value;
-  const filtrado = seleccion === "todos"
-    ? menu
-    : menu.filter(item => item.categoria === seleccion);
+  const filtrado = seleccion === "todos" ? menu : menu.filter(item => item.categoria === seleccion);
   renderMenuEspecial(filtrado);
 };
 
-// ── Grupo: Renderizar menú especial ───────────────────────────
 function renderMenuEspecial(lista) {
   const contenedor = document.getElementById("menu-especial");
   contenedor.innerHTML = "";
@@ -69,31 +57,19 @@ function renderMenuEspecial(lista) {
     const grupo = document.createElement("div");
     grupo.className = "categoria-grupo";
 
-    const titulo = document.createElement("h3");
-    titulo.textContent = categoria;
-    grupo.appendChild(titulo);
-
-    // Encabezado tipo tabla
-    const encabezado = document.createElement("div");
-    encabezado.className = "producto-lineal encabezado";
-    encabezado.innerHTML = `
-      <strong>Producto</strong>
-      <span>Precio</span>
-      <span>Descripción</span>
-      <span>Cantidad</span>
-    `;
-    grupo.appendChild(encabezado);
+    grupo.innerHTML += `<h3>${categoria}</h3>
+      <div class="producto-lineal encabezado">
+        <strong>Producto</strong><span>Precio</span><span>Descripción</span><span>Cantidad</span>
+      </div>`;
 
     agrupado[categoria].forEach(item => {
-      const div = document.createElement("div");
-      div.className = "producto-lineal";
-      div.innerHTML = `
-        <strong>${item.nombre}</strong>
-        <span>${item.precio} CUP</span>
-        <button class="btn-icono" title="Ver descripción" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">🛈</button>
-        <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
-      `;
-      grupo.appendChild(div);
+      grupo.innerHTML += `
+        <div class="producto-lineal">
+          <strong>${item.nombre}</strong>
+          <span>${item.precio} CUP</span>
+          <button class="btn-icono" title="Ver descripción" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">🛈</button>
+          <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
+        </div>`;
     });
 
     contenedor.appendChild(grupo);
@@ -109,9 +85,7 @@ function renderMenuEspecial(lista) {
   });
 }
 
-// ── Grupo: Renderizar envases ─────────────────────────────────
 async function cargarEnvases() {
-  console.log("📦 Cargando envases...");
   const { data, error } = await supabase
     .from("menu_item")
     .select("*")
@@ -120,39 +94,25 @@ async function cargarEnvases() {
     .gt("stock", 0)
     .order("precio", { ascending: true });
 
-  if (error) {
-    console.error("❌ Error al cargar envases:", error);
-    return;
-  }
+  if (error) return console.error("❌ Error al cargar envases:", error);
 
   envases = data;
   const contenedor = document.getElementById("envases-contenedor");
-  contenedor.innerHTML = "";
-
-  // Encabezado tipo tabla
-  const encabezado = document.createElement("div");
-  encabezado.className = "producto-lineal encabezado";
-  encabezado.innerHTML = `
-    <strong>Envase</strong>
-    <span>Precio</span>
-    <span></span>
-    <span>Cantidad</span>
-  `;
-  contenedor.appendChild(encabezado);
+  contenedor.innerHTML = `
+    <div class="producto-lineal encabezado">
+      <strong>Envase</strong><span>Precio</span><span></span><span>Cantidad</span>
+    </div>`;
 
   envases.forEach((item, index) => {
-    const div = document.createElement("div");
-    div.className = "producto-lineal";
     const cantidadInicial = index === 0 ? 1 : 0;
     cantidadesEnvases[item.nombre] = cantidadInicial;
-
-    div.innerHTML = `
-      <strong>${item.nombre}</strong>
-      <span>${item.precio} CUP</span>
-      <span></span>
-      <input type="number" min="0" value="${cantidadInicial}" data-name="${item.nombre}" data-price="${item.precio}" />
-    `;
-    contenedor.appendChild(div);
+    contenedor.innerHTML += `
+      <div class="producto-lineal">
+        <strong>${item.nombre}</strong>
+        <span>${item.precio} CUP</span>
+        <span></span>
+        <input type="number" min="0" value="${cantidadInicial}" data-name="${item.nombre}" data-price="${item.precio}" />
+      </div>`;
   });
 
   document.querySelectorAll("#envases-contenedor input[type='number']").forEach(input => {
@@ -164,10 +124,9 @@ async function cargarEnvases() {
     });
   });
 }
-// ── Grupo: Cálculo de totales ─────────────────────────────────
+
 function calcularTotales() {
-  let total = 0;
-  let cantidad = 0;
+  let total = 0, cantidad = 0;
 
   for (const nombre in cantidades) {
     const cant = cantidades[nombre];
@@ -191,16 +150,11 @@ function calcularTotales() {
   document.getElementById("total-items").textContent = cantidad;
 }
 
-// ── Grupo: Modal de descripción ───────────────────────────────
 window.mostrarDescripcion = function (texto, imagen) {
   document.getElementById("modal-texto").textContent = texto || "Sin descripción disponible.";
   const img = document.getElementById("modal-imagen");
-  if (imagen) {
-    img.src = imagen;
-    img.style.display = "block";
-  } else {
-    img.style.display = "none";
-  }
+  img.src = imagen || "";
+  img.style.display = imagen ? "block" : "none";
   document.getElementById("modal-descripcion").style.display = "flex";
 };
 
@@ -208,7 +162,6 @@ document.getElementById("modal-close").addEventListener("click", () => {
   document.getElementById("modal-descripcion").style.display = "none";
 });
 
-// ── Grupo: Acciones de interfaz ───────────────────────────────
 document.getElementById("btn-limpiar").addEventListener("click", () => {
   Object.keys(cantidades).forEach(k => cantidades[k] = 0);
   Object.keys(cantidadesEnvases).forEach(k => cantidadesEnvases[k] = 0);
@@ -221,7 +174,6 @@ document.getElementById("infoGrupo").addEventListener("click", () => {
   bloque.style.display = bloque.style.display === "none" ? "block" : "none";
 });
 
-// ── Grupo: Confirmación y WhatsApp ────────────────────────────
 window.cancelar = function () {
   document.getElementById("confirmacion").style.display = "none";
 };
@@ -233,10 +185,7 @@ window.enviarPedido = async function () {
   const telefono = document.getElementById("telefono").value.trim();
   const unirse = document.getElementById("unirseGrupo").checked;
 
-  if (!cliente || !piso || !apartamento) {
-    alert("⚠️ Por favor completa nombre, piso y apartamento");
-    return;
-  }
+  if (!cliente || !piso || !apartamento) return alert("⚠️ Por favor completa nombre, piso y apartamento");
 
   const items = [];
   let resumenHTML = `<p><strong>Cliente:</strong> ${cliente}<br><strong>Piso:</strong> ${piso}<br><strong>Apartamento:</strong> ${apartamento}</p><ul>`;
@@ -248,21 +197,18 @@ window.enviarPedido = async function () {
     const item = menu.find(p => p.nombre === nombre);
     if (item && cant > 0) {
       const subtotal = cant * item.precio;
-    items.push({ nombre, cantidad: cant, subtotal });
+      items.push({ nombre, cantidad: cant, subtotal });
       resumenHTML += `<li>${nombre} x${cant} = ${subtotal} CUP</li>`;
       mensaje += `- ${nombre} x${cant} = ${subtotal} CUP\n`;
       total += subtotal;
     }
   }
 
-  if (items.length === 0) {
-    alert("⚠️ Selecciona al menos un producto");
-    return;
-  }
+  if (items.length === 0) return alert("⚠️ Selecciona al menos un producto");
 
   mensaje += `\nTotal: ${total} CUP`;
 
-  const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
+    const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
     p_cliente: cliente,
     p_piso: piso,
     p_apartamento: apartamento,
@@ -279,16 +225,25 @@ window.enviarPedido = async function () {
   }
 
   console.log("✅ Pedido registrado:", data);
- resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
-document.getElementById("resumen").innerHTML = `
-  <h3 style="color:#a52a2a;">Resumen detallado</h3>
-  ${resumenHTML}
-  <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
-  <button onclick="cancelar()" class="btn-secundario">❌ Cancelar</button>
-`;
+  resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
+  document.getElementById("resumen").innerHTML = `
+    <h3 style="color:#a52a2a;">Resumen detallado</h3>
+    ${resumenHTML}
+    <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
+    <button onclick="cancelar()" class="btn-secundario">❌ Cancelar</button>
+  `;
   document.getElementById("confirmacion").style.display = "block";
   window.mensajeWhatsApp = mensaje;
 };
+
+window.enviarWhatsApp = function () {
+  const numero = "5350971023";
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(window.mensajeWhatsApp)}`;
+  window.open(url, "_blank");
+  document.getElementById("confirmacion").style.display = "none";
+  console.log("📤 Pedido enviado por WhatsApp");
+};
+
 window.revisarPedido = function () {
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
@@ -346,15 +301,7 @@ window.cancelarResumen = function () {
 document.getElementById("modal-close-resumen").addEventListener("click", () => {
   document.getElementById("modal-resumen").style.display = "none";
 });
-// ── Grupo: Enviar por WhatsApp ────────────────────────────────
-window.enviarWhatsApp = function () {
-  const numero = "5350971023";
-  const url = `https://wa.me/${numero}?text=${encodeURIComponent(window.mensajeWhatsApp)}`;
-  window.open(url, "_blank");
-  document.getElementById("confirmacion").style.display = "none";
-  console.log("📤 Pedido enviado por WhatsApp");
-};
 
-// ── Grupo: Inicialización del módulo ──────────────────────────
+// ── Inicialización ─────────────────────────────────────────────
 cargarMenuEspecial();
 cargarEnvases();
