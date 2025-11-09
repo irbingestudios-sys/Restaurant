@@ -96,11 +96,6 @@ header p {
   text-align: right;
 }
 
-.producto-lineal.encabezado {
-  font-weight: bold;
-  background-color: #f1f1f1;
-  border-bottom: 2px solid #ccc;
-}
 .btn-secundario {
   background-color: var(--color-acento);
   color: #fff;
@@ -263,3 +258,31 @@ header p {
   .scrollable-menu {
     max-height: 300px;
   }
+  .producto-izquierda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 200px;
+  text-align: justify;
+}
+
+.producto-derecha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+  justify-content: flex-end;
+}
+  .resumen-lista {
+  margin-top: 1rem;
+  border-top: 1px solid #ddd;
+  padding-top: 1rem;
+}
+
+.producto-derecha span {
+  font-size: 0.95rem;
+  color: #555;
+  min-width: 60px;
+  text-align: right;
+}
