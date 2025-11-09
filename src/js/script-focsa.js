@@ -56,23 +56,23 @@ function renderMenuEspecial(lista) {
   for (const categoria in agrupado) {
     const grupo = document.createElement("div");
     grupo.className = "categoria-grupo";
-    grupo.innerHTML += `<h3 class="titulo-seccion">${categoria}</h3>
-      <div class="producto-lineal encabezado">
-        <strong>Producto</strong><span>Precio</span><span>Descripción</span><span>Cantidad</span>
-      </div>`;
+
+    grupo.innerHTML += `<h3 class="titulo-seccion">${categoria}</h3>`;
 
     agrupado[categoria].forEach(item => {
-   grupo.innerHTML += `
-  <div class="producto-lineal">
-    <div class="producto-nombre">
-      <strong>${item.nombre}</strong>
-      <button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">
-        <img src="../assets/info-icon.svg" alt="Descripción" />
-      </button>
-    </div>
-    <span class="producto-precio">${item.precio} CUP</span>
-    <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
-  </div>`;
+      grupo.innerHTML += `
+        <div class="producto-lineal">
+          <div class="producto-izquierda">
+            <strong>${item.nombre}</strong>
+            <button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">
+              <img src="../assets/info-icon.svg" alt="Descripción" />
+            </button>
+          </div>
+          <div class="producto-derecha">
+            <span>${item.precio} CUP</span>
+            <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
+          </div>
+        </div>`;
     });
 
     contenedor.appendChild(grupo);
@@ -108,11 +108,13 @@ async function cargarEnvases() {
     const bloque = document.createElement("div");
     bloque.className = "producto-lineal";
     bloque.innerHTML = `
-      <div class="producto-nombre">
+      <div class="producto-izquierda">
         <strong>${item.nombre}</strong>
       </div>
-      <span class="producto-precio">${item.precio} CUP</span>
-      <input type="number" min="0" value="${cantidadInicial}" data-name="${item.nombre}" data-price="${item.precio}" />
+      <div class="producto-derecha">
+        <span>${item.precio} CUP</span>
+        <input type="number" min="0" value="${cantidadInicial}" data-name="${item.nombre}" data-price="${item.precio}" />
+      </div>
     `;
     contenedor.appendChild(bloque);
   });
