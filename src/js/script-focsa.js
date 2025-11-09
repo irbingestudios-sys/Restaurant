@@ -286,9 +286,14 @@ window.revisarPedido = () => {
   }
 
   const items = [];
-  let html = `<p><strong>Cliente:</strong> ${cliente}<br><strong>Piso:</strong> ${piso}<br><strong>Apartamento:</strong> ${apartamento}</p><ul>`;
-  let mensaje = `Pedido para: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\n\n`;
   let total = 0;
+
+  let html = `
+    <p><strong>Cliente:</strong> ${cliente}<br>
+    <strong>Piso:</strong> ${piso}<br>
+    <strong>Apartamento:</strong> ${apartamento}</p>
+    <div class="resumen-lista">
+  `;
 
   for (const nombre in cantidades) {
     const cant = cantidades[nombre];
@@ -296,9 +301,20 @@ window.revisarPedido = () => {
     if (item && cant > 0) {
       const subtotal = cant * item.precio;
       items.push({ nombre, cantidad: cant, subtotal });
-      html += `<li>${nombre} x${cant} = ${subtotal} CUP</li>`;
-      mensaje += `- ${nombre} x${cant} = ${subtotal} CUP\n`;
       total += subtotal;
+
+      html += `
+        <div class="producto-lineal">
+          <div class="producto-izquierda">
+            <strong>${nombre}</strong>
+          </div>
+          <div class="producto-derecha">
+            <span>${item.precio} CUP</span>
+            <span>x${cant}</span>
+            <span>= ${subtotal} CUP</span>
+          </div>
+        </div>
+      `;
     }
   }
 
@@ -308,9 +324,20 @@ window.revisarPedido = () => {
     if (item && cant > 0) {
       const subtotal = cant * item.precio;
       items.push({ nombre, cantidad: cant, subtotal });
-      html += `<li>${nombre} x${cant} = ${subtotal} CUP</li>`;
-      mensaje += `- ${nombre} x${cant} = ${subtotal} CUP\n`;
       total += subtotal;
+
+      html += `
+        <div class="producto-lineal">
+          <div class="producto-izquierda">
+            <strong>${nombre}</strong>
+          </div>
+          <div class="producto-derecha">
+            <span>${item.precio} CUP</span>
+            <span>x${cant}</span>
+            <span>= ${subtotal} CUP</span>
+          </div>
+        </div>
+      `;
     }
   }
 
@@ -319,8 +346,11 @@ window.revisarPedido = () => {
     return;
   }
 
-  html += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
+  html += `</div><p><strong>Total:</strong> ${total} CUP</p>`;
   document.getElementById("contenido-resumen").innerHTML = html;
   document.getElementById("modal-resumen").style.display = "flex";
-  mensajeWhatsApp = mensaje;
+
+  mensajeWhatsApp = `Pedido para: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\n\n` +
+    items.map(i => `- ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n") +
+    `\n\nTotal: ${total} CUP`;
 };
