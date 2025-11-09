@@ -286,3 +286,20 @@ header p {
   min-width: 60px;
   text-align: right;
 }
+  .producto-lineal {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.producto-izquierda,
+.producto-derecha {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.producto-derecha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
