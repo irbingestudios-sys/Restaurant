@@ -62,15 +62,15 @@ function renderMenuEspecial(lista) {
       </div>`;
 
     agrupado[categoria].forEach(item => {
-      grupo.innerHTML += `
-        <div class="producto-lineal">
-          <strong>${item.nombre}</strong>
-          <span>${item.precio} CUP</span>
-          <button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">
-            <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/info-icon.svg" alt="Descripción" />
-          </button>
-          <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
-        </div>`;
+    grupo.innerHTML += `
+  <div class="producto-lineal">
+    <strong>${item.nombre}</strong>
+    <span>${item.precio} CUP</span>
+    <button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">
+      <img src="../assets/info-icon.svg" alt="Descripción" />
+    </button>
+    <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
+  </div>`;
     });
 
     contenedor.appendChild(grupo);
@@ -97,21 +97,20 @@ async function cargarEnvases() {
   envases = data;
 
   const contenedor = document.getElementById("envases-contenedor");
-  contenedor.innerHTML = `
-    <div class="producto-lineal encabezado">
-      <strong>Envase</strong><span>Precio</span><span></span><span>Cantidad</span>
-    </div>`;
+  contenedor.innerHTML = ""; // Eliminamos encabezado tipo tabla
 
   envases.forEach((item, index) => {
     const cantidadInicial = index === 0 ? 1 : 0;
     cantidadesEnvases[item.nombre] = cantidadInicial;
-    contenedor.innerHTML += `
-      <div class="producto-lineal">
-        <strong>${item.nombre}</strong>
-        <span>${item.precio} CUP</span>
-        <span></span>
-        <input type="number" min="0" value="${cantidadInicial}" data-name="${item.nombre}" data-price="${item.precio}" />
-      </div>`;
+
+    const bloque = document.createElement("div");
+    bloque.className = "producto-lineal";
+    bloque.innerHTML = `
+      <strong>${item.nombre}</strong>
+      <span>${item.precio} CUP</span>
+      <input type="number" min="0" value="${cantidadInicial}" data-name="${item.nombre}" data-price="${item.precio}" />
+    `;
+    contenedor.appendChild(bloque);
   });
 
   document.querySelectorAll("#envases-contenedor input[type='number']").forEach(input => {
