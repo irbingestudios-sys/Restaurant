@@ -31,8 +31,7 @@ form.addEventListener('submit', async (e) => {
     errorMessage.textContent = 'Error interno';
     return;
   }
-
-  const { data: perfil, error: perfilError } = await supabase.rpc('obtener_perfil_seguro');
+    const { data: perfil, error: perfilError } = await supabase.rpc('obtener_perfil_seguro');
   if (perfilError || !perfil || perfil.length === 0) {
     logEvent('error', 'Login', `Error al obtener perfil: ${perfilError?.message || 'Perfil vacío'}`);
     errorMessage.textContent = 'Error al obtener perfil';
