@@ -7,10 +7,7 @@
 // └────────────────────────────────────────────────────────────┘
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-const supabase = createClient(
-  "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
-);
+const supabase = createClient("https://qeqltwrkubtyrmgvgaai.supabase.co", "TU_API_KEY");
 
 let menu = [], envases = [];
 const cantidades = {}, cantidadesEnvases = {};
@@ -46,7 +43,6 @@ window.filtrarMenu = () => {
   const filtrado = seleccion === "todos" ? menu : menu.filter(item => item.categoria === seleccion);
   renderMenuEspecial(filtrado);
 };
-
 function renderMenuEspecial(lista) {
   const contenedor = document.getElementById("menu-especial");
   contenedor.innerHTML = "";
@@ -60,7 +56,7 @@ function renderMenuEspecial(lista) {
   for (const categoria in agrupado) {
     const grupo = document.createElement("div");
     grupo.className = "categoria-grupo";
-    grupo.innerHTML += `<h3>${categoria}</h3>
+    grupo.innerHTML += `<h3 class="titulo-seccion">${categoria}</h3>
       <div class="producto-lineal encabezado">
         <strong>Producto</strong><span>Precio</span><span>Descripción</span><span>Cantidad</span>
       </div>`;
@@ -70,7 +66,9 @@ function renderMenuEspecial(lista) {
         <div class="producto-lineal">
           <strong>${item.nombre}</strong>
           <span>${item.precio} CUP</span>
-          <button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">🛈</button>
+          <button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">
+            <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/info-icon.svg" alt="Descripción" />
+          </button>
           <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
         </div>`;
     });
@@ -172,10 +170,17 @@ window.toggleVentajasGrupo = () => {
   const bloque = document.getElementById("ventajasGrupo");
   bloque.style.display = bloque.style.display === "none" ? "block" : "none";
 };
-
 window.cancelar = () => {
   document.getElementById("confirmacion").style.display = "none";
 };
+
+window.cancelarResumen = () => {
+  document.getElementById("modal-resumen").style.display = "none";
+};
+
+document.getElementById("modal-close-resumen").addEventListener("click", () => {
+  document.getElementById("modal-resumen").style.display = "none";
+});
 
 window.enviarWhatsApp = () => {
   const numero = "5350971023";
@@ -191,7 +196,15 @@ window.enviarPedido = async () => {
   const telefono = document.getElementById("telefono").value.trim();
   const unirse = document.getElementById("unirseGrupo").checked;
 
-  if (!cliente || !piso || !apartamento) return alert("⚠️ Completa nombre, piso y apartamento");
+  if (!cliente || !piso || !apartamento) {
+    alert("⚠️ Completa nombre, piso y apartamento");
+    return;
+  }
+
+  if (telefono && !/^\d+$/.test(telefono)) {
+    alert("⚠️ El teléfono debe contener solo números");
+    return;
+  }
 
   const items = [];
   let resumenHTML = `<p><strong>Cliente:</strong> ${cliente}<br><strong>Piso:</strong> ${piso}<br><strong>Apartamento:</strong> ${apartamento}</p><ul>`;
@@ -222,11 +235,15 @@ window.enviarPedido = async () => {
     }
   }
 
-  if (items.length === 0) return alert("⚠️ Selecciona al menos un producto");
+  if (items.length === 0) {
+    alert("⚠️ Selecciona al menos un producto");
+    return;
+  }
 
   mensaje += `\nTotal: ${total} CUP`;
-  mensajeWhatsApp
-    const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
+  mensajeWhatsApp = mensaje;
+
+  const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
     p_cliente: cliente,
     p_piso: piso,
     p_apartamento: apartamento,
@@ -251,7 +268,6 @@ window.enviarPedido = async () => {
     <button onclick="cancelar()" class="btn-secundario">❌ Cancelar</button>
   `;
   document.getElementById("confirmacion").style.display = "block";
-  mensajeWhatsApp = mensaje;
 };
 
 window.revisarPedido = () => {
@@ -303,11 +319,3 @@ window.revisarPedido = () => {
   document.getElementById("modal-resumen").style.display = "flex";
   mensajeWhatsApp = mensaje;
 };
-
-window.cancelarResumen = () => {
-  document.getElementById("modal-resumen").style.display = "none";
-};
-
-document.getElementById("modal-close-resumen").addEventListener("click", () => {
-  document.getElementById("modal-resumen").style.display = "none";
-});
