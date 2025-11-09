@@ -10,14 +10,12 @@
 </head>
 <body>
   <div class="menu-container">
-    <!-- Logo y encabezado -->
     <header>
       <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/logo.png" alt="Logo La Casona de 17" class="logo-login" />
-      <h1>MENÚ ESPECIAL FOCSA</h1>
+      <h1 class="titulo-seccion">MENÚ ESPECIAL FOCSA</h1>
       <p>Clientes del Edificio FOCSA</p>
     </header>
 
-    <!-- Filtro por categoría -->
     <section>
       <label for="filtro"><strong>Filtrar por categoría:</strong></label>
       <select id="filtro" onchange="filtrarMenu()">
@@ -25,42 +23,37 @@
       </select>
     </section>
 
-    <!-- Menú especial -->
     <section>
-      <h2 style="text-transform: uppercase; color: #a52a2a;">Su Menú de Hoy</h2>
+      <h2 class="titulo-seccion">Su Menú de Hoy</h2>
       <div id="menu-especial" class="scrollable-menu"></div>
     </section>
 
-    <!-- Envases -->
     <section>
-      <h2 style="text-transform: uppercase; color: #a52a2a;">Envases</h2>
+      <h2 class="titulo-seccion">Envases</h2>
       <div id="envases-contenedor" class="scrollable-menu"></div>
     </section>
 
-    <!-- Resumen del pedido -->
     <section id="totales">
-      <h2 style="text-transform: uppercase; color: #a52a2a;">Resumen del Pedido</h2>
+      <h2 class="titulo-seccion">Resumen del Pedido</h2>
       <p>Total: <span id="total-cup">0</span> CUP</p>
       <p>Cantidad de ítems: <span id="total-items">0</span></p>
       <button id="btn-limpiar">Limpiar selección</button>
       <button onclick="revisarPedido()" class="btn-secundario">🕵️ Revisar pedido</button>
     </section>
 
-    <!-- Datos del cliente -->
     <section>
-      <h2 style="text-transform: uppercase; color: #a52a2a;">Datos del Cliente</h2>
-      <input type="text" id="cliente" placeholder="Nombre del cliente" />
-      <input type="text" id="piso" placeholder="Piso (ej. 14)" />
-      <input type="text" id="apartamento" placeholder="Apartamento (ej. 1405)" />
+      <h2 class="titulo-seccion">Datos del Cliente</h2>
+      <input type="text" id="cliente" placeholder="Nombre del cliente" required />
+      <input type="text" id="piso" placeholder="Piso (ej. 14)" required />
+      <input type="text" id="apartamento" placeholder="Apartamento (ej. 1405)" required />
       <input type="text" id="telefono" placeholder="Teléfono (opcional)" />
 
       <label>
         <input type="checkbox" id="unirseGrupo" />
         ¿Desea unirse al grupo de La Casona?
-        <span id="infoGrupo" style="cursor:pointer;">ℹ️</span>
+        <button class="btn-icono" onclick="toggleVentajasGrupo()">ℹ️</button>
       </label>
-      <div id="ventajasGrupo" style="display:none; margin-top:10px;">
-        <p><strong>Ventajas:</strong></p>
+      <div id="ventajasGrupo" class="acordeon" style="display:none;">
         <ul>
           <li>Promociones exclusivas</li>
           <li>Acceso anticipado a nuevos productos</li>
@@ -70,9 +63,8 @@
       </div>
     </section>
 
-    <!-- Confirmación -->
     <section id="confirmacion" style="display:none; margin-top:30px;">
-      <h2 style="text-transform: uppercase; color: #a52a2a;">Confirmación del Pedido</h2>
+      <h2 class="titulo-seccion">Confirmación del Pedido</h2>
       <div id="resumen"></div>
       <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
       <button onclick="cancelar()" class="btn-secundario">❌ Cancelar</button>
@@ -80,20 +72,20 @@
   </div>
 
   <!-- Modal de descripción -->
-  <div id="modal-descripcion" class="modal" style="display:none;">
+  <div id="modal-descripcion" class="modal" role="dialog" aria-label="Descripción del producto" style="display:none;">
     <div class="modal-content">
       <span id="modal-close">&times;</span>
-      <h3>Descripción del producto</h3>
+      <h3 class="titulo-seccion">Descripción del producto</h3>
       <p id="modal-texto"></p>
       <img id="modal-imagen" src="" alt="Imagen del producto" style="max-width:100%; margin-top:10px;" />
     </div>
   </div>
 
   <!-- Modal: Vista previa del pedido -->
-  <div id="modal-resumen" class="modal" style="display:none;">
+  <div id="modal-resumen" class="modal" role="dialog" aria-label="Vista previa del pedido" style="display:none;">
     <div class="modal-content">
       <span id="modal-close-resumen">&times;</span>
-      <h3 style="color:#a52a2a;">🧾 Vista previa del pedido</h3>
+      <h3 class="titulo-seccion">🧾 Vista previa del pedido</h3>
       <div id="contenido-resumen"></div>
       <div style="margin-top:20px;">
         <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
