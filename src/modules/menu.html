@@ -14,15 +14,15 @@
     <h1>🍽️ Módulo de Menú</h1>
     <h2 id="bienvenida">Cargando perfil...</h2>
 
-    <!-- ── Grupo: Acciones principales ───────────────────────────── -->
+    <!-- Acciones principales -->
     <div id="acciones">
-  <button id="btnCrear">➕ Crear nuevo producto</button>
-  <button id="btnExportarMenu">📤 Exportar menú</button>
-  <input type="file" id="inputImportarMenu" accept=".csv" style="display:none" />
-  <button id="btnImportarMenu">📥 Importar menú</button>
-</div>
+      <button id="btnCrear">➕ Crear nuevo producto</button>
+      <button id="btnExportarMenu">📤 Exportar menú</button>
+      <input type="file" id="inputImportarMenu" accept=".csv" style="display:none" />
+      <button id="btnImportarMenu">📥 Importar menú</button>
+    </div>
 
-    <!-- ── Grupo: Filtros de búsqueda ────────────────────────────── -->
+    <!-- Filtros de búsqueda -->
     <div id="filtros">
       <select id="filtro-destino">
         <option value="">Todos los destinos</option>
@@ -41,18 +41,13 @@
       </select>
     </div>
 
-    <!-- ── Grupo: Resumen por categoría, destino y área ──────────── -->
-    <div id="resumen" class="resumen-lineal">
-      <!-- Se llenará dinámicamente por JS -->
-    </div>
+    <!-- Resumen por categoría, destino y área -->
+    <div id="resumen" class="resumen-lineal"></div>
 
-    <!-- ── Grupo: Contenedor de productos agrupados ──────────────── -->
-    <div id="contenedor-productos">
-      <!-- Se llenará dinámicamente por JS -->
-    </div>
+    <!-- Contenedor de productos agrupados -->
+    <div id="contenedor-productos"></div>
   </main>
-
-  <!-- ── Modal: Creación múltiple ───────────────────────────────── -->
+    <!-- Modal: Creación múltiple -->
   <div id="modal-producto" class="modal">
     <div class="modal-content">
       <h2>Crear productos</h2>
@@ -76,7 +71,7 @@
     </div>
   </div>
 
-  <!-- ── Modal: Detalles del producto ───────────────────────────── -->
+  <!-- Modal: Detalles del producto -->
   <div id="modal-detalle" class="modal">
     <div class="modal-content">
       <h3>Detalles del producto</h3>
