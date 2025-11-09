@@ -210,3 +210,23 @@ header p {
   cursor: pointer;
   color: #a52a2a;
 }
+/* style-focsa.css */
+
+/* Responsivo solo para FOCSA */
+@media (max-width: 768px) {
+  .focsa-header {
+    text-align: center;
+    font-size: 1.2rem;
+  }
+
+  .focsa-resumen {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fafafa;
+    border-top: 1px solid #ddd;
+    padding: 16px;
+    font-size: 1rem;
+  }
+}
