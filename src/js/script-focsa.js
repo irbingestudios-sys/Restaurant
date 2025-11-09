@@ -62,13 +62,15 @@ function renderMenuEspecial(lista) {
       </div>`;
 
     agrupado[categoria].forEach(item => {
-    grupo.innerHTML += `
+   grupo.innerHTML += `
   <div class="producto-lineal">
-    <strong>${item.nombre}</strong>
-    <span>${item.precio} CUP</span>
-    <button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">
-      <img src="../assets/info-icon.svg" alt="Descripción" />
-    </button>
+    <div class="producto-nombre">
+      <strong>${item.nombre}</strong>
+      <button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">
+        <img src="../assets/info-icon.svg" alt="Descripción" />
+      </button>
+    </div>
+    <span class="producto-precio">${item.precio} CUP</span>
     <input type="number" min="0" value="${cantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
   </div>`;
     });
@@ -97,7 +99,7 @@ async function cargarEnvases() {
   envases = data;
 
   const contenedor = document.getElementById("envases-contenedor");
-  contenedor.innerHTML = ""; // Eliminamos encabezado tipo tabla
+  contenedor.innerHTML = "";
 
   envases.forEach((item, index) => {
     const cantidadInicial = index === 0 ? 1 : 0;
@@ -106,8 +108,10 @@ async function cargarEnvases() {
     const bloque = document.createElement("div");
     bloque.className = "producto-lineal";
     bloque.innerHTML = `
-      <strong>${item.nombre}</strong>
-      <span>${item.precio} CUP</span>
+      <div class="producto-nombre">
+        <strong>${item.nombre}</strong>
+      </div>
+      <span class="producto-precio">${item.precio} CUP</span>
       <input type="number" min="0" value="${cantidadInicial}" data-name="${item.nombre}" data-price="${item.precio}" />
     `;
     contenedor.appendChild(bloque);
