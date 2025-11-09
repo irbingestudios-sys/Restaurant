@@ -151,6 +151,25 @@ label {
   border-radius: 4px;
   width: 100%;
 }
+/* styles-base.css */
+
+/* Ajuste global para móviles */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+    padding: 0 8px;
+  }
+
+  .menu-container {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .menu-item {
+    width: 100%;
+    margin-bottom: 12px;
+  }
+}
 
 /* === Referencias técnicas === */
 /* Usado por: login.html, admin.html, menu.html, cliente.html */
