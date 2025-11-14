@@ -28,17 +28,20 @@ header {
   text-align: center;
   margin-bottom: 1rem;
 }
+
 .logo-login {
   width: 96px;
   max-width: 160px;
   margin: 0 auto 1rem;
   display: block;
 }
+
 header h1 {
   font-size: 1.8rem;
   color: var(--color-acento);
   margin-bottom: 0.25rem;
 }
+
 header p {
   font-size: 1rem;
   color: #555;
@@ -73,18 +76,42 @@ header p {
 
 .producto-lineal {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
   padding: 10px;
   border-bottom: 1px solid #eee;
   flex-wrap: wrap;
 }
 
+.producto-izquierda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 200px;
+  text-align: justify;
+}
+
+.producto-derecha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+  justify-content: flex-end;
+}
+
 .producto-lineal strong {
   font-size: 1rem;
   font-weight: 600;
   color: #333;
+}
+
+.producto-lineal span {
+  font-size: 0.95rem;
+  color: #555;
+  min-width: 60px;
+  text-align: right;
 }
 
 .producto-lineal input[type="number"] {
@@ -106,6 +133,7 @@ header p {
   font-size: 0.9rem;
   margin-bottom: 8px;
 }
+
 .btn-secundario:hover {
   background-color: var(--color-secundario);
 }
@@ -118,10 +146,12 @@ header p {
   color: var(--color-acento);
   padding: 4px;
 }
+
 .btn-icono:hover {
   color: var(--color-secundario);
   transform: scale(1.1);
 }
+
 .btn-icono img {
   width: 18px;
   height: 18px;
@@ -144,6 +174,7 @@ header p {
   margin-top: 10px;
   animation: fadeIn 0.3s ease-in-out;
 }
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-5px); }
   to { opacity: 1; transform: translateY(0); }
@@ -159,6 +190,7 @@ header p {
   align-items: center;
   z-index: 999;
 }
+
 .modal-content {
   background: #fff;
   padding: 20px;
@@ -168,6 +200,7 @@ header p {
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   position: relative;
 }
+
 #modal-close,
 #modal-close-resumen {
   position: absolute;
@@ -187,47 +220,45 @@ header p {
   border-top: 1px solid #ddd;
   background-color: #fff;
 }
+
 .footer-redes a img {
   width: 28px;
   height: 28px;
   transition: transform 0.2s ease;
 }
+
 .footer-redes a:hover img {
   transform: scale(1.2);
 }
 
+/* === Adaptación móvil === */
 @media (max-width: 768px) {
   .menu-container {
     padding: 1rem;
   }
 
   .producto-lineal {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
   }
 
-.producto-lineal input[type="number"] {
-  width: 80px;
-  padding: 6px;
-  font-size: 0.95rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  text-align: right;
-}
-  .producto-nombre {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  min-width: 200px;
-  text-align: justify;
-}
-.producto-precio {
-  font-size: 0.95rem;
-  color: #555;
-  min-width: 80px;
-  text-align: right;
-}
- .btn-secundario,
+  .producto-izquierda,
+  .producto-derecha {
+    width: 100%;
+    justify-content: space-between;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .producto-derecha span,
+  .producto-derecha input {
+    flex: 1;
+    min-width: 40%;
+    text-align: right;
+  }
+
+  .btn-secundario,
   .btn-icono {
     width: 100%;
     font-size: 1rem;
@@ -258,48 +289,23 @@ header p {
   .scrollable-menu {
     max-height: 300px;
   }
-  .producto-izquierda {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex: 1;
-  min-width: 200px;
-  text-align: justify;
-}
 
-.producto-derecha {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 160px;
-  justify-content: flex-end;
-}
   .resumen-lista {
-  margin-top: 1rem;
-  border-top: 1px solid #ddd;
-  padding-top: 1rem;
-}
+    margin-top: 1rem;
+    border-top: 1px solid #ddd;
+    padding-top: 1rem;
+  }
 
-.producto-derecha span {
-  font-size: 0.95rem;
-  color: #555;
-  min-width: 60px;
-  text-align: right;
-}
-  .producto-lineal {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
+  .resumen-lista .producto-lineal {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
 
-.producto-izquierda,
-.producto-derecha {
-  width: 100%;
-  justify-content: space-between;
-}
-
-.producto-derecha {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  .resumen-lista .producto-derecha {
+    width: 100%;
+    justify-content: space-between;
+    display: flex;
+    flex-wrap: wrap;
+  }
 }
