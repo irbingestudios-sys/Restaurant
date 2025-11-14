@@ -40,7 +40,22 @@
       <button id="btn-limpiar">Limpiar selección</button>
       <button onclick="revisarPedido()" class="btn-secundario">🕵️ Revisar pedido</button>
     </section>
+    
+<!-- Seguimiento del pedido -->
+<section id="seguimiento-pedido" style="display:none;">
+  <h2 class="titulo-seccion">📦 Seguimiento del Pedido</h2>
+  <div class="estado-lineal">
+    <strong>Estado actual:</strong> <span id="estado-actual">🕓 Pendiente</span>
+  </div>
 
+  <button id="btn-entregado" class="btn-secundario">✅ Marcar como entregado</button>
+
+  <div id="bloque-criterio" style="display:none; margin-top:20px;">
+    <h3 class="titulo-seccion">📝 Opinión del Cliente</h3>
+    <textarea id="criterio" rows="3" placeholder="¿Cómo estuvo su pedido?" required></textarea>
+    <button id="btn-guardar-criterio" class="btn-secundario">Guardar criterio</button>
+  </div>
+</section>
     <section>
       <h2 class="titulo-seccion">Datos del Cliente</h2>
       <input type="text" id="cliente" placeholder="Nombre del cliente" required />
