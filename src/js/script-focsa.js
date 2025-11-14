@@ -273,6 +273,7 @@ window.enviarPedido = async () => {
     <button onclick="cancelar()" class="btn-secundario">❌ Cancelar</button>
   `;
   document.getElementById("confirmacion").style.display = "block";
+  mostrarSeguimientoPedido();
 };
 
 window.revisarPedido = () => {
