@@ -309,3 +309,21 @@ header p {
     flex-wrap: wrap;
   }
 }
+.estado-lineal {
+  font-size: 1rem;
+  padding: 10px;
+  background-color: #fdfdfd;
+  border-left: 4px solid var(--color-acento);
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+#criterio {
+  width: 100%;
+  padding: 8px;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  resize: vertical;
+  margin-bottom: 10px;
+}
