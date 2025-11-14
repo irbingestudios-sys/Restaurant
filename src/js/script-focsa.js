@@ -369,12 +369,95 @@ document.getElementById("btn-entregado").addEventListener("click", () => {
   document.getElementById("bloque-criterio").style.display = "block";
 });
 
-document.getElementById("btn-guardar-criterio").addEventListener("click", () => {
-  const criterio = document.getElementById("criterio").value.trim();
-  if (criterio) {
-    console.log("📝 Criterio del cliente:", criterio);
-    alert("Gracias por su opinión");
-  } else {
-    alert("Criterio guardado (vacío)");
+// === Seguimiento del pedido FOCSA ===
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const supabase = createClient("https://qeqltwrkubtyrmgvgaai.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...");
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("📦 DOM cargado, iniciando seguimiento...");
+
+  const pedidoId = localStorage.getItem("pedido_id");
+  const usuarioId = localStorage.getItem("usuario_id");
+
+  const estadoActual = document.getElementById("estado-actual");
+  const btnEntregado = document.getElementById("btn-entregado");
+  const bloqueCriterio = document.getElementById("bloque-criterio");
+
+  if (!pedidoId) {
+    console.warn("⚠️ No se encontró pedido_id en localStorage");
+    return;
+  }
+
+  if (!estadoActual) {
+    console.error("❌ Elemento #estado-actual no encontrado");
+    return;
+  }
+
+  // Función para consultar estado actual desde Supabase
+  async function actualizarSeguimiento() {
+    console.log("🔄 Consultando estado del pedido:", pedidoId);
+
+    const { data, error } = await supabase
+      .from("cocina_pedido")
+      .select("estado")
+      .eq("pedido_id", pedidoId)
+      .single();
+
+    if (error || !data) {
+      console.error("❌ Error al obtener estado:", error);
+      estadoActual.textContent = "⚠️ Estado desconocido";
+      return;
+    }
+
+    switch (data.estado) {
+      case "pendiente":
+        estadoActual.textContent = "🕓 Pendiente";
+        break;
+      case "en cocina":
+        estadoActual.textContent = "🟡 En cocina";
+        break;
+      case "listo":
+        estadoActual.textContent = "🟢 Listo para entregar";
+        break;
+      case "entregado":
+        estadoActual.textContent = "✅ Entregado";
+        if (btnEntregado) btnEntregado.style.display = "none";
+        if (bloqueCriterio) bloqueCriterio.style.display = "block";
+        break;
+      default:
+        estadoActual.textContent = "⚠️ Estado desconocido";
+    }
+
+    console.log("📌 Estado actual:", data.estado);
+  }
+
+  // Ejecutar al cargar
+  actualizarSeguimiento();
+
+  // Actualizar cada 10 segundos
+  setInterval(actualizarSeguimiento, 10000);
+
+  // Botón para marcar como entregado
+  if (btnEntregado) {
+    btnEntregado.addEventListener("click", async () => {
+      console.log("📤 Marcando pedido como entregado...");
+
+      const { error } = await supabase.rpc("actualizar_estado_pedido", {
+        p_id: pedidoId,
+        nuevo_estado: "entregado",
+        usuario: usuarioId
+      });
+
+      if (error) {
+        console.error("❌ Error al actualizar estado:", error);
+        alert("No se pudo marcar como entregado");
+      } else {
+        console.log("✅ Estado actualizado a entregado");
+        estadoActual.textContent = "✅ Entregado";
+        btnEntregado.style.display = "none";
+        bloqueCriterio.style.display = "block";
+      }
+    });
   }
 });
