@@ -6,14 +6,22 @@
 // │ Fecha: 2025-11-08                                          │
 // └────────────────────────────────────────────────────────────┘
 
+//SECCIÓN 1 — Supabase y variables globale
+// === Supabase FOCSA ===
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-const supabase = createClient("https://qeqltwrkubtyrmgvgaai.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw");
+
+const supabase = createClient(
+  "https://qeqltwrkubtyrmgvgaai.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
+);
 
 let menu = [], envases = [];
 const cantidades = {}, cantidadesEnvases = {};
 let mensajeWhatsApp = "";
 
+//SECCIÓN 2 — Carga de menú y envase
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("📦 DOM cargado");
   cargarMenuEspecial();
   cargarEnvases();
 });
@@ -43,22 +51,19 @@ window.filtrarMenu = () => {
   const filtrado = seleccion === "todos" ? menu : menu.filter(item => item.categoria === seleccion);
   renderMenuEspecial(filtrado);
 };
+
 function renderMenuEspecial(lista) {
   const contenedor = document.getElementById("menu-especial");
   contenedor.innerHTML = "";
-
   const agrupado = {};
   lista.forEach(item => {
     if (!agrupado[item.categoria]) agrupado[item.categoria] = [];
     agrupado[item.categoria].push(item);
   });
-
   for (const categoria in agrupado) {
     const grupo = document.createElement("div");
     grupo.className = "categoria-grupo";
-
     grupo.innerHTML += `<h3 class="titulo-seccion">${categoria}</h3>`;
-
     agrupado[categoria].forEach(item => {
       grupo.innerHTML += `
         <div class="producto-lineal">
@@ -74,10 +79,8 @@ function renderMenuEspecial(lista) {
           </div>
         </div>`;
     });
-
     contenedor.appendChild(grupo);
   }
-
   document.querySelectorAll("#menu-especial input[type='number']").forEach(input => {
     input.addEventListener("input", () => {
       cantidades[input.dataset.name] = parseInt(input.value) || 0;
@@ -94,31 +97,23 @@ async function cargarEnvases() {
     .eq("disponible", true)
     .gt("stock", 0)
     .order("precio", { ascending: true });
-
   if (error) return console.error("❌ Error al cargar envases:", error);
   envases = data;
-
   const contenedor = document.getElementById("envases-contenedor");
   contenedor.innerHTML = "";
-
   envases.forEach((item, index) => {
     const cantidadInicial = index === 0 ? 1 : 0;
     cantidadesEnvases[item.nombre] = cantidadInicial;
-
     const bloque = document.createElement("div");
     bloque.className = "producto-lineal";
     bloque.innerHTML = `
-      <div class="producto-izquierda">
-        <strong>${item.nombre}</strong>
-      </div>
+      <div class="producto-izquierda"><strong>${item.nombre}</strong></div>
       <div class="producto-derecha">
         <span>${item.precio} CUP</span>
         <input type="number" min="0" value="${cantidadInicial}" data-name="${item.nombre}" data-price="${item.precio}" />
-      </div>
-    `;
+      </div>`;
     contenedor.appendChild(bloque);
   });
-
   document.querySelectorAll("#envases-contenedor input[type='number']").forEach(input => {
     input.addEventListener("input", () => {
       cantidadesEnvases[input.dataset.name] = parseInt(input.value) || 0;
@@ -126,7 +121,7 @@ async function cargarEnvases() {
     });
   });
 }
-
+//SECCIÓN 3 — Totales, descripción y eventos del pedidos
 function calcularTotales() {
   let total = 0, cantidad = 0;
 
@@ -175,6 +170,7 @@ window.toggleVentajasGrupo = () => {
   const bloque = document.getElementById("ventajasGrupo");
   bloque.style.display = bloque.style.display === "none" ? "block" : "none";
 };
+
 window.cancelar = () => {
   document.getElementById("confirmacion").style.display = "none";
 };
@@ -186,6 +182,80 @@ window.cancelarResumen = () => {
 document.getElementById("modal-close-resumen").addEventListener("click", () => {
   document.getElementById("modal-resumen").style.display = "none";
 });
+
+//SECCIÓN 4 — Revisar y enviar pedidos
+window.revisarPedido = () => {
+  const cliente = document.getElementById("cliente").value.trim();
+  const piso = document.getElementById("piso").value.trim();
+  const apartamento = document.getElementById("apartamento").value.trim();
+
+  if (!cliente || !piso || !apartamento) {
+    alert("⚠️ Completa nombre, piso y apartamento antes de revisar el pedido");
+    return;
+  }
+
+  const items = [];
+  let total = 0;
+  let html = `
+    <p><strong>Cliente:</strong> ${cliente}<br>
+    <strong>Piso:</strong> ${piso}<br>
+    <strong>Apartamento:</strong> ${apartamento}</p>
+    <div class="resumen-lista">
+  `;
+
+  for (const nombre in cantidades) {
+    const cant = cantidades[nombre];
+    const item = menu.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      const subtotal = cant * item.precio;
+      items.push({ nombre, cantidad: cant, subtotal });
+      total += subtotal;
+      html += `
+        <div class="producto-lineal">
+          <div class="producto-izquierda"><strong>${nombre}</strong></div>
+          <div class="producto-derecha">
+            <span>${item.precio} CUP</span>
+            <span>x${cant}</span>
+            <span>= ${subtotal} CUP</span>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  for (const nombre in cantidadesEnvases) {
+    const cant = cantidadesEnvases[nombre];
+    const item = envases.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      const subtotal = cant * item.precio;
+      items.push({ nombre, cantidad: cant, subtotal });
+      total += subtotal;
+      html += `
+        <div class="producto-lineal">
+          <div class="producto-izquierda"><strong>${nombre}</strong></div>
+          <div class="producto-derecha">
+            <span>${item.precio} CUP</span>
+            <span>x${cant}</span>
+            <span>= ${subtotal} CUP</span>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  if (items.length === 0) {
+    alert("⚠️ No has seleccionado ningún producto");
+    return;
+  }
+
+  html += `</div><p><strong>Total:</strong> ${total} CUP</p>`;
+  document.getElementById("contenido-resumen").innerHTML = html;
+  document.getElementById("modal-resumen").style.display = "flex";
+
+  mensajeWhatsApp = `Pedido para: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\n\n` +
+    items.map(i => `- ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n") +
+    `\n\nTotal: ${total} CUP`;
+};
 
 window.enviarWhatsApp = () => {
   const numero = "5350971023";
@@ -265,6 +335,7 @@ window.enviarPedido = async () => {
   }
 
   console.log("✅ Pedido registrado:", data);
+  localStorage.setItem("pedido_id", data.pedido_id);
   resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
   document.getElementById("resumen").innerHTML = `
     <h3 class="titulo-seccion">Resumen detallado</h3>
@@ -275,104 +346,13 @@ window.enviarPedido = async () => {
   document.getElementById("confirmacion").style.display = "block";
   mostrarSeguimientoPedido();
 };
-
-window.revisarPedido = () => {
-  const cliente = document.getElementById("cliente").value.trim();
-  const piso = document.getElementById("piso").value.trim();
-  const apartamento = document.getElementById("apartamento").value.trim();
-
-  if (!cliente || !piso || !apartamento) {
-    alert("⚠️ Completa nombre, piso y apartamento antes de revisar el pedido");
-    return;
-  }
-
-  const items = [];
-  let total = 0;
-
-  let html = `
-    <p><strong>Cliente:</strong> ${cliente}<br>
-    <strong>Piso:</strong> ${piso}<br>
-    <strong>Apartamento:</strong> ${apartamento}</p>
-    <div class="resumen-lista">
-  `;
-
-  for (const nombre in cantidades) {
-    const cant = cantidades[nombre];
-    const item = menu.find(p => p.nombre === nombre);
-    if (item && cant > 0) {
-      const subtotal = cant * item.precio;
-      items.push({ nombre, cantidad: cant, subtotal });
-      total += subtotal;
-
-      html += `
-        <div class="producto-lineal">
-          <div class="producto-izquierda">
-            <strong>${nombre}</strong>
-          </div>
-          <div class="producto-derecha">
-            <span>${item.precio} CUP</span>
-            <span>x${cant}</span>
-            <span>= ${subtotal} CUP</span>
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  for (const nombre in cantidadesEnvases) {
-    const cant = cantidadesEnvases[nombre];
-    const item = envases.find(p => p.nombre === nombre);
-    if (item && cant > 0) {
-      const subtotal = cant * item.precio;
-      items.push({ nombre, cantidad: cant, subtotal });
-      total += subtotal;
-
-      html += `
-        <div class="producto-lineal">
-          <div class="producto-izquierda">
-            <strong>${nombre}</strong>
-          </div>
-          <div class="producto-derecha">
-            <span>${item.precio} CUP</span>
-            <span>x${cant}</span>
-            <span>= ${subtotal} CUP</span>
-          </div>
-        </div>
-      `;
-    }
-  }
-
-  if (items.length === 0) {
-    alert("⚠️ No has seleccionado ningún producto");
-    return;
-  }
-
-  html += `</div><p><strong>Total:</strong> ${total} CUP</p>`;
-  document.getElementById("contenido-resumen").innerHTML = html;
-  document.getElementById("modal-resumen").style.display = "flex";
-
-  mensajeWhatsApp = `Pedido para: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\n\n` +
-    items.map(i => `- ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n") +
-    `\n\nTotal: ${total} CUP`;
-};
+//SECCIÓN 5 — Seguimiento del pedido y guardar criterio
 function mostrarSeguimientoPedido() {
   document.getElementById("menu-especial").style.display = "none";
   document.getElementById("envases-contenedor").style.display = "none";
   document.getElementById("totales").style.display = "none";
   document.getElementById("seguimiento-pedido").style.display = "block";
-  document.getElementById("estado-actual").textContent = "🟡 En cocina";
 }
-
-document.getElementById("btn-entregado").addEventListener("click", () => {
-  document.getElementById("estado-actual").textContent = "✅ Entregado";
-  document.getElementById("btn-entregado").style.display = "none";
-  document.getElementById("bloque-criterio").style.display = "block";
-});
-
-// === Seguimiento del pedido FOCSA ===
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-const supabase = createClient("https://qeqltwrkubtyrmgvgaai.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...");
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("📦 DOM cargado, iniciando seguimiento...");
@@ -383,6 +363,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const estadoActual = document.getElementById("estado-actual");
   const btnEntregado = document.getElementById("btn-entregado");
   const bloqueCriterio = document.getElementById("bloque-criterio");
+  const btnGuardar = document.getElementById("btn-guardar-criterio");
+  const criterioInput = document.getElementById("criterio");
 
   if (!pedidoId) {
     console.warn("⚠️ No se encontró pedido_id en localStorage");
@@ -393,40 +375,36 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("❌ Elemento #estado-actual no encontrado");
     return;
   }
-// === Guardar criterio del cliente ===
-const btnGuardar = document.getElementById("btn-guardar-criterio");
-const criterioInput = document.getElementById("criterio");
 
-if (btnGuardar && criterioInput) {
-  btnGuardar.addEventListener("click", async () => {
-    const criterio = criterioInput.value.trim();
-    const pedidoId = localStorage.getItem("pedido_id");
+  // === Guardar criterio del cliente ===
+  if (btnGuardar && criterioInput) {
+    btnGuardar.addEventListener("click", async () => {
+      const criterio = criterioInput.value.trim();
+      if (!pedidoId) {
+        console.warn("⚠️ No se encontró pedido_id en localStorage");
+        alert("No se puede guardar el criterio sin un pedido activo");
+        return;
+      }
 
-    if (!pedidoId) {
-      console.warn("⚠️ No se encontró pedido_id en localStorage");
-      alert("No se puede guardar el criterio sin un pedido activo");
-      return;
-    }
+      const { error } = await supabase.rpc("guardar_criterio_cliente", {
+        pedido: pedidoId,
+        criterio: criterio || "Sin comentario"
+      });
 
-    const { error } = await supabase.rpc("guardar_criterio_cliente", {
-      pedido: pedidoId,
-      criterio: criterio || "Sin comentario"
+      if (error) {
+        console.error("❌ Error al guardar criterio:", error);
+        alert("Hubo un problema al guardar el criterio");
+      } else {
+        console.log("📝 Criterio guardado correctamente:", criterio);
+        alert("Gracias por su opinión");
+        criterioInput.value = "";
+      }
     });
+  } else {
+    console.warn("⚠️ Elementos #btn-guardar-criterio o #criterio no encontrados");
+  }
 
-    if (error) {
-      console.error("❌ Error al guardar criterio:", error);
-      alert("Hubo un problema al guardar el criterio");
-    } else {
-      console.log("📝 Criterio guardado correctamente:", criterio);
-      alert("Gracias por su opinión");
-      criterioInput.value = "";
-    }
-  });
-} else {
-  console.warn("⚠️ Elementos #btn-guardar-criterio o #criterio no encontrados");
-}
-  
-  // Función para consultar estado actual desde Supabase
+  // === Consulta del estado actual ===
   async function actualizarSeguimiento() {
     console.log("🔄 Consultando estado del pedido:", pedidoId);
 
@@ -464,13 +442,10 @@ if (btnGuardar && criterioInput) {
     console.log("📌 Estado actual:", data.estado);
   }
 
-  // Ejecutar al cargar
   actualizarSeguimiento();
-
-  // Actualizar cada 10 segundos
   setInterval(actualizarSeguimiento, 10000);
 
-  // Botón para marcar como entregado
+  // === Marcar como entregado ===
   if (btnEntregado) {
     btnEntregado.addEventListener("click", async () => {
       console.log("📤 Marcando pedido como entregado...");
