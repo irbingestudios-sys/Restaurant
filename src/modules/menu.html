@@ -70,7 +70,18 @@
       </div>
     </div>
   </div>
-
+<section id="seguimiento-pedido" style="display:none;">
+  <h2 class="titulo-seccion">📦 Seguimiento del pedido</h2>
+  <div id="estado-pedido" class="estado-lineal">
+    <span id="estado-actual">🟡 En cocina</span>
+  </div>
+  <button id="btn-entregado" class="btn-secundario">✅ Marcar como entregado</button>
+  <div id="bloque-criterio" style="margin-top:1rem; display:none;">
+    <label for="criterio">¿Cómo le llegó el pedido?</label>
+    <textarea id="criterio" rows="3" placeholder="Opcional: calidad, presentación, tiempo..."></textarea>
+    <button id="btn-guardar-criterio" class="btn-secundario">💾 Guardar criterio</button>
+  </div>
+</section>
   <!-- Modal: Detalles del producto -->
   <div id="modal-detalle" class="modal">
     <div class="modal-content">
