@@ -393,7 +393,39 @@ document.addEventListener("DOMContentLoaded", () => {
     console.error("❌ Elemento #estado-actual no encontrado");
     return;
   }
+// === Guardar criterio del cliente ===
+const btnGuardar = document.getElementById("btn-guardar-criterio");
+const criterioInput = document.getElementById("criterio");
 
+if (btnGuardar && criterioInput) {
+  btnGuardar.addEventListener("click", async () => {
+    const criterio = criterioInput.value.trim();
+    const pedidoId = localStorage.getItem("pedido_id");
+
+    if (!pedidoId) {
+      console.warn("⚠️ No se encontró pedido_id en localStorage");
+      alert("No se puede guardar el criterio sin un pedido activo");
+      return;
+    }
+
+    const { error } = await supabase.rpc("guardar_criterio_cliente", {
+      pedido: pedidoId,
+      criterio: criterio || "Sin comentario"
+    });
+
+    if (error) {
+      console.error("❌ Error al guardar criterio:", error);
+      alert("Hubo un problema al guardar el criterio");
+    } else {
+      console.log("📝 Criterio guardado correctamente:", criterio);
+      alert("Gracias por su opinión");
+      criterioInput.value = "";
+    }
+  });
+} else {
+  console.warn("⚠️ Elementos #btn-guardar-criterio o #criterio no encontrados");
+}
+  
   // Función para consultar estado actual desde Supabase
   async function actualizarSeguimiento() {
     console.log("🔄 Consultando estado del pedido:", pedidoId);
