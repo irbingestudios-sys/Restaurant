@@ -354,3 +354,26 @@ window.revisarPedido = () => {
     items.map(i => `- ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n") +
     `\n\nTotal: ${total} CUP`;
 };
+function mostrarSeguimientoPedido() {
+  document.getElementById("menu-especial").style.display = "none";
+  document.getElementById("envases-contenedor").style.display = "none";
+  document.getElementById("totales").style.display = "none";
+  document.getElementById("seguimiento-pedido").style.display = "block";
+  document.getElementById("estado-actual").textContent = "🟡 En cocina";
+}
+
+document.getElementById("btn-entregado").addEventListener("click", () => {
+  document.getElementById("estado-actual").textContent = "✅ Entregado";
+  document.getElementById("btn-entregado").style.display = "none";
+  document.getElementById("bloque-criterio").style.display = "block";
+});
+
+document.getElementById("btn-guardar-criterio").addEventListener("click", () => {
+  const criterio = document.getElementById("criterio").value.trim();
+  if (criterio) {
+    console.log("📝 Criterio del cliente:", criterio);
+    alert("Gracias por su opinión");
+  } else {
+    alert("Criterio guardado (vacío)");
+  }
+});
