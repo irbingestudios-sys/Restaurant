@@ -186,14 +186,19 @@ document.getElementById("modal-close-resumen").addEventListener("click", () => {
 
 //SECCIÓN 4 — Revisar y enviar pedidos
 window.revisarPedido = () => {
+  console.log("🔍 Iniciando revisión del pedido...");
+
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
   const apartamento = document.getElementById("apartamento").value.trim();
 
   if (!cliente || !piso || !apartamento) {
+    console.warn("⚠️ Datos incompletos: cliente, piso o apartamento faltan");
     alert("⚠️ Completa nombre, piso y apartamento antes de revisar el pedido");
     return;
   }
+
+  console.log("✅ Datos del cliente:", { cliente, piso, apartamento });
 
   const items = [];
   let total = 0;
@@ -245,6 +250,7 @@ window.revisarPedido = () => {
   }
 
   if (items.length === 0) {
+    console.warn("⚠️ No se seleccionaron productos");
     alert("⚠️ No has seleccionado ningún producto");
     return;
   }
@@ -256,6 +262,8 @@ window.revisarPedido = () => {
   mensajeWhatsApp = `Pedido para: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\n\n` +
     items.map(i => `- ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n") +
     `\n\nTotal: ${total} CUP`;
+
+  console.log("📦 Pedido listo para revisión:", { items, total });
 };
 
 window.enviarWhatsApp = () => {
@@ -266,6 +274,8 @@ window.enviarWhatsApp = () => {
 };
 
 window.enviarPedido = async () => {
+  console.log("📤 Enviando pedido...");
+
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
   const apartamento = document.getElementById("apartamento").value.trim();
@@ -273,18 +283,18 @@ window.enviarPedido = async () => {
   const unirse = document.getElementById("unirseGrupo").checked;
 
   if (!cliente || !piso || !apartamento) {
+    console.warn("⚠️ Datos incompletos para envío");
     alert("⚠️ Completa nombre, piso y apartamento");
     return;
   }
 
   if (telefono && !/^\d+$/.test(telefono)) {
+    console.warn("⚠️ Teléfono inválido:", telefono);
     alert("⚠️ El teléfono debe contener solo números");
     return;
   }
 
   const items = [];
-  let resumenHTML = `<p><strong>Cliente:</strong> ${cliente}<br><strong>Piso:</strong> ${piso}<br><strong>Apartamento:</strong> ${apartamento}</p><ul>`;
-  let mensaje = `Pedido para: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\n\n`;
   let total = 0;
 
   for (const nombre in cantidades) {
@@ -293,8 +303,6 @@ window.enviarPedido = async () => {
     if (item && cant > 0) {
       const subtotal = cant * item.precio;
       items.push({ nombre, cantidad: cant, subtotal });
-      resumenHTML += `<li>${nombre} x${cant} = ${subtotal} CUP</li>`;
-      mensaje += `- ${nombre} x${cant} = ${subtotal} CUP\n`;
       total += subtotal;
     }
   }
@@ -305,19 +313,19 @@ window.enviarPedido = async () => {
     if (item && cant > 0) {
       const subtotal = cant * item.precio;
       items.push({ nombre, cantidad: cant, subtotal });
-      resumenHTML += `<li>${nombre} x${cant} = ${subtotal} CUP</li>`;
-      mensaje += `- ${nombre} x${cant} = ${subtotal} CUP\n`;
       total += subtotal;
     }
   }
 
   if (items.length === 0) {
+    console.warn("⚠️ Pedido vacío");
     alert("⚠️ Selecciona al menos un producto");
     return;
   }
 
-  mensaje += `\nTotal: ${total} CUP`;
-  mensajeWhatsApp = mensaje;
+  console.log("📦 Datos del pedido:", {
+    cliente, piso, apartamento, telefono, unirse, items, total
+  });
 
   const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
     p_cliente: cliente,
@@ -335,15 +343,16 @@ window.enviarPedido = async () => {
     return;
   }
 
-  console.log("✅ Pedido registrado:", data);
-  localStorage.setItem("pedido_id", data.pedido_id);
-  resumenHTML += `</ul><p><strong>Total:</strong> ${total} CUP</p>`;
-  document.getElementById("resumen").innerHTML = `
-    <h3 class="titulo-seccion">Resumen detallado</h3>
-    ${resumenHTML}
-    <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
-    <button onclick="cancelar()" class="btn-secundario">❌ Cancelar</button>
-  `;
+  const pedidoId = data?.pedido_id;
+  if (!pedidoId) {
+    console.warn("⚠️ No se devolvió pedido_id");
+    alert("Pedido registrado pero sin ID");
+    return;
+  }
+
+  console.log("✅ Pedido registrado correctamente:", pedidoId);
+  localStorage.setItem("pedido_id", pedidoId);
+
   document.getElementById("confirmacion").style.display = "block";
   mostrarSeguimientoPedido();
 };
