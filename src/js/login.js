@@ -57,7 +57,7 @@ form.addEventListener('submit', async (e) => {
       window.location.href = './src/modules/menu.html';
       break;
     case 'cocina':
-      window.location.href = '../src/modules/cocina.html';
+      window.location.href = '.../src/modules/cocina.html';
       break;
     case 'cliente':
       window.location.href = './cliente.html';
