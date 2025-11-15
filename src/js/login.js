@@ -56,10 +56,8 @@ form.addEventListener('submit', async (e) => {
     case 'gerente':
       window.location.href = './src/modules/menu.html';
       break;
-    case 'dependiente':
     case 'cocina':
-    case 'repartidor':
-      window.location.href = './menu.html';
+      window.location.href = './src/modules/cocina.html';
       break;
     case 'cliente':
       window.location.href = './cliente.html';
