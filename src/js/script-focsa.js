@@ -15,6 +15,27 @@ const supabase = createClient(
 );
 
 window.supabase = supabase;
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("📦 DOM cargado — cargando menú y envases");
+  cargarMenuEspecial();
+  cargarEnvases();
+});
+document.addEventListener("DOMContentLoaded", () => {
+  const pedidoId = localStorage.getItem("pedido_id");
+  if (!pedidoId) {
+    console.warn("⚠️ No se encontró pedido_id en localStorage");
+    return;
+  }
+
+  console.log("📦 DOM cargado — iniciando seguimiento de pedido:", pedidoId);
+
+  async function actualizarSeguimiento() {
+    await verificarIntegridadPedido(); // o actualizarEstadoPedido() si usas cocina_pedido directamente
+  }
+
+  actualizarSeguimiento();
+  setInterval(actualizarSeguimiento, 10000);
+});
 
 let menu = [], envases = [];
 const cantidades = {}, cantidadesEnvases = {};
