@@ -387,28 +387,31 @@ window.enviarPedido = async () => {
 window.enviarWhatsApp = () => {
   console.log("📤 Enviando mensaje a WhatsApp...");
 
+  // ✅ Cerrar vista previa
+  document.getElementById("modal-resumen").style.display = "none";
+
   const numero = "5350971023";
   const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensajeWhatsApp)}`;
   window.open(url, "_blank");
 
+  // ✅ Ocultar confirmación
   document.getElementById("confirmacion").style.display = "none";
+
+  // ✅ Mostrar seguimiento
   mostrarSeguimientoPedido();
 
+  // ✅ Limpiar cantidades
   Object.keys(cantidades).forEach(k => cantidades[k] = 0);
   Object.keys(cantidadesEnvases).forEach(k => cantidadesEnvases[k] = 0);
   document.querySelectorAll("input[type='number']").forEach(input => input.value = 0);
   calcularTotales();
 
+  // ✅ Limpiar campos del cliente
   ["cliente", "piso", "apartamento", "telefono"].forEach(id => {
     const input = document.getElementById(id);
     if (input) input.value = "";
   });
   document.getElementById("unirseGrupo").checked = false;
-
-  document.getElementById("menu-especial").style.display = "none";
-  document.getElementById("envases-contenedor").style.display = "none";
-  document.getElementById("totales").style.display = "none";
-  document.getElementById("seguimiento-pedido").style.display = "block";
 
   console.log("✅ Pedido enviado y sistema reiniciado");
 
