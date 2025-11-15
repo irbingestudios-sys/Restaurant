@@ -1,0 +1,42 @@
+/* src/css/cocina.css */
+/* Estilos específicos para módulo cocina */
+
+.lista-pedidos {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.pedido-bloque {
+  background-color: #fff;
+  border-left: 6px solid var(--color-secundario);
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  text-align: left;
+}
+
+.pedido-bloque p {
+  margin-bottom: 0.5rem;
+}
+
+.estado {
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.estado.pendiente {
+  background-color: #f1c40f;
+  color: #fff;
+}
+
+.estado.entregado {
+  background-color: #2ecc71;
+  color: #fff;
+}
+
+button {
+  margin-top: 0.5rem;
+}
