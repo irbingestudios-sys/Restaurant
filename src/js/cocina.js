@@ -1,4 +1,3 @@
-// src/js/cocina.js
 import { supabase } from './supabaseClient.js';
 import { logEvent } from './logger.js';
 
@@ -10,7 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     console.log('🔄 Iniciando módulo cocina...');
 
-    // ── Grupo: Autenticación y perfil ──────────────────────────
+    // ── Autenticación y perfil ───────────────────────────────
     const { data: perfil, error } = await supabase.rpc('obtener_perfil_seguro');
     if (error || !perfil || perfil.length === 0) throw new Error('Perfil no disponible');
 
@@ -35,24 +34,39 @@ document.addEventListener('DOMContentLoaded', async () => {
       detalle: `Ingreso al módulo cocina por ${correo} (${rol})`
     });
 
-    // ── Grupo: Carga inicial de pedidos ────────────────────────
+    // ── Resumen diario ───────────────────────────────────────
+    const { data: resumen, error: errorResumen } = await supabase.rpc('resumen_cocina_dia', {
+      p_usuario: usuarioId
+    });
+
+    if (errorResumen) {
+      console.warn('⚠️ Error al obtener resumen diario:', errorResumen.message);
+    } else if (resumen && resumen.length > 0) {
+      const r = resumen[0];
+      document.getElementById('resumen-dia').innerHTML = `
+        <p>📦 Entregados hoy: <strong>${r.entregados}</strong> — 💰 <strong>${r.importe_entregado.toFixed(2)} CUP</strong></p>
+        <p>⏳ Pendientes hoy: <strong>${r.pendientes}</strong> — 💰 <strong>${r.importe_pendiente.toFixed(2)} CUP</strong></p>
+      `;
+    }
+
+    // ── Carga inicial de pedidos ─────────────────────────────
     await cargarPedidos();
 
-    // ── Grupo: Actualización automática ────────────────────────
+    // ── Actualización automática ─────────────────────────────
     setInterval(cargarPedidos, 30000); // cada 30 segundos
 
-    // ── Grupo: Botón de cierre de sesión ───────────────────────
+    // ── Cierre de sesión ─────────────────────────────────────
     document.getElementById('cerrar-sesion').addEventListener('click', () => {
       console.log('🔒 Cerrando sesión...');
       localStorage.clear();
       window.location.href = 'login.html';
     });
 
-    // ── Grupo: Delegación de eventos para botones ──────────────
+    // ── Delegación de eventos para botones ───────────────────
     document.getElementById('lista-pedidos').addEventListener('click', e => {
       if (e.target.matches('button[data-pedido-id]')) {
         const pedidoId = e.target.getAttribute('data-pedido-id');
-        marcarEntregado(pedidoId);
+        marcarEntregado(pedidoId, usuarioId);
       }
     });
 
@@ -63,7 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// ── Grupo: Carga de pedidos ───────────────────────────────────
+// ── Cargar pedidos desde la vista ────────────────────────────
 async function cargarPedidos() {
   console.log('📦 Cargando pedidos desde vista técnica...');
 
@@ -78,7 +92,7 @@ async function cargarPedidos() {
   renderizarPedidos(pedidosGlobal);
 }
 
-// ── Grupo: Renderizado de pedidos ─────────────────────────────
+// ── Renderizar pedidos con productos e importes ──────────────
 function renderizarPedidos(lista) {
   const contenedor = document.getElementById('lista-pedidos');
   contenedor.innerHTML = '';
@@ -87,13 +101,19 @@ function renderizarPedidos(lista) {
     const bloque = document.createElement('div');
     bloque.className = 'pedido-bloque';
 
-    // Render de productos si existen
     let productosHTML = '';
+    let total = 0;
+
     if (pedido.items && Array.isArray(pedido.items)) {
       productosHTML = `
         <ul class="productos-lista">
-          ${pedido.items.map(item => `<li>${item.nombre} × ${item.cantidad}</li>`).join('')}
+          ${pedido.items.map(item => {
+            const importe = item.cantidad * item.precio;
+            total += importe;
+            return `<li>${item.nombre} × ${item.cantidad} — ${importe.toFixed(2)} CUP</li>`;
+          }).join('')}
         </ul>
+        <p><strong>Total:</strong> ${total.toFixed(2)} CUP</p>
       `;
     }
 
@@ -109,11 +129,8 @@ function renderizarPedidos(lista) {
   });
 }
 
-// ── Grupo: Marcar como entregado ──────────────────────────────
-async function marcarEntregado(pedidoId) {
-  const { data: perfil } = await supabase.rpc('obtener_perfil_seguro');
-  const usuarioId = perfil?.[0]?.id;
-
+// ── Marcar pedido como entregado ─────────────────────────────
+async function marcarEntregado(pedidoId, usuarioId) {
   console.log('📤 Marcando pedido como entregado:', pedidoId);
 
   const { error } = await supabase.rpc('actualizar_estado_pedido', {
@@ -131,5 +148,5 @@ async function marcarEntregado(pedidoId) {
   }
 }
 
-// ── Grupo: Exponer función global ─────────────────────────────
+// ── Exponer función global ───────────────────────────────────
 window.marcarEntregado = marcarEntregado;
