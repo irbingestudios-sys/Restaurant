@@ -35,19 +35,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // ── Resumen diario ───────────────────────────────────────
-    const { data: resumen, error: errorResumen } = await supabase.rpc('resumen_cocina_dia', {
-      p_usuario: usuarioId
-    });
+const { data: resumen, error: errorResumen } = await supabase.rpc('resumen_cocina_dia', {
+  p_usuario: usuarioId
+});
 
-    if (errorResumen) {
-      console.warn('⚠️ Error al obtener resumen diario:', errorResumen.message);
-    } else if (resumen && resumen.length > 0) {
-      const r = resumen[0];
-      document.getElementById('resumen-dia').innerHTML = `
-        <p>📦 Entregados hoy: <strong>${r.entregados}</strong> — 💰 <strong>${r.importe_entregado.toFixed(2)} CUP</strong></p>
-        <p>⏳ Pendientes hoy: <strong>${r.pendientes}</strong> — 💰 <strong>${r.importe_pendiente.toFixed(2)} CUP</strong></p>
-      `;
-    }
+if (errorResumen) {
+  console.warn('⚠️ Error al obtener resumen diario:', errorResumen.message);
+} else if (resumen && resumen.length > 0) {
+  const r = resumen[0];
+  const resumenEl = document.getElementById('resumen-dia');
+  if (resumenEl) {
+    resumenEl.innerHTML = `
+      <p>📦 Entregados hoy: <strong>${r.entregados}</strong> — 💰 <strong>${r.importe_entregado.toFixed(2)} CUP</strong></p>
+      <p>⏳ Pendientes hoy: <strong>${r.pendientes}</strong> — 💰 <strong>${r.importe_pendiente.toFixed(2)} CUP</strong></p>
+    `;
+  } else {
+    console.warn('⚠️ Elemento #resumen-dia no encontrado en el DOM');
+  }
+}
 
     // ── Carga inicial de pedidos ─────────────────────────────
     await cargarPedidos();
