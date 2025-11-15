@@ -1,103 +1,112 @@
 // src/js/cocina.js
+import { supabase } from './supabaseClient.js';
+import { logEvent } from './logger.js';
 
-// ┌────────────────────────────────────────────┐
-// │ Sección 1: Inicialización Supabase         │
-// └────────────────────────────────────────────┘
-const { createClient } = supabase;
-const supabaseClient = createClient("https://https://qeqltwrkubtyrmgvgaai.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw");
-console.log("✅ Supabase inicializado");
+window.supabase = supabase;
 
-// ┌────────────────────────────────────────────┐
-// │ Sección 2: Verificación de sesión y rol    │
-// └────────────────────────────────────────────┘
-function verificarAccesoModulo() {
-  const usuarioId = localStorage.getItem("usuario_id");
-  const rol = localStorage.getItem("usuario_rol");
-  const area = localStorage.getItem("usuario_area");
+let pedidosGlobal = [];
 
-  if (!usuarioId || !rol) {
-    console.warn("⚠️ Usuario no autenticado");
-    alert("Debes iniciar sesión");
-    window.location.href = "login.html";
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    console.log('🔄 Iniciando módulo cocina...');
+
+    // ── Grupo: Autenticación y perfil ──────────────────────────
+    const { data: perfil, error } = await supabase.rpc('obtener_perfil_seguro');
+    if (error || !perfil || perfil.length === 0) throw new Error('Perfil no disponible');
+
+    const usuario = perfil[0];
+    const nombre = usuario?.nombre || 'sin nombre';
+    const rol = usuario?.rol || 'sin rol';
+    const correo = usuario?.correo || 'sin correo';
+    const usuarioId = usuario?.id;
+
+    console.log(`✅ Perfil cargado: ${nombre} (${rol})`);
+    document.getElementById('bienvenida').textContent = `Bienvenido, ${nombre} (${rol})`;
+
+    if (!['super_admin', 'admin', 'cocina'].includes(rol)) {
+      logEvent('warn', 'Cocina', `Acceso denegado para rol: ${rol}`);
+      window.location.href = '../../index.html';
+      return;
+    }
+
+    await supabase.rpc('registrar_evento', {
+      tipo: 'acceso',
+      modulo: 'cocina',
+      detalle: `Ingreso al módulo cocina por ${correo} (${rol})`
+    });
+
+    // ── Grupo: Carga inicial de pedidos ────────────────────────
+    await cargarPedidos();
+
+    // ── Grupo: Actualización automática ────────────────────────
+    setInterval(cargarPedidos, 30000); // cada 30 segundos
+
+    // ── Grupo: Botón de cierre de sesión ───────────────────────
+    document.getElementById('cerrar-sesion').addEventListener('click', () => {
+      console.log('🔒 Cerrando sesión...');
+      localStorage.clear();
+      window.location.href = '../../index.html';
+    });
+
+  } catch (err) {
+    console.error('❌ Error en módulo cocina:', err.message);
+    alert('Error al iniciar módulo cocina');
+    window.location.href = '../../index.html';
+  }
+});
+
+// ── Grupo: Carga de pedidos ───────────────────────────────────
+async function cargarPedidos() {
+  console.log('📦 Cargando pedidos desde vista técnica...');
+
+  const { data, error } = await supabase.from('vw_pedidos_cocina').select('*');
+  if (error) {
+    console.error('❌ Error al cargar pedidos:', error.message);
     return;
   }
 
-  if (!["admin", "cocina", "super_admin"].includes(rol)) {
-    console.warn("⛔ Acceso denegado para rol:", rol);
-    alert("Acceso denegado. Este módulo es exclusivo para cocina y administración.");
-    window.location.href = "login.html";
-    return;
-  }
-
-  console.log(`✅ Acceso autorizado: ${rol} (${area || "sin área"})`);
+  pedidosGlobal = data;
+  console.log(`✅ ${pedidosGlobal.length} pedidos cargados`);
+  renderizarPedidos(pedidosGlobal);
 }
 
-// ┌────────────────────────────────────────────┐
-// │ Sección 3: Cargar pedidos desde Supabase   │
-// └────────────────────────────────────────────┘
-async function cargarPedidosCocina() {
-  console.log("📦 Cargando pedidos desde vista técnica...");
+// ── Grupo: Renderizado de pedidos ─────────────────────────────
+function renderizarPedidos(lista) {
+  const contenedor = document.getElementById('lista-pedidos');
+  contenedor.innerHTML = '';
 
-  const { data, error } = await supabaseClient.from("vw_pedidos_cocina").select("*");
-
-  if (error) {
-    console.error("❌ Error al cargar pedidos:", error);
-    return;
-  }
-
-  console.log(`✅ ${data.length} pedidos cargados`);
-  const contenedor = document.getElementById("lista-pedidos");
-  contenedor.innerHTML = "";
-
-  data.forEach(pedido => {
-    const bloque = document.createElement("div");
-    bloque.className = "pedido-bloque";
+  lista.forEach(pedido => {
+    const bloque = document.createElement('div');
+    bloque.className = 'pedido-bloque';
     bloque.innerHTML = `
       <p><strong>${pedido.cliente}</strong> — Piso ${pedido.piso}, Apto ${pedido.apartamento}</p>
       <p>🕒 ${new Date(pedido.fecha_registro).toLocaleString()}</p>
       <p>Estado: <span class="estado ${pedido.estado || 'pendiente'}">${pedido.estado || 'pendiente'}</span></p>
-      ${pedido.criterio ? `<p>📝 Criterio: ${pedido.criterio}</p>` : ""}
+      ${pedido.criterio ? `<p>📝 Criterio: ${pedido.criterio}</p>` : ''}
       <button onclick="marcarEntregado('${pedido.pedido_id}')">✅ Marcar como entregado</button>
     `;
     contenedor.appendChild(bloque);
   });
 }
 
-// ┌────────────────────────────────────────────┐
-// │ Sección 4: Marcar pedido como entregado    │
-// └────────────────────────────────────────────┘
+// ── Grupo: Marcar como entregado ──────────────────────────────
 async function marcarEntregado(pedidoId) {
-  const usuarioId = localStorage.getItem("usuario_id");
-  console.log("📤 Marcando pedido como entregado:", pedidoId);
+  const { data: perfil } = await supabase.rpc('obtener_perfil_seguro');
+  const usuarioId = perfil?.[0]?.id;
 
-  const { error } = await supabaseClient.rpc("actualizar_estado_pedido", {
+  console.log('📤 Marcando pedido como entregado:', pedidoId);
+
+  const { error } = await supabase.rpc('actualizar_estado_pedido', {
     p_id: pedidoId,
-    nuevo_estado: "entregado",
+    nuevo_estado: 'entregado',
     usuario: usuarioId
   });
 
   if (error) {
-    console.error("❌ Error al actualizar estado:", error);
-    alert("No se pudo actualizar el estado");
+    console.error('❌ Error al actualizar estado:', error.message);
+    alert('No se pudo actualizar el estado');
   } else {
-    console.log("✅ Pedido actualizado correctamente");
-    cargarPedidosCocina();
+    console.log('✅ Pedido actualizado correctamente');
+    await cargarPedidos();
   }
-}
-
-// ┌────────────────────────────────────────────┐
-// │ Sección 5: Inicialización del módulo       │
-// └────────────────────────────────────────────┘
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("🚀 Módulo cocina iniciado");
-  verificarAccesoModulo();
-  cargarPedidosCocina();
-});
-// ┌────────────────────────────────────────────┐
-// │ Sección 6: Cerrar sesión                   │
-// └────────────────────────────────────────────┘
-function cerrarSesion() {
-  console.log("🔒 Cerrando sesión...");
-  localStorage.clear();
-  window.location.href = "login.html";
 }
