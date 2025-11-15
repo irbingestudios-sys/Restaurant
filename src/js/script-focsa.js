@@ -35,8 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
   await verificarIntegridadPedido();
 }
   setInterval(actualizarSeguimiento, 10000);
-});
-
   cargarMenuEspecial();
   cargarEnvases();
 });
