@@ -45,7 +45,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('cerrar-sesion').addEventListener('click', () => {
       console.log('🔒 Cerrando sesión...');
       localStorage.clear();
-      window.location.href = '../../index.html';
+      window.location.href = 'login.html';
+    });
+
+    // ── Grupo: Delegación de eventos para botones ──────────────
+    document.getElementById('lista-pedidos').addEventListener('click', e => {
+      if (e.target.matches('button[data-pedido-id]')) {
+        const pedidoId = e.target.getAttribute('data-pedido-id');
+        marcarEntregado(pedidoId);
+      }
     });
 
   } catch (err) {
@@ -78,12 +86,24 @@ function renderizarPedidos(lista) {
   lista.forEach(pedido => {
     const bloque = document.createElement('div');
     bloque.className = 'pedido-bloque';
+
+    // Render de productos si existen
+    let productosHTML = '';
+    if (pedido.items && Array.isArray(pedido.items)) {
+      productosHTML = `
+        <ul class="productos-lista">
+          ${pedido.items.map(item => `<li>${item.nombre} × ${item.cantidad}</li>`).join('')}
+        </ul>
+      `;
+    }
+
     bloque.innerHTML = `
       <p><strong>${pedido.cliente}</strong> — Piso ${pedido.piso}, Apto ${pedido.apartamento}</p>
       <p>🕒 ${new Date(pedido.fecha_registro).toLocaleString()}</p>
       <p>Estado: <span class="estado ${pedido.estado || 'pendiente'}">${pedido.estado || 'pendiente'}</span></p>
       ${pedido.criterio ? `<p>📝 Criterio: ${pedido.criterio}</p>` : ''}
-      <button onclick="marcarEntregado('${pedido.pedido_id}')">✅ Marcar como entregado</button>
+      ${productosHTML}
+      <button data-pedido-id="${pedido.pedido_id}">✅ Marcar como entregado</button>
     `;
     contenedor.appendChild(bloque);
   });
@@ -110,3 +130,6 @@ async function marcarEntregado(pedidoId) {
     await cargarPedidos();
   }
 }
+
+// ── Grupo: Exponer función global ─────────────────────────────
+window.marcarEntregado = marcarEntregado;
