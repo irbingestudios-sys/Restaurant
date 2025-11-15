@@ -8,12 +8,18 @@
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const supabase = createClient("https://qeqltwrkubtyrmgvgaai.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw");
+const supabase = createClient("https://qeqltwrkubtyrmgvgaai.supabase.co", "TOKEN_PRIVADO");
 window.supabase = supabase;
+
 let menu = [];
 let envases = [];
 let cantidades = {};
 let cantidadesEnvases = {};
+
+// ─────────────────────────────────────────────────────────────
+// 🔰 INICIALIZACIÓN
+// ─────────────────────────────────────────────────────────────
+
 document.addEventListener("DOMContentLoaded", () => {
   console.group("🟢 FOCSA — Inicialización");
   console.log("🚀 Script FOCSA inicializado");
@@ -22,6 +28,11 @@ document.addEventListener("DOMContentLoaded", () => {
   iniciarSeguimiento();
   console.groupEnd();
 });
+
+// ─────────────────────────────────────────────────────────────
+// 📦 CARGA DE MENÚ ESPECIAL
+// ─────────────────────────────────────────────────────────────
+
 async function cargarMenuEspecial() {
   console.group("📥 Carga de menú");
   const { data, error } = await supabase.rpc("obtener_menu_focsa");
@@ -33,6 +44,7 @@ async function cargarMenuEspecial() {
 }
 
 function renderMenuEspecial(lista) {
+  console.group("🖼️ Renderizado de menú");
   const contenedor = document.getElementById("menu-especial");
   contenedor.innerHTML = "";
   const agrupado = {};
@@ -77,7 +89,13 @@ function renderMenuEspecial(lista) {
       calcularTotales();
     });
   });
+
+  console.groupEnd();
 }
+
+// ─────────────────────────────────────────────────────────────
+// 🧴 CARGA DE ENVASES
+// ─────────────────────────────────────────────────────────────
 
 async function cargarEnvases() {
   console.group("📥 Carga de envases");
@@ -92,11 +110,17 @@ async function cargarEnvases() {
   if (error) return console.error("❌ Error al cargar envases:", error);
   envases = data;
   console.log("🧴 Envases cargados:", envases.length);
-  // render similar al menú con stockTexto
   console.groupEnd();
 }
+
+// ─────────────────────────────────────────────────────────────
+// 🧮 CÁLCULO DE TOTALES
+// ─────────────────────────────────────────────────────────────
+
 function calcularTotales() {
+  console.group("🧮 Cálculo de totales");
   let total = 0, cantidad = 0;
+
   for (const nombre in cantidades) {
     const cant = cantidades[nombre];
     const item = menu.find(p => p.nombre === nombre);
@@ -105,6 +129,7 @@ function calcularTotales() {
       cantidad += cant;
     }
   }
+
   for (const nombre in cantidadesEnvases) {
     const cant = cantidadesEnvases[nombre];
     const item = envases.find(p => p.nombre === nombre);
@@ -113,12 +138,20 @@ function calcularTotales() {
       cantidad += cant;
     }
   }
+
   document.getElementById("total-cup").textContent = total.toFixed(2);
   document.getElementById("total-items").textContent = cantidad;
   console.log("🧮 Totales actualizados:", { total, cantidad });
+  console.groupEnd();
 }
+
+// ─────────────────────────────────────────────────────────────
+// 📤 ENVÍO DE PEDIDO
+// ─────────────────────────────────────────────────────────────
+
 window.enviarPedido = async () => {
   console.group("📤 RPC — registrar_pedido_focsa");
+
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
   const apartamento = document.getElementById("apartamento").value.trim();
@@ -126,16 +159,22 @@ window.enviarPedido = async () => {
   const unirse = document.getElementById("unirseGrupo").checked;
 
   const items = []; let total = 0;
+
   for (const nombre in cantidades) { /* construir items */ }
   for (const nombre in cantidadesEnvases) { /* construir items */ }
 
   const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
-    p_cliente: cliente, p_piso: piso, p_apartamento: apartamento,
-    p_telefono: telefono || null, p_direccion: null,
-    p_unirse_grupo: unirse, p_items: JSON.stringify(items)
+    p_cliente: cliente,
+    p_piso: piso,
+    p_apartamento: apartamento,
+    p_telefono: telefono || null,
+    p_direccion: null,
+    p_unirse_grupo: unirse,
+    p_items: JSON.stringify(items)
   });
 
   if (error) return console.error("❌ Error RPC:", error);
+
   const pedidoId = data?.pedido_id;
   if (!pedidoId) return console.warn("⚠️ No se devolvió pedido_id");
 
@@ -143,12 +182,18 @@ window.enviarPedido = async () => {
   const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
   historial.push(pedidoId);
   localStorage.setItem("historial_pedidos", JSON.stringify(historial));
+
   console.log("📥 pedido_id_actual guardado:", pedidoId);
   console.log("📚 Historial actualizado:", historial);
   console.groupEnd();
 
   mostrarSeguimientoPedido();
 };
+
+// ─────────────────────────────────────────────────────────────
+// 🔎 SEGUIMIENTO DE PEDIDO
+// ─────────────────────────────────────────────────────────────
+
 function iniciarSeguimiento() {
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (!pedidoId) return;
@@ -157,6 +202,7 @@ function iniciarSeguimiento() {
 
 async function verificarIntegridadPedido(pedidoId) {
   console.group("🔎 Seguimiento del pedido");
+
   const { data, error } = await supabase
     .from("vw_integridad_pedido")
     .select("*")
@@ -168,6 +214,7 @@ async function verificarIntegridadPedido(pedidoId) {
   const estado = data.estado_actual || "⏳ En espera";
   const cocina = data.replicado_en_cocina ? "✅ Cocina OK" : "⚠️ Sin cocina";
   const reparto = data.replicado_en_reparto ? "✅ Reparto OK" : "⚠️ Sin reparto";
+
   document.getElementById("estado-actual").textContent = `🧾 ${estado} | ${cocina} | ${reparto}`;
 
   const btnEntregar = document.getElementById("btn-entregar");
@@ -176,14 +223,24 @@ async function verificarIntegridadPedido(pedidoId) {
 
   const contenedor = document.getElementById("contenido-pedido");
   contenedor.innerHTML = "";
-  for (const item of data.items || []) {
+
+    for (const item of data.items || []) {
     const { data: stockData } = await supabase
-      .from("menu_item").select("stock").eq("nombre", item.nombre).maybeSingle();
+      .from("menu_item")
+      .select("stock")
+      .eq("nombre", item.nombre)
+      .maybeSingle();
+
     const stock = stockData?.stock ?? "—";
-    const stockTexto = stock <= 3 ? `<span style="color:red">Stock: ${stock}</span>` : `Stock: ${stock}`;
+    const stockTexto = stock <= 3
+      ? `<span style="color:red">Stock: ${stock}</span>`
+      : `Stock: ${stock}`;
+
     contenedor.innerHTML += `
       <div class="producto-lineal">
-        <div class="producto-izquierda"><strong>${item.nombre}</strong></div>
+        <div class="producto-izquierda">
+          <strong>${item.nombre}</strong>
+        </div>
         <div class="producto-derecha">
           <span>${stockTexto}</span>
           <span>x${item.cantidad}</span>
@@ -191,6 +248,7 @@ async function verificarIntegridadPedido(pedidoId) {
         </div>
       </div>`;
   }
+
   console.groupEnd();
 }
 window.nuevoPedido = () => {
