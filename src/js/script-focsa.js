@@ -382,6 +382,45 @@ window.enviarPedido = async () => {
 
   mostrarSeguimientoPedido();
 };
+
+// === Confirmar y enviar por WhatsApp ===
+window.enviarWhatsApp = () => {
+  console.log("📤 Enviando mensaje a WhatsApp...");
+
+  const numero = "5350971023";
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensajeWhatsApp)}`;
+  window.open(url, "_blank");
+
+  document.getElementById("confirmacion").style.display = "none";
+  mostrarSeguimientoPedido();
+
+  Object.keys(cantidades).forEach(k => cantidades[k] = 0);
+  Object.keys(cantidadesEnvases).forEach(k => cantidadesEnvases[k] = 0);
+  document.querySelectorAll("input[type='number']").forEach(input => input.value = 0);
+  calcularTotales();
+
+  ["cliente", "piso", "apartamento", "telefono"].forEach(id => {
+    const input = document.getElementById(id);
+    if (input) input.value = "";
+  });
+  document.getElementById("unirseGrupo").checked = false;
+
+  document.getElementById("menu-especial").style.display = "none";
+  document.getElementById("envases-contenedor").style.display = "none";
+  document.getElementById("totales").style.display = "none";
+  document.getElementById("seguimiento-pedido").style.display = "block";
+
+  console.log("✅ Pedido enviado y sistema reiniciado");
+
+  // registrarEventoPedido("pedido_enviado", "Pedido confirmado por cliente y enviado por WhatsApp");
+};
+
+// === Cancelar resumen visual ===
+window.cancelarResumen = () => {
+  document.getElementById("modal-resumen").style.display = "none";
+  console.log("❌ Resumen cancelado");
+};
+
 //SECCIÓN 5 — Guardar criterio del cliente
 document.addEventListener("DOMContentLoaded", () => {
   const pedidoId = localStorage.getItem("pedido_id");
