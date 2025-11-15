@@ -93,3 +93,11 @@ document.addEventListener("DOMContentLoaded", () => {
   verificarAccesoModulo();
   cargarPedidosCocina();
 });
+// ┌────────────────────────────────────────────┐
+// │ Sección 6: Cerrar sesión                   │
+// └────────────────────────────────────────────┘
+function cerrarSesion() {
+  console.log("🔒 Cerrando sesión...");
+  localStorage.clear();
+  window.location.href = "login.html";
+}
