@@ -420,6 +420,13 @@ window.cancelarResumen = () => {
   document.getElementById("modal-resumen").style.display = "none";
   console.log("❌ Resumen cancelado");
 };
+// === Mostrar sección de seguimiento ===
+window.mostrarSeguimientoPedido = () => {
+  document.getElementById("menu-especial").style.display = "none";
+  document.getElementById("envases-contenedor").style.display = "none";
+  document.getElementById("totales").style.display = "none";
+  document.getElementById("seguimiento-pedido").style.display = "block";
+};
 
 //SECCIÓN 5 — Guardar criterio del cliente
 document.addEventListener("DOMContentLoaded", () => {
