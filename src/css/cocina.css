@@ -40,3 +40,22 @@
 button {
   margin-top: 0.5rem;
 }
+.acciones-superiores {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.acciones-superiores label {
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.acciones-superiores select {
+  padding: 0.4rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  min-width: 120px;
+}
