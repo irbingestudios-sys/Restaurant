@@ -386,3 +386,38 @@ document.getElementById("btn-limpiar").addEventListener("click", () => {
 // 🌐 Exponer funciones al HTML
 window.revisarPedido = revisarPedido;
 window.mostrarSeguimientoPedido = iniciarSeguimiento;
+function enviarWhatsApp() {
+  console.group("📲 Enviar pedido por WhatsApp");
+
+  const cliente = document.getElementById("cliente").value.trim();
+  const piso = document.getElementById("piso").value.trim();
+  const apartamento = document.getElementById("apartamento").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+
+  const items = [];
+
+  for (const nombre in cantidades) {
+    const cant = cantidades[nombre];
+    const item = menu.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      items.push(`• ${item.nombre} x${cant} = ${item.precio * cant} CUP`);
+    }
+  }
+
+  for (const nombre in cantidadesEnvases) {
+    const cant = cantidadesEnvases[nombre];
+    const item = envases.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      items.push(`• ${item.nombre} x${cant} = ${item.precio * cant} CUP`);
+    }
+  }
+
+  const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n\n${items.join("\n")}\n\nTotal: ${document.getElementById("total-cup").textContent} CUP`;
+
+  const url = `https://wa.me/+5355582319?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, "_blank");
+
+  console.groupEnd();
+}
+
+window.enviarWhatsApp = enviarWhatsApp;
