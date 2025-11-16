@@ -13,17 +13,41 @@
     <img src="../assets/logo.png" alt="Logo del sistema" class="logo" />
     <h1>👨‍🍳 Pedidos en Cocina</h1>
 
+    <!-- 👋 Bienvenida -->
     <p id="bienvenida" style="margin-bottom: 1rem;"></p>
 
-    <div id="resumen-dia" class="estado-lineal"></div>
-
+    <!-- 🔍 Filtros -->
     <div class="acciones-superiores">
-      <button onclick="location.reload()">🔄 Actualizar</button>
+      <label for="filtro-tipo">Tipo:</label>
+      <select id="filtro-tipo">
+        <option value="todos">Todos</option>
+        <option value="normal">Normal</option>
+        <option value="especial">Especial</option>
+        <option value="urgente">Urgente</option>
+      </select>
+
+      <label for="filtro-local">Local:</label>
+      <select id="filtro-local">
+        <option value="todos">Todos</option>
+        <option value="FOCSA">FOCSA</option>
+        <option value="LOCAL">LOCAL</option>
+        <option value="REPARTO">REPARTO</option>
+      </select>
+
+      <button onclick="cargarPedidosEnCocina()">🔄 Aplicar filtros</button>
     </div>
 
+    <!-- 📊 Resúmenes -->
+    <div id="resumen-dia" class="estado-lineal"></div>
+    <div id="resumen-local" class="estado-lineal"></div>
+
+    <!-- 📦 Lista de pedidos -->
     <div id="lista-pedidos" class="lista-pedidos"></div>
 
-    <button id="cerrar-sesion">🔒 Cerrar sesión</button>
+    <!-- 🔒 Cierre de sesión -->
+    <button id="cerrar-sesion" onclick="supabase.auth.signOut().then(() => location.href = '/login.html')">
+      🔒 Cerrar sesión
+    </button>
   </div>
 
   <script type="module" src="../js/cocina.js"></script>
