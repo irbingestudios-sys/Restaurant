@@ -354,11 +354,16 @@ async function renderizarSeguimientoPedidos() {
         <ul>
     `;
 
-    for (const item of data.items || []) {
-      html += `<li>${item.nombre} x${item.cantidad} = ${item.subtotal} CUP</li>`;
-    }
+let totalPedido = 0;
 
-    html += `</ul></div>`;
+for (const item of data.items || []) {
+  html += `<li>${item.nombre} x${item.cantidad} = ${item.subtotal} CUP</li>`;
+  totalPedido += item.subtotal;
+}
+
+html += `</ul>
+  <p><strong>Total del pedido:</strong> ${totalPedido.toFixed(2)} CUP</p>
+</div>`;
     contenedor.innerHTML += html;
   }
 
