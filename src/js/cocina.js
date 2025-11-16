@@ -19,6 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Script cocina.js inicializado");
 
   await verificarAcceso(); // 🔐 Verifica sesión y rol
+  await cargarFiltrosDesdePedidos(); // 🔍 Carga dinámica de filtros
   await cargarPedidosEnCocina(); // 📥 Carga inicial
 
   // 🔄 Auto-refresh cada 15s
@@ -88,6 +89,60 @@ async function verificarAcceso() {
 
   document.getElementById("bienvenida").textContent = `👋 Bienvenido ${data.nombre} (${rol})`;
   console.log("✅ Acceso permitido para rol:", rol);
+  console.groupEnd();
+}
+//DATOS DEL FILTRO EN LA BASE
+// 🔍 CARGA DINÁMICA DE FILTROS DESDE LA TABLA PEDIDOS
+async function cargarFiltrosDesdePedidos() {
+  console.group("🔍 Cargando filtros dinámicos");
+
+  const { data, error } = await supabase
+    .from("pedidos")
+    .select("tipo, local");
+
+  if (error) {
+    console.error("❌ Error al cargar filtros:", error);
+    return;
+  }
+
+  const tipos = [...new Set(data.map(p => p.tipo).filter(Boolean))];
+  const locales = [...new Set(data.map(p => p.local).filter(Boolean))];
+
+  const tipoSelect = document.getElementById("filtro-tipo");
+  const localSelect = document.getElementById("filtro-local");
+
+  tipoSelect.innerHTML = '<option value="todos">Todos</option>';
+  localSelect.innerHTML = '<option value="todos">Todos</option>';
+
+  tipos.forEach(tipo => {
+    const opt = document.createElement("option");
+    opt.value = tipo;
+    opt.textContent = tipo;
+    tipoSelect.appendChild(opt);
+  });
+
+  locales.forEach(local => {
+    const opt = document.createElement("option");
+    opt.value = local;
+    opt.textContent = local;
+    localSelect.appendChild(opt);
+  });
+tipoSelect.value = localStorage.getItem("filtro-tipo") || "todos";
+localSelect.value = localStorage.getItem("filtro-local") || "todos";
+
+if (!tipoSelect.dataset.listenerAttached) {
+  tipoSelect.addEventListener("change", e => {
+    localStorage.setItem("filtro-tipo", e.target.value);
+  });
+  tipoSelect.dataset.listenerAttached = "true";
+}
+
+if (!localSelect.dataset.listenerAttached) {
+  localSelect.addEventListener("change", e => {
+    localStorage.setItem("filtro-local", e.target.value);
+  });
+  localSelect.dataset.listenerAttached = "true";
+}
   console.groupEnd();
 }
 
