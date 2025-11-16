@@ -39,21 +39,30 @@ async function verificarAcceso() {
     return;
   }
 
+  console.log("🧾 Usuario autenticado:", user);
+
   const { data, error } = await supabase
     .from("usuarios")
-    .select("rol")
-    .eq("id", user.id)
+    .select("rol, activo, nombre")
+    .eq("id", user.id) // ← usa ID porque coincide con auth.user().id
     .maybeSingle();
 
   if (error || !data) {
-    console.warn("❌ Error al obtener rol");
+    console.warn("❌ Error al obtener rol o usuario no registrado:", error);
     alert("Error al verificar rol.");
     location.href = "/login.html";
     return;
   }
 
+  if (!data.activo) {
+    console.warn("⛔ Usuario inactivo:", data.nombre);
+    alert("Su cuenta está desactivada.");
+    location.href = "/login.html";
+    return;
+  }
+
   const rol = data.rol;
-  const rolesPermitidos = ["admin", "super", "gerente", "cocina"];
+  const rolesPermitidos = ["admin", "super", "super_admin", "gerente", "cocina"];
 
   if (!rolesPermitidos.includes(rol)) {
     console.warn("❌ Rol no autorizado:", rol);
@@ -62,7 +71,7 @@ async function verificarAcceso() {
     return;
   }
 
-  document.getElementById("bienvenida").textContent = `👋 Bienvenido al módulo cocina (${rol})`;
+  document.getElementById("bienvenida").textContent = `👋 Bienvenido ${data.nombre} (${rol})`;
   console.log("✅ Acceso permitido para rol:", rol);
   console.groupEnd();
 }
