@@ -433,7 +433,7 @@ window.revisarPedido = revisarPedido;
 window.mostrarSeguimientoPedido = iniciarSeguimiento;
 
 //ENVIAR POR WHASAPP
-function enviarWhatsApp() {
+async function enviarWhatsApp() {
   console.group("📲 Enviar pedido por WhatsApp");
 
   const cliente = document.getElementById("cliente").value.trim();
@@ -456,12 +456,19 @@ function enviarWhatsApp() {
   }
 
   const items = [];
+  let total = 0;
 
   for (const nombre in cantidades) {
     const cant = cantidades[nombre];
     const item = menu.find(p => p.nombre === nombre);
     if (item && cant > 0) {
-      items.push(`• ${item.nombre} x${cant} = ${item.precio * cant} CUP`);
+      items.push({
+        nombre: item.nombre,
+        cantidad: cant,
+        precio: item.precio,
+        subtotal: cant * item.precio
+      });
+      total += cant * item.precio;
     }
   }
 
@@ -469,28 +476,52 @@ function enviarWhatsApp() {
     const cant = cantidadesEnvases[nombre];
     const item = envases.find(p => p.nombre === nombre);
     if (item && cant > 0) {
-      items.push(`• ${item.nombre} x${cant} = ${item.precio * cant} CUP`);
+      items.push({
+        nombre: item.nombre,
+        cantidad: cant,
+        precio: item.precio,
+        subtotal: cant * item.precio
+      });
+      total += cant * item.precio;
     }
   }
 
+  // RPC: registrar pedido
+  const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
+    p_cliente: cliente,
+    p_piso: piso,
+    p_apartamento: apartamento,
+    p_telefono: telefono || null,
+    p_direccion: null,
+    p_unirse_grupo: unirse,
+    p_items: JSON.stringify(items)
+  });
+
+  if (error) return console.error("❌ Error RPC:", error);
+
+  const pedidoId = data?.pedido_id;
+  if (!pedidoId) return console.warn("⚠️ No se devolvió pedido_id");
+
+  localStorage.setItem("pedido_id_actual", pedidoId);
+  const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
+  historial.push(pedidoId);
+  localStorage.setItem("historial_pedidos", JSON.stringify(historial));
+
+  // WhatsApp
   const grupoTexto = unirse ? "✅ Desea unirse al grupo" : "❌ No desea unirse al grupo";
-
-  const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n${grupoTexto}\n\n${items.join("\n")}\n\nTotal: ${document.getElementById("total-cup").textContent} CUP`;
-
+  const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n${grupoTexto}\n\n${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}\n\nTotal: ${total.toFixed(2)} CUP`;
   const url = `https://wa.me/+5355582319?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
 
-  // 🔄 Reiniciar flujo después de enviar
+  // Reiniciar flujo
   document.getElementById("modal-resumen").style.display = "none";
   cantidades = {};
   cantidadesEnvases = {};
   filtrarMenu();
   calcularTotales();
-
-  // 🔎 Activar seguimiento y criterio del cliente
   mostrarSeguimientoPedido();
 
-  console.log("✅ Pedido enviado por WhatsApp y flujo reiniciado");
+  console.log("✅ Pedido registrado y enviado por WhatsApp");
   console.groupEnd();
 }
 
