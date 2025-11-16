@@ -256,6 +256,9 @@ async function verificarIntegridadPedido(pedidoId) {
   const btnEntregar = document.getElementById("btn-entregar");
   btnEntregar.disabled = !(data.replicado_en_cocina && data.replicado_en_reparto);
   console.log("🔓 Botón entrega activado:", !btnEntregar.disabled);
+  document.getElementById("btn-entregar").addEventListener("click", () => {
+  document.getElementById("bloque-criterio").style.display = "block";
+});
 
   const contenedor = document.getElementById("contenido-pedido");
   contenedor.innerHTML = "";
@@ -293,3 +296,28 @@ window.nuevoPedido = () => {
   location.reload();
   console.groupEnd();
 };
+document.getElementById("btn-guardar-criterio").addEventListener("click", async () => {
+  console.group("📝 Guardar criterio del cliente");
+
+  const criterio = document.getElementById("criterio").value.trim();
+  const pedidoId = localStorage.getItem("pedido_id_actual");
+
+  if (!criterio || !pedidoId) {
+    console.warn("⚠️ No hay criterio o pedido activo.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("criterios_pedido")
+    .insert([{ pedido_id: pedidoId, criterio }]);
+
+  if (error) {
+    console.error("❌ Error al guardar criterio:", error);
+  } else {
+    console.log("✅ Criterio guardado:", criterio);
+    alert("¡Gracias por su opinión!");
+    document.getElementById("bloque-criterio").style.display = "none";
+  }
+
+  console.groupEnd();
+});
