@@ -237,12 +237,13 @@ window.enviarPedido = async () => {
     p_telefono: telefono || null,
     p_direccion: null,
     p_unirse_grupo: unirse,
-    p_items: JSON.stringify(items)
+    p_items: JSON.stringify(items),
+    p_canal: "rpc" // ✅ canal agregado
   });
 
   if (error) return console.error("❌ Error RPC:", error);
 
-  const pedidoId = data?.pedido_id;
+  const pedidoId = data?.[0]?.pedido_id; // ✅ acceso corregido
   if (!pedidoId) return console.warn("⚠️ No se devolvió pedido_id");
 
   localStorage.setItem("pedido_id_actual", pedidoId);
@@ -432,7 +433,7 @@ document.getElementById("btn-limpiar").addEventListener("click", () => {
 window.revisarPedido = revisarPedido;
 window.mostrarSeguimientoPedido = iniciarSeguimiento;
 
-//ENVIAR POR WHASAPP
+//ENVIAR POR WHATSAPP
 async function enviarWhatsApp() {
   console.group("📲 Enviar pedido por WhatsApp");
 
@@ -503,7 +504,8 @@ async function enviarWhatsApp() {
     p_telefono: telefono || null,
     p_direccion: null,
     p_unirse_grupo: unirse,
-    p_items: items
+    p_items: items,
+    p_canal: "whatsapp" // ✅ canal agregado
   });
 
   if (error) {
@@ -512,7 +514,7 @@ async function enviarWhatsApp() {
     return;
   }
 
-  const pedidoId = data?.pedido_id;
+  const pedidoId = data?.[0]?.pedido_id; // ✅ acceso corregido
   if (!pedidoId) {
     console.warn("⚠️ No se devolvió pedido_id");
     console.groupEnd();
@@ -532,6 +534,9 @@ async function enviarWhatsApp() {
   const url = `https://wa.me/+5355582319?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
   console.log("📤 WhatsApp abierto con mensaje");
+
+  console.groupEnd();
+}
 
   // 🔄 Reinicio del flujo
   document.getElementById("modal-resumen").style.display = "none";
