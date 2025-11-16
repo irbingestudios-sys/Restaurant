@@ -241,4 +241,4 @@ window.enviarPedido = async () => {
 function iniciarSeguimiento() {
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (!pedidoId) return;
-  setInterval(() => verificar
+  setInterval(() => verificarIntegridadPedido(pedidoId), 10000);
