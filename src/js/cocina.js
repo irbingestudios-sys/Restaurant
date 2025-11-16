@@ -266,12 +266,12 @@ async function marcarComoCocinado(pedidoId) {
   console.group("✅ Marcar como cocinado:", pedidoId);
 
   const { error } = await supabase
-    .from("log_eventos_pedido")
+    .from("evento_pedido")
     .insert([{
       pedido_id: pedidoId,
-      evento: "cocinado",
+      etapa: "cocinado",
       origen: "cocina",
-      timestamp: new Date().toISOString()
+      fecha: new Date().toISOString()
     }]);
 
   if (error) {
@@ -297,13 +297,12 @@ async function rechazarPedido(pedidoId) {
   }
 
   const { error } = await supabase
-    .from("log_eventos_pedido")
+    .from("eventos_pedido")
     .insert([{
       pedido_id: pedidoId,
-      evento: "rechazado",
-      origen: "cocina",
-      detalle: motivo,
-      timestamp: new Date().toISOString()
+      tipo: "rechazado",
+      descripcion: motivo,
+      fecha: new Date().toISOString()
     }]);
 
   if (error) {
