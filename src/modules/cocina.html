@@ -10,16 +10,22 @@
 </head>
 <body>
   <div class="admin-container">
-   <img src="../assets/logo.png" alt="Logo del sistema" class="logo" />
-    <h1>📋 Pedidos en Cocina</h1>
-    <div id="lista-pedidos" class="lista-pedidos"></div>
-   <button id="cerrar-sesion">🔒 Cerrar sesión</button>
-    </div>
-<p id="bienvenida" style="margin-bottom: 1rem;"></p>
-<div id="resumen-dia" class="estado-lineal"></div>
-<div class="acciones-superiores"></div
+    <img src="../assets/logo.png" alt="Logo del sistema" class="logo" />
+    <h1>👨‍🍳 Pedidos en Cocina</h1>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script type="module" src="../js/cocina.js"></script>
+    <p id="bienvenida" style="margin-bottom: 1rem;"></p>
+
+    <div id="resumen-dia" class="estado-lineal"></div>
+
+    <div class="acciones-superiores">
+      <button onclick="location.reload()">🔄 Actualizar</button>
+    </div>
+
+    <div id="lista-pedidos" class="lista-pedidos"></div>
+
+    <button id="cerrar-sesion">🔒 Cerrar sesión</button>
+  </div>
+
+  <script type="module" src="../js/cocina.js"></script>
 </body>
 </html>
