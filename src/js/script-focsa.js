@@ -96,6 +96,25 @@ function renderMenuEspecial(lista) {
 // ─────────────────────────────────────────────────────────────
 // 🧴 CARGA DE ENVASES
 // ─────────────────────────────────────────────────────────────
+async function cargarEnvases() {
+  console.group("📥 Carga de envases");
+
+  const { data, error } = await supabase
+    .from("menu_item")
+    .select("*")
+    .eq("categoria", "Envases")
+    .eq("disponible", true)
+    .gt("stock", 0)
+    .order("precio", { ascending: true });
+
+  if (error) return console.error("❌ Error al cargar envases:", error);
+
+  envases = data;
+  console.log("🧴 Envases cargados:", envases.length);
+  renderEnvases(envases); // ← esta línea debe estar aquí
+  console.groupEnd();
+}
+
 function renderEnvases(lista) {
   console.group("🖼️ Renderizado de envases");
   const contenedor = document.getElementById("envases-contenedor");
@@ -119,7 +138,7 @@ function renderEnvases(lista) {
       </div>`;
   });
 
-  document.querySelectorAll("#envases input[type='number']").forEach(input => {
+  document.querySelectorAll("#envases-contenedor input[type='number']").forEach(input => {
     input.addEventListener("input", () => {
       cantidadesEnvases[input.dataset.name] = parseInt(input.value) || 0;
       calcularTotales();
@@ -128,24 +147,7 @@ function renderEnvases(lista) {
 
   console.groupEnd();
 }
-envases = data;
-console.log("🧴 Envases cargados:", envases.length);
-renderEnvases(envases);
-async function cargarEnvases() {
-  console.group("📥 Carga de envases");
-  const { data, error } = await supabase
-    .from("menu_item")
-    .select("*")
-    .eq("categoria", "Envases")
-    .eq("disponible", true)
-    .gt("stock", 0)
-    .order("precio", { ascending: true });
 
-  if (error) return console.error("❌ Error al cargar envases:", error);
-  envases = data;
-  console.log("🧴 Envases cargados:", envases.length);
-  console.groupEnd();
-}
 
 // ─────────────────────────────────────────────────────────────
 // 🧮 CÁLCULO DE TOTALES
