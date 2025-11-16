@@ -1,157 +1,187 @@
-import { supabase } from './supabaseClient.js';
-import { logEvent } from './logger.js';
+// ┌────────────────────────────────────────────────────────────┐
+// │ Módulo: Cocina FOCSA                                       │
+// │ Script: cocina.js                                          │
+// │ Autor: Irbing Brizuela                                     │
+// │ Fecha: 2025-11-16                                          │
+// └────────────────────────────────────────────────────────────┘
 
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+// 🔐 Conexión Supabase
+const supabase = createClient("https://qeqltwrkubtyrmgvgaai.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...");
 window.supabase = supabase;
 
-let pedidosGlobal = [];
+// 🟢 INICIALIZACIÓN
+document.addEventListener("DOMContentLoaded", async () => {
+  console.group("🟢 Módulo Cocina — Inicialización");
+  console.log("🚀 Script cocina.js inicializado");
 
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    console.log('🔄 Iniciando módulo cocina...');
+  await verificarAcceso(); // 🔐 Verifica sesión y rol
+  await cargarPedidosEnCocina(); // 📥 Carga inicial
+  setInterval(cargarPedidosEnCocina, 15000); // 🔄 Auto-refresh cada 15s
 
-    // ── Autenticación y perfil ───────────────────────────────
-    const { data: perfil, error } = await supabase.rpc('obtener_perfil_seguro');
-    if (error || !perfil || perfil.length === 0) throw new Error('Perfil no disponible');
-
-    const usuario = perfil[0];
-    const nombre = usuario?.nombre || 'sin nombre';
-    const rol = usuario?.rol || 'sin rol';
-    const correo = usuario?.correo || 'sin correo';
-    const usuarioId = usuario?.id;
-
-    console.log(`✅ Perfil cargado: ${nombre} (${rol})`);
-    document.getElementById('bienvenida').textContent = `Bienvenido, ${nombre} (${rol})`;
-
-    if (!['super_admin', 'admin', 'cocina'].includes(rol)) {
-      logEvent('warn', 'Cocina', `Acceso denegado para rol: ${rol}`);
-      window.location.href = '../../index.html';
-      return;
-    }
-
-    await supabase.rpc('registrar_evento', {
-      tipo: 'acceso',
-      modulo: 'cocina',
-      detalle: `Ingreso al módulo cocina por ${correo} (${rol})`
-    });
-
-    // ── Resumen diario ───────────────────────────────────────
-const { data: resumen, error: errorResumen } = await supabase.rpc('resumen_cocina_dia', {
-  p_usuario: usuarioId
+  console.groupEnd();
 });
 
-if (errorResumen) {
-  console.warn('⚠️ Error al obtener resumen diario:', errorResumen.message);
-} else if (resumen && resumen.length > 0) {
-  const r = resumen[0];
-  const resumenEl = document.getElementById('resumen-dia');
-  if (resumenEl) {
-    resumenEl.innerHTML = `
-      <p>📦 Entregados hoy: <strong>${r.entregados}</strong> — 💰 <strong>${r.importe_entregado.toFixed(2)} CUP</strong></p>
-      <p>⏳ Pendientes hoy: <strong>${r.pendientes}</strong> — 💰 <strong>${r.importe_pendiente.toFixed(2)} CUP</strong></p>
-    `;
-  } else {
-    console.warn('⚠️ Elemento #resumen-dia no encontrado en el DOM');
-  }
-}
+// 🔐 VERIFICACIÓN DE USUARIO Y ROL
+async function verificarAcceso() {
+  console.group("🔐 Verificación de acceso");
 
-    // ── Carga inicial de pedidos ─────────────────────────────
-    await cargarPedidos();
-
-    // ── Actualización automática ─────────────────────────────
-    setInterval(cargarPedidos, 30000); // cada 30 segundos
-
-    // ── Cierre de sesión ─────────────────────────────────────
-    document.getElementById('cerrar-sesion').addEventListener('click', () => {
-      console.log('🔒 Cerrando sesión...');
-      localStorage.clear();
-      window.location.href = 'login.html';
-    });
-
-    // ── Delegación de eventos para botones ───────────────────
-    document.getElementById('lista-pedidos').addEventListener('click', e => {
-      if (e.target.matches('button[data-pedido-id]')) {
-        const pedidoId = e.target.getAttribute('data-pedido-id');
-        marcarEntregado(pedidoId, usuarioId);
-      }
-    });
-
-  } catch (err) {
-    console.error('❌ Error en módulo cocina:', err.message);
-    alert('Error al iniciar módulo cocina');
-    window.location.href = '../../index.html';
-  }
-});
-
-// ── Cargar pedidos desde la vista ────────────────────────────
-async function cargarPedidos() {
-  console.log('📦 Cargando pedidos desde vista técnica...');
-
-  const { data, error } = await supabase.from('vw_pedidos_cocina').select('*');
-  if (error) {
-    console.error('❌ Error al cargar pedidos:', error.message);
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user) {
+    console.warn("❌ Usuario no autenticado");
+    alert("Acceso denegado. No ha iniciado sesión.");
+    location.href = "/login.html";
     return;
   }
 
-  pedidosGlobal = data;
-  console.log(`✅ ${pedidosGlobal.length} pedidos cargados`);
-  renderizarPedidos(pedidosGlobal);
+  const { data, error } = await supabase
+    .from("usuarios")
+    .select("rol")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error || !data) {
+    console.warn("❌ Error al obtener rol");
+    alert("Error al verificar rol.");
+    location.href = "/login.html";
+    return;
+  }
+
+  const rol = data.rol;
+  const rolesPermitidos = ["admin", "super", "gerente", "cocina"];
+
+  if (!rolesPermitidos.includes(rol)) {
+    console.warn("❌ Rol no autorizado:", rol);
+    alert("Acceso restringido. Este módulo es solo para cocina, gerencia o administración.");
+    location.href = "/denegado.html";
+    return;
+  }
+
+  document.getElementById("bienvenida").textContent = `👋 Bienvenido al módulo cocina (${rol})`;
+  console.log("✅ Acceso permitido para rol:", rol);
+  console.groupEnd();
 }
 
-// ── Renderizar pedidos con productos e importes ──────────────
-function renderizarPedidos(lista) {
-  const contenedor = document.getElementById('lista-pedidos');
-  contenedor.innerHTML = '';
+// 📥 CARGA DE PEDIDOS
+async function cargarPedidosEnCocina() {
+  console.group("📥 Carga de pedidos en cocina");
 
-  lista.forEach(pedido => {
-    const bloque = document.createElement('div');
-    bloque.className = 'pedido-bloque';
-
-    let productosHTML = '';
-    let total = 0;
-
-    if (pedido.items && Array.isArray(pedido.items)) {
-      productosHTML = `
-        <ul class="productos-lista">
-          ${pedido.items.map(item => {
-            const importe = item.cantidad * item.precio;
-            total += importe;
-            return `<li>${item.nombre} × ${item.cantidad} — ${importe.toFixed(2)} CUP</li>`;
-          }).join('')}
-        </ul>
-        <p><strong>Total:</strong> ${total.toFixed(2)} CUP</p>
-      `;
-    }
-
-    bloque.innerHTML = `
-      <p><strong>${pedido.cliente}</strong> — Piso ${pedido.piso}, Apto ${pedido.apartamento}</p>
-      <p>🕒 ${new Date(pedido.fecha_registro).toLocaleString()}</p>
-      <p>Estado: <span class="estado ${pedido.estado || 'pendiente'}">${pedido.estado || 'pendiente'}</span></p>
-      ${pedido.criterio ? `<p>📝 Criterio: ${pedido.criterio}</p>` : ''}
-      ${productosHTML}
-      <button data-pedido-id="${pedido.pedido_id}">✅ Marcar como entregado</button>
-    `;
-    contenedor.appendChild(bloque);
-  });
-}
-
-// ── Marcar pedido como entregado ─────────────────────────────
-async function marcarEntregado(pedidoId, usuarioId) {
-  console.log('📤 Marcando pedido como entregado:', pedidoId);
-
-  const { error } = await supabase.rpc('actualizar_estado_pedido', {
-    p_id: pedidoId,
-    nuevo_estado: 'entregado',
-    usuario: usuarioId
-  });
+  const { data, error } = await supabase
+    .from("vw_integridad_pedido")
+    .select("*")
+    .in("estado_actual", ["pendiente", "en cocina"])
+    .order("fecha_registro", { ascending: true });
 
   if (error) {
-    console.error('❌ Error al actualizar estado:', error.message);
-    alert('No se pudo actualizar el estado');
-  } else {
-    console.log('✅ Pedido actualizado correctamente');
-    await cargarPedidos();
+    console.error("❌ Error al cargar pedidos:", error);
+    return;
   }
+
+  console.log("✅ Pedidos cargados:", data.length);
+  renderizarPedidos(data);
+  renderResumenDia(data);
+
+  console.groupEnd();
 }
 
-// ── Exponer función global ───────────────────────────────────
-window.marcarEntregado = marcarEntregado;
+// 📊 RESUMEN DEL DÍA
+function renderResumenDia(pedidos) {
+  console.group("📊 Resumen del día");
+
+  const resumen = document.getElementById("resumen-dia");
+  const total = pedidos.length;
+  const pendientes = pedidos.filter(p => p.estado_actual === "pendiente").length;
+  const enCocina = pedidos.filter(p => p.estado_actual === "en cocina").length;
+
+  resumen.innerHTML = `
+    <strong>📊 Resumen del Día:</strong>
+    Total: ${total} | Pendientes: ${pendientes} | En cocina: ${enCocina}
+  `;
+
+  console.log("📊 Total:", total, "| Pendientes:", pendientes, "| En cocina:", enCocina);
+  console.groupEnd();
+}
+
+// 🖼️ RENDERIZADO DE PEDIDOS
+function renderizarPedidos(pedidos) {
+  console.group("🖼️ Renderizado de pedidos");
+
+  const contenedor = document.getElementById("lista-pedidos");
+  contenedor.innerHTML = "";
+
+  if (pedidos.length === 0) {
+    contenedor.innerHTML = "<p>No hay pedidos pendientes.</p>";
+    console.log("📭 Sin pedidos pendientes");
+    console.groupEnd();
+    return;
+  }
+
+  pedidos.forEach(pedido => {
+    const total = pedido.items.reduce((sum, i) => sum + i.subtotal, 0);
+    const bloque = document.createElement("div");
+    bloque.className = "pedido-bloque";
+
+    bloque.innerHTML = `
+      <h3>📦 Pedido ${pedido.pedido_id.slice(0, 8)}...</h3>
+      <p><strong>Cliente:</strong> ${pedido.cliente}</p>
+      <p><strong>Canal:</strong> ${pedido.canal} | <strong>Estado:</strong> ${pedido.estado_actual}</p>
+      <p><strong>Fecha:</strong> ${new Date(pedido.fecha_registro).toLocaleString()}</p>
+      <ul>${pedido.items.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}</ul>
+      <p><strong>Total:</strong> ${total.toFixed(2)} CUP</p>
+      <div class="acciones">
+        <button onclick="marcarComoCocinado('${pedido.pedido_id}')">✅ Cocinado</button>
+        <button onclick="rechazarPedido('${pedido.pedido_id}')">❌ Rechazar</button>
+      </div>
+    `;
+
+    contenedor.appendChild(bloque);
+  });
+
+  console.groupEnd();
+}
+
+// ✅ MARCAR COMO COCINADO
+async function marcarComoCocinado(pedidoId) {
+  console.group("✅ Marcar como cocinado:", pedidoId);
+
+  const { error } = await supabase
+    .from("log_eventos_pedido")
+    .insert([{ pedido_id: pedidoId, evento: "cocinado", origen: "cocina", timestamp: new Date().toISOString() }]);
+
+  if (error) {
+    console.error("❌ Error al registrar evento:", error);
+    return;
+  }
+
+  console.log("📦 Pedido marcado como cocinado");
+  cargarPedidosEnCocina();
+
+  console.groupEnd();
+}
+
+// ❌ RECHAZAR PEDIDO
+async function rechazarPedido(pedidoId) {
+  console.group("❌ Rechazar pedido:", pedidoId);
+
+  const motivo = prompt("Motivo del rechazo:");
+  if (!motivo) {
+    console.warn("⚠️ Rechazo cancelado por falta de motivo");
+    console.groupEnd();
+    return;
+  }
+
+  const { error } = await supabase
+    .from("log_eventos_pedido")
+    .insert([{ pedido_id: pedidoId, evento: "rechazado", origen: "cocina", detalle: motivo, timestamp: new Date().toISOString() }]);
+
+  if (error) {
+    console.error("❌ Error al registrar rechazo:", error);
+    return;
+  }
+
+  console.log("📦 Pedido rechazado con motivo:", motivo);
+  cargarPedidosEnCocina();
+
+  console.groupEnd();
+}
