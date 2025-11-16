@@ -670,3 +670,19 @@ function toggleVentajasGrupo() {
 }
 
 window.toggleVentajasGrupo = toggleVentajasGrupo;
+//DESCRIPCION
+function mostrarDescripcion(descripcion, imagenUrl) {
+  console.group("📝 Mostrar descripción del producto");
+
+  document.getElementById("modal-texto").textContent = descripcion;
+  document.getElementById("modal-imagen").src = imagenUrl || "";
+  document.getElementById("modal-descripcion").style.display = "block";
+
+  console.log("🖼️ Descripción mostrada:", descripcion);
+  console.groupEnd();
+}
+
+window.mostrarDescripcion = mostrarDescripcion;
+document.getElementById("modal-close").addEventListener("click", () => {
+  document.getElementById("modal-descripcion").style.display = "none";
+});
