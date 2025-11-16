@@ -505,7 +505,7 @@ async function enviarWhatsApp() {
     p_direccion: null,
     p_unirse_grupo: unirse,
     p_items: items,
-    p_canal: "whatsapp" // ✅ canal agregado
+    p_canal: "whatsapp"
   });
 
   if (error) {
@@ -514,7 +514,7 @@ async function enviarWhatsApp() {
     return;
   }
 
-  const pedidoId = data?.[0]?.pedido_id; // ✅ acceso corregido
+  const pedidoId = data?.[0]?.pedido_id;
   if (!pedidoId) {
     console.warn("⚠️ No se devolvió pedido_id");
     console.groupEnd();
@@ -535,9 +535,6 @@ async function enviarWhatsApp() {
   window.open(url, "_blank");
   console.log("📤 WhatsApp abierto con mensaje");
 
-  console.groupEnd();
-}
-
   // 🔄 Reinicio del flujo
   document.getElementById("modal-resumen").style.display = "none";
   cantidades = {};
@@ -551,7 +548,7 @@ async function enviarWhatsApp() {
   console.log("📦 Seguimiento activado");
 
   console.groupEnd();
-}
+} // ← Este cierre es el único necesario
 
 window.enviarWhatsApp = enviarWhatsApp;
 
