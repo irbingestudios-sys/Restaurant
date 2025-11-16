@@ -20,9 +20,17 @@ let cantidadesEnvases = {};
 document.addEventListener("DOMContentLoaded", () => {
   console.group("🟢 FOCSA — Inicialización");
   console.log("🚀 Script FOCSA inicializado");
+
   cargarMenuEspecial();
   cargarEnvases();
   iniciarSeguimiento();
+
+  // 🔎 Mostrar seguimiento si hay pedido activo
+  const pedidoId = localStorage.getItem("pedido_id_actual");
+  if (pedidoId) {
+    document.getElementById("seguimiento-pedido").style.display = "block";
+  }
+
   console.groupEnd();
 });
 
@@ -578,6 +586,40 @@ function mostrarSeguimientoPedido() {
 }
 
 window.mostrarSeguimientoPedido = mostrarSeguimientoPedido;
+
+//FUNCION RESETEAR
+function resetearFOCSA() {
+  console.group("🔄 Reinicio completo FOCSA");
+
+  // 🧹 Limpiar almacenamiento local y de sesión
+  localStorage.clear();
+  sessionStorage.clear();
+
+  // 🧼 Resetear variables
+  cantidades = {};
+  cantidadesEnvases = {};
+
+  // 🧾 Reiniciar menú y envases
+  filtrarMenu();
+  calcularTotales();
+
+  // 🧤 Ocultar seguimiento y modales
+  document.getElementById("seguimiento-pedido").style.display = "none";
+  document.getElementById("modal-resumen").style.display = "none";
+  document.getElementById("bloque-criterio").style.display = "none";
+
+  // 🧼 Limpiar campos del cliente
+  document.getElementById("cliente").value = "";
+  document.getElementById("piso").value = "";
+  document.getElementById("apartamento").value = "";
+  document.getElementById("telefono").value = "";
+  document.getElementById("unirseGrupo").checked = false;
+
+  console.log("✅ Sistema listo para nuevo pedido");
+  console.groupEnd();
+}
+
+window.resetearFOCSA = resetearFOCSA;
 
 //VENTAJAS DEL GRUPO
 function toggleVentajasGrupo() {
