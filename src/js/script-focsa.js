@@ -503,7 +503,7 @@ async function enviarWhatsApp() {
     p_telefono: telefono || null,
     p_direccion: null,
     p_unirse_grupo: unirse,
-    p_items: JSON.stringify(items)
+    p_items: items
   });
 
   if (error) {
