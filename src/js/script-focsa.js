@@ -236,9 +236,9 @@ window.enviarPedido = async () => {
   historial.push(pedidoId);
   localStorage.setItem("historial_pedidos", JSON.stringify(historial));
 
-  console.log("📥 pedido_id_actual guardado:", pedidoId
-    console.groupEnd();
-  mostrarSeguimientoPedido();
+  console.log("📥 pedido_id_actual guardado:", pedidoId);
+console.groupEnd();
+mostrarSeguimientoPedido();
 };
 
 // 🔎 SEGUIMIENTO Y CRITERIO DEL CLIENTE
