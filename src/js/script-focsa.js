@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (pedidoId) {
     document.getElementById("seguimiento-pedido").style.display = "block";
   }
-
+renderizarSeguimientoPedidos();
   console.groupEnd();
 });
 
@@ -258,6 +258,7 @@ window.enviarPedido = async () => {
   const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
   historial.push(pedidoId);
   localStorage.setItem("historial_pedidos", JSON.stringify(historial));
+  renderizarSeguimientoPedidos();
 
   console.log("📥 pedido_id_actual guardado:", pedidoId);
   console.groupEnd();
@@ -325,6 +326,46 @@ async function verificarIntegridadPedido(pedidoId) {
 
   console.groupEnd();
 }
+
+async function renderizarSeguimientoPedidos() {
+  console.group("📦 Seguimiento múltiple de pedidos");
+
+  const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
+  const contenedor = document.getElementById("seguimiento-multiple");
+  contenedor.innerHTML = "";
+
+  for (const pedidoId of historial.slice(-5).reverse()) {
+    const { data, error } = await supabase
+      .from("vw_integridad_pedido")
+      .select("*")
+      .eq("pedido_id", pedidoId)
+      .maybeSingle();
+
+    if (error || !data) continue;
+
+    const estado = data.estado_actual || "⏳ En espera";
+    const cocina = data.replicado_en_cocina ? "✅ Cocina OK" : "⚠️ Sin cocina";
+    const reparto = data.replicado_en_reparto ? "✅ Reparto OK" : "⚠️ Sin reparto";
+
+    let html = `
+      <div class="seguimiento-bloque">
+        <h4>📦 Pedido: ${pedidoId.slice(0, 8)}...</h4>
+        <p><strong>Estado:</strong> ${estado} | ${cocina} | ${reparto}</p>
+        <ul>
+    `;
+
+    for (const item of data.items || []) {
+      html += `<li>${item.nombre} x${item.cantidad} = ${item.subtotal} CUP</li>`;
+    }
+
+    html += `</ul></div>`;
+    contenedor.innerHTML += html;
+  }
+
+  console.groupEnd();
+}
+
+window.renderizarSeguimientoPedidos = renderizarSeguimientoPedidos;
 
 document.getElementById("btn-guardar-criterio").addEventListener("click", async () => {
   console.group("📝 Guardar criterio del cliente");
@@ -533,6 +574,7 @@ async function enviarWhatsApp() {
   const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
   historial.push(pedidoId);
   localStorage.setItem("historial_pedidos", JSON.stringify(historial));
+  renderizarSeguimientoPedidos();
 
   console.log("📥 Pedido registrado con ID:", pedidoId);
 
