@@ -98,7 +98,7 @@ function renderMenuEspecial(lista) {
 // ─────────────────────────────────────────────────────────────
 function renderEnvases(lista) {
   console.group("🖼️ Renderizado de envases");
-  const contenedor = document.getElementById("envases");
+  const contenedor = document.getElementById("envases-contenedor");
   contenedor.innerHTML = "";
 
   lista.forEach(item => {
