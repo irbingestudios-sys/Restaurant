@@ -28,16 +28,27 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function verificarAcceso() {
   console.group("🔐 Verificación de acceso");
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
-    console.warn("❌ Usuario no autenticado");
+  // 🧪 Verificar sesión activa
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !sessionData?.session) {
+    console.warn("❌ No hay sesión activa:", sessionError);
     alert("Acceso denegado. No ha iniciado sesión.");
     location.href = "/login.html";
     return;
   }
 
-  console.log("🧾 Usuario autenticado:", user);
+  // 🧾 Obtener usuario autenticado
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user || !user.id) {
+    console.warn("❌ Error al obtener usuario:", userError);
+    alert("Acceso denegado. Usuario no válido.");
+    location.href = "/login.html";
+    return;
+  }
 
+  console.log("🧾 Usuario autenticado:", user.email || user.id);
+
+  // 🔍 Buscar rol en tabla usuario
   const { data, error } = await supabase
     .from("usuario")
     .select("rol, activo, nombre")
@@ -45,8 +56,8 @@ async function verificarAcceso() {
     .maybeSingle();
 
   if (error || !data) {
-    console.warn("❌ Error al obtener rol o usuario no registrado:", error);
-    alert("Error al verificar rol.");
+    console.warn("❌ Usuario no registrado en tabla 'usuario':", error);
+    alert("Error al verificar rol. Usuario no registrado.");
     location.href = "/login.html";
     return;
   }
@@ -58,7 +69,7 @@ async function verificarAcceso() {
     return;
   }
 
-  const rol = data.rol;
+  const rol = data.rol?.trim().toLowerCase();
   const rolesPermitidos = ["admin", "super", "super_admin", "gerente", "cocina"];
 
   if (!rolesPermitidos.includes(rol)) {
