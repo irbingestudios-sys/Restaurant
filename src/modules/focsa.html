@@ -16,6 +16,7 @@
       <p>Clientes del Edificio FOCSA</p>
     </header>
 
+    <!-- Filtro por categoría -->
     <section>
       <label for="filtro"><strong>Filtrar por categoría:</strong></label>
       <select id="filtro" onchange="filtrarMenu()">
@@ -23,16 +24,19 @@
       </select>
     </section>
 
+    <!-- Menú especial -->
     <section>
       <h2 class="titulo-seccion">Su Menú de Hoy</h2>
       <div id="menu-especial" class="scrollable-menu"></div>
     </section>
 
+    <!-- Envases (sección fija) -->
     <section>
       <h2 class="titulo-seccion">Envases</h2>
       <div id="envases-contenedor" class="scrollable-menu"></div>
     </section>
 
+    <!-- Totales -->
     <section id="totales">
       <h2 class="titulo-seccion">Resumen del Pedido</h2>
       <p>Total: <span id="total-cup">0</span> CUP</p>
@@ -40,22 +44,24 @@
       <button id="btn-limpiar">Limpiar selección</button>
       <button onclick="revisarPedido()" class="btn-secundario">🕵️ Revisar pedido</button>
     </section>
-    
-<!-- Seguimiento del pedido -->
-<section id="seguimiento-pedido" style="display:none;">
-  <h2 class="titulo-seccion">📦 Seguimiento del Pedido</h2>
-  <div class="estado-lineal">
-    <strong>Estado actual:</strong> <span id="estado-actual">🕓 Pendiente</span>
-  </div>
 
-  <button id="btn-entregado" class="btn-secundario">✅ Marcar como entregado</button>
+    <!-- Seguimiento del pedido -->
+    <section id="seguimiento-pedido" style="display:none;">
+      <h2 class="titulo-seccion">📦 Seguimiento del Pedido</h2>
+      <div class="estado-lineal">
+        <strong>Estado actual:</strong> <span id="estado-actual">🕓 Pendiente</span>
+      </div>
 
-  <div id="bloque-criterio" style="display:none; margin-top:20px;">
-    <h3 class="titulo-seccion">📝 Opinión del Cliente</h3>
-    <textarea id="criterio" rows="3" placeholder="¿Cómo estuvo su pedido?" required></textarea>
-    <button id="btn-guardar-criterio" class="btn-secundario">Guardar criterio</button>
-  </div>
-</section>
+      <button id="btn-entregado" class="btn-secundario">✅ Marcar como entregado</button>
+
+      <div id="bloque-criterio" style="display:none; margin-top:20px;">
+        <h3 class="titulo-seccion">📝 Opinión del Cliente</h3>
+        <textarea id="criterio" rows="3" placeholder="¿Cómo estuvo su pedido?" required></textarea>
+        <button id="btn-guardar-criterio" class="btn-secundario">Guardar criterio</button>
+      </div>
+    </section>
+
+    <!-- Datos del cliente -->
     <section>
       <h2 class="titulo-seccion">Datos del Cliente</h2>
       <input type="text" id="cliente" placeholder="Nombre del cliente" required />
@@ -82,46 +88,50 @@
         </ul>
       </div>
     </section>
-      <!-- Modal de descripción -->
-  <div id="modal-descripcion" class="modal" role="dialog" aria-label="Descripción del producto" style="display:none;">
-    <div class="modal-content">
-      <span id="modal-close">&times;</span>
-      <h3 class="titulo-seccion">Descripción del producto</h3>
-      <p id="modal-texto"></p>
-      <img id="modal-imagen" src="" alt="Imagen del producto" style="max-width:100%; margin-top:10px;" />
-    </div>
-  </div>
 
-  <!-- Modal: Vista previa del pedido -->
-  <div id="modal-resumen" class="modal" role="dialog" aria-label="Vista previa del pedido" style="display:none;">
-    <div class="modal-content">
-      <span id="modal-close-resumen">&times;</span>
-      <h3 class="titulo-seccion">🧾 Vista previa del pedido</h3>
-      <div id="contenido-resumen"></div>
-      <div style="margin-top:20px;">
-        <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
-        <button onclick="cancelarResumen()" class="btn-secundario">❌ Cancelar</button>
+    <!-- Modal de descripción -->
+    <div id="modal-descripcion" class="modal" role="dialog" aria-label="Descripción del producto" style="display:none;">
+      <div class="modal-content">
+        <span id="modal-close">&times;</span>
+        <h3 class="titulo-seccion">Descripción del producto</h3>
+        <p id="modal-texto"></p>
+        <img id="modal-imagen" src="" alt="Imagen del producto" style="max-width:100%; margin-top:10px;" />
       </div>
     </div>
-  </div>
 
-  <!-- Footer con redes sociales -->
-  <footer class="footer-redes">
-    <a href="https://facebook.com" target="_blank">
-      <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/facebook.svg" alt="Facebook" />
-    </a>
-    <a href="https://instagram.com" target="_blank">
-      <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/instagram.svg" alt="Instagram" />
-    </a>
-    <a href="https://lacasona17.com" target="_blank">
-      <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/web.svg" alt="Sitio Web" />
-    </a>
-  </footer>
+    <!-- Modal: Vista previa del pedido -->
+    <div id="modal-resumen" class="modal" role="dialog" aria-label="Vista previa del pedido" style="display:none;">
+      <div class="modal-content">
+        <span id="modal-close-resumen">&times;</span>
+        <h3 class="titulo-seccion">🧾 Vista previa del pedido</h3>
+        <div id="contenido-resumen"></div>
+        <div style="margin-top:20px;">
+          <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
+          <button onclick="cancelarResumen()" class="btn-secundario">❌ Cancelar</button>
+        </div>
+      </div>
+    </div>
 
-  <script type="module" src="https://irbingestudios-sys.github.io/Restaurant/src/js/script-focsa.js"></script>
+    <!-- Footer con redes sociales -->
+    <footer class="footer-redes">
+      <a href="https://facebook.com" target="_blank">
+        <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/facebook.svg" alt="Facebook" />
+      </a>
+      <a href="https://instagram.com" target="_blank">
+        <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/instagram.svg" alt="Instagram" />
+      </a>
+      <a href="https://lacasona17.com" target="_blank">
+        <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/web.svg" alt="Sitio Web" />
+      </a>
+    </footer>
+
+    <!-- Script principal -->
+    <script type="module" src="https://irbingestudios-sys.github.io/Restaurant/src/js/script-focsa.js"></script>
+
     <!-- Contenedor de confirmación del pedido -->
-<div id="confirmacion" style="display:none;">
-  <div id="resumen"></div>
-</div>
+    <div id="confirmacion" style="display:none;">
+      <div id="resumen"></div>
+    </div>
+  </div>
 </body>
 </html>
