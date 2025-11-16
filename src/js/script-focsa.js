@@ -243,3 +243,4 @@ function iniciarSeguimiento() {
   if (!pedidoId) return;
   setInterval(() => verificarIntegridadPedido(pedidoId), 10000);
 }
+window.filtrarMenu = filtrarMenu;
