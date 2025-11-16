@@ -59,3 +59,8 @@ button {
   border: 1px solid #ccc;
   min-width: 120px;
 }
+.filtro-grupo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
