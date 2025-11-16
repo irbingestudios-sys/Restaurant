@@ -6,10 +6,10 @@
 // │ Fecha: 2025-11-08                                          │
 // └────────────────────────────────────────────────────────────┘
 
-//INICIALIZACIÓN
+// INICIALIZACIÓN
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-const supabase = createClient("https://qeqltwrkubtyrmgvgaai.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw");
+const supabase = createClient("https://qeqltwrkubtyrmgvgaai.supabase.co", "TU_API_KEY_AQUÍ");
 window.supabase = supabase;
 
 let menu = [];
@@ -25,7 +25,8 @@ document.addEventListener("DOMContentLoaded", () => {
   iniciarSeguimiento();
   console.groupEnd();
 });
-//CARGA DE MENÚ Y ENVASES
+
+// CARGA DE MENÚ Y ENVASES
 async function cargarMenuEspecial() {
   console.group("📥 Carga de menú");
   const { data, error } = await supabase.rpc("obtener_menu_focsa");
@@ -65,7 +66,8 @@ async function cargarEnvases() {
   renderEnvases(envases);
   console.groupEnd();
 }
-//RENDERIZADO MODULAR
+
+// RENDERIZADO MODULAR
 function renderGrupo(lista, contenedorId, destinoCantidades) {
   console.group(`🖼️ Renderizado en ${contenedorId}`);
   const contenedor = document.getElementById(contenedorId);
@@ -123,10 +125,10 @@ function renderMenuEspecial(lista) {
 function renderEnvases(lista) {
   renderGrupo(lista, "envases-contenedor", cantidadesEnvases);
 }
-//FILTRO POR CATEGORÍA
+
+// FILTRO POR CATEGORÍA
 function filtrarMenu() {
   console.group("🔍 Filtro de categoría");
-
   const categoriaSeleccionada = document.getElementById("filtro").value;
   console.log("📌 Categoría seleccionada:", categoriaSeleccionada);
 
@@ -143,7 +145,9 @@ function filtrarMenu() {
 
   console.groupEnd();
 }
-//CÁLCULO DE TOTALES
+window.filtrarMenu = filtrarMenu;
+
+// CÁLCULO DE TOTALES
 function calcularTotales() {
   console.group("🧮 Cálculo de totales");
   let total = 0, cantidad = 0;
@@ -171,7 +175,8 @@ function calcularTotales() {
   console.log("🧮 Totales actualizados:", { total, cantidad });
   console.groupEnd();
 }
-//ENVÍO DE PEDIDO
+
+// ENVÍO DE PEDIDO
 window.enviarPedido = async () => {
   console.group("📤 RPC — registrar_pedido_focsa");
 
@@ -231,16 +236,153 @@ window.enviarPedido = async () => {
   historial.push(pedidoId);
   localStorage.setItem("historial_pedidos", JSON.stringify(historial));
 
-  console.log("📥 pedido_id_actual guardado:", pedidoId);
-  console.log("📚 Historial actualizado:", historial);
-  console.groupEnd();
-
+  console.log("📥 pedido_id_actual guardado:", pedidoId
+    console.groupEnd();
   mostrarSeguimientoPedido();
 };
-//SEGUIMIENTO Y CRITERIO DEL CLIENTE
+
+// 🔎 SEGUIMIENTO Y CRITERIO DEL CLIENTE
 function iniciarSeguimiento() {
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (!pedidoId) return;
   setInterval(() => verificarIntegridadPedido(pedidoId), 10000);
 }
-window.filtrarMenu = filtrarMenu;
+
+async function verificarIntegridadPedido(pedidoId) {
+  console.group("🔎 Seguimiento del pedido");
+
+  const { data, error } = await supabase
+    .from("vw_integridad_pedido")
+    .select("*")
+    .eq("pedido_id", pedidoId)
+    .maybeSingle();
+
+  if (error || !data) return console.warn("⚠️ Error o pedido no encontrado");
+
+  const estado = data.estado_actual || "⏳ En espera";
+  const cocina = data.replicado_en_cocina ? "✅ Cocina OK" : "⚠️ Sin cocina";
+  const reparto = data.replicado_en_reparto ? "✅ Reparto OK" : "⚠️ Sin reparto";
+
+  document.getElementById("estado-actual").textContent = `🧾 ${estado} | ${cocina} | ${reparto}`;
+
+  const btnEntregar = document.getElementById("btn-entregado");
+  btnEntregar.disabled = !(data.replicado_en_cocina && data.replicado_en_reparto);
+  btnEntregar.addEventListener("click", () => {
+    document.getElementById("bloque-criterio").style.display = "block";
+  });
+
+  const contenedor = document.getElementById("contenido-resumen");
+  contenedor.innerHTML = "";
+
+  for (const item of data.items || []) {
+    const { data: stockData } = await supabase
+      .from("menu_item")
+      .select("stock")
+      .eq("nombre", item.nombre)
+      .maybeSingle();
+
+    const stock = stockData?.stock ?? "—";
+    const stockTexto = stock <= 3
+      ? `<span style="color:red">Stock: ${stock}</span>`
+      : `Stock: ${stock}`;
+
+    contenedor.innerHTML += `
+      <div class="producto-lineal">
+        <div class="producto-izquierda">
+          <strong>${item.nombre}</strong>
+        </div>
+        <div class="producto-derecha">
+          <span>${stockTexto}</span>
+          <span>x${item.cantidad}</span>
+          <span>= ${item.subtotal} CUP</span>
+        </div>
+      </div>`;
+  }
+
+  console.groupEnd();
+}
+
+document.getElementById("btn-guardar-criterio").addEventListener("click", async () => {
+  console.group("📝 Guardar criterio del cliente");
+
+  const criterio = document.getElementById("criterio").value.trim();
+  const pedidoId = localStorage.getItem("pedido_id_actual");
+
+  if (!criterio || !pedidoId) {
+    console.warn("⚠️ No hay criterio o pedido activo.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("criterios_pedido")
+    .insert([{ pedido_id: pedidoId, criterio }]);
+
+  if (error) {
+    console.error("❌ Error al guardar criterio:", error);
+  } else {
+    console.log("✅ Criterio guardado:", criterio);
+    alert("¡Gracias por su opinión!");
+    document.getElementById("bloque-criterio").style.display = "none";
+  }
+
+  console.groupEnd();
+});
+
+// 🧾 Vista previa del pedido
+function revisarPedido() {
+  console.group("🧾 Vista previa del pedido");
+
+  const resumen = document.getElementById("contenido-resumen");
+  resumen.innerHTML = "";
+
+  const items = [];
+
+  for (const nombre in cantidades) {
+    const cant = cantidades[nombre];
+    const item = menu.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      items.push({ ...item, cantidad: cant });
+    }
+  }
+
+  for (const nombre in cantidadesEnvases) {
+    const cant = cantidadesEnvases[nombre];
+    const item = envases.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      items.push({ ...item, cantidad: cant });
+    }
+  }
+
+  if (items.length === 0) {
+    resumen.innerHTML = "<p>No ha seleccionado ningún producto.</p>";
+  } else {
+    items.forEach(item => {
+      const subtotal = item.precio * item.cantidad;
+      resumen.innerHTML += `
+        <div class="producto-lineal">
+          <div class="producto-izquierda">
+            <strong>${item.nombre}</strong>
+          </div>
+          <div class="producto-derecha">
+            <span>x${item.cantidad}</span>
+            <span>= ${subtotal} CUP</span>
+          </div>
+        </div>`;
+    });
+  }
+
+  document.getElementById("modal-resumen").style.display = "block";
+  console.groupEnd();
+}
+
+// 🔄 Limpiar selección
+document.getElementById("btn-limpiar").addEventListener("click", () => {
+  cantidades = {};
+  cantidadesEnvases = {};
+  filtrarMenu();
+  calcularTotales();
+});
+
+// 🌐 Exponer funciones al HTML
+window.revisarPedido = revisarPedido;
+window.mostrarSeguimientoPedido = iniciarSeguimiento;
