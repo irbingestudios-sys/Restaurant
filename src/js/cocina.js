@@ -175,8 +175,9 @@ function renderResumenPorLocal(pedidos) {
   `;
 
   console.groupEnd();
+}
 
-// 🖼️ RENDERIZADO DE PEDIDOS AGRUPADOS
+// 🖼️ RENDERIZADO DE PEDIDOS AGRUPADOS CON VALIDACIÓN
 function renderizarPedidos(pedidos) {
   console.group("🖼️ Renderizado de pedidos");
 
@@ -191,21 +192,35 @@ function renderizarPedidos(pedidos) {
   }
 
   pedidos.forEach(pedido => {
-    const total = pedido.items.reduce((sum, i) => sum + i.subtotal, 0);
+    // ✅ Validación de estructura de items
+    if (!Array.isArray(pedido.items)) {
+      console.warn("⚠️ Pedido omitido por estructura inválida de items:", pedido.pedido_id);
+      return;
+    }
+
+    const total = pedido.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
     const bloque = document.createElement("div");
     bloque.className = "pedido-bloque";
 
+    // 🧩 Agrupar por categoría
     const agrupado = {};
     pedido.items.forEach(item => {
+      if (!item || typeof item !== "object" || !item.nombre || !item.cantidad || typeof item.subtotal !== "number") {
+        console.warn("⚠️ Ítem inválido en pedido:", pedido.pedido_id, item);
+        return;
+      }
+
       const categoria = item.categoria || "Sin categoría";
       if (!agrupado[categoria]) agrupado[categoria] = [];
       agrupado[categoria].push(item);
     });
 
+    // 🔠 Ordenar alfabéticamente dentro de cada categoría
     for (const cat in agrupado) {
       agrupado[cat].sort((a, b) => a.nombre.localeCompare(b.nombre));
     }
 
+    // 🧾 Construir HTML
     let listaHTML = "";
     for (const cat in agrupado) {
       listaHTML += `<h4>${cat}</h4><ul>`;
