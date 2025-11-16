@@ -186,7 +186,21 @@ window.enviarPedido = async () => {
   const telefono = document.getElementById("telefono").value.trim();
   const unirse = document.getElementById("unirseGrupo").checked;
 
-  const items = []; let total = 0;
+  if (!cliente || !piso || !apartamento) {
+    alert("Por favor, complete los datos del cliente antes de enviar el pedido.");
+    console.warn("❌ Datos del cliente incompletos.");
+    return;
+  }
+
+  const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
+  if (!tieneEnvase) {
+    alert("Debe seleccionar al menos un envase para realizar la entrega.");
+    console.warn("❌ Pedido sin envases.");
+    return;
+  }
+
+  const items = [];
+  let total = 0;
 
   for (const nombre in cantidades) {
     const cant = cantidades[nombre];
@@ -237,8 +251,9 @@ window.enviarPedido = async () => {
   localStorage.setItem("historial_pedidos", JSON.stringify(historial));
 
   console.log("📥 pedido_id_actual guardado:", pedidoId);
-console.groupEnd();
-mostrarSeguimientoPedido();
+  console.groupEnd();
+
+  mostrarSeguimientoPedido();
 };
 
 // 🔎 SEGUIMIENTO Y CRITERIO DEL CLIENTE
@@ -335,6 +350,8 @@ function revisarPedido() {
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
   const apartamento = document.getElementById("apartamento").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const unirse = document.getElementById("unirseGrupo").checked;
 
   if (!cliente || !piso || !apartamento) {
     alert("Por favor, complete los datos del cliente antes de revisar el pedido.");
@@ -342,8 +359,24 @@ function revisarPedido() {
     return;
   }
 
+  const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
+  if (!tieneEnvase) {
+    alert("Debe seleccionar al menos un envase para realizar la entrega.");
+    console.warn("❌ Pedido sin envases.");
+    return;
+  }
+
   const resumen = document.getElementById("contenido-resumen");
-  resumen.innerHTML = "";
+  resumen.innerHTML = `
+    <div class="cliente-datos">
+      <p><strong>Cliente:</strong> ${cliente}</p>
+      <p><strong>Piso:</strong> ${piso}</p>
+      <p><strong>Apartamento:</strong> ${apartamento}</p>
+      <p><strong>Teléfono:</strong> ${telefono || "—"}</p>
+      <p><strong>Grupo La Casona:</strong> ${unirse ? "✅ Sí desea unirse" : "❌ No desea unirse"}</p>
+    </div>
+    <hr />
+  `;
 
   const items = [];
 
@@ -364,7 +397,7 @@ function revisarPedido() {
   }
 
   if (items.length === 0) {
-    resumen.innerHTML = "<p>No ha seleccionado ningún producto.</p>";
+    resumen.innerHTML += "<p>No ha seleccionado ningún producto.</p>";
   } else {
     items.forEach(item => {
       const subtotal = item.precio * item.cantidad;
