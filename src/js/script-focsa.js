@@ -448,6 +448,13 @@ function enviarWhatsApp() {
     return;
   }
 
+  const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
+  if (!tieneEnvase) {
+    alert("Debe seleccionar al menos un envase para realizar la entrega.");
+    console.warn("❌ Pedido sin envases.");
+    return;
+  }
+
   const items = [];
 
   for (const nombre in cantidades) {
@@ -473,6 +480,17 @@ function enviarWhatsApp() {
   const url = `https://wa.me/+5355582319?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
 
+  // 🔄 Reiniciar flujo después de enviar
+  document.getElementById("modal-resumen").style.display = "none";
+  cantidades = {};
+  cantidadesEnvases = {};
+  filtrarMenu();
+  calcularTotales();
+
+  // 🔎 Activar seguimiento y criterio del cliente
+  mostrarSeguimientoPedido();
+
+  console.log("✅ Pedido enviado por WhatsApp y flujo reiniciado");
   console.groupEnd();
 }
 
