@@ -17,12 +17,19 @@
     <p id="bienvenida" style="margin-bottom: 1rem;"></p>
 
     <!-- 🔍 Filtros -->
-    <div class="acciones-superiores">
-      <p style="font-size: 0.9rem; color: gray;">Los filtros se aplican automáticamente al cambiar.</p>
-      <label for="filtro-tipo">Tipo:</label>
-      <select id="filtro-tipo"><option value="todos">Todos</option></select>
-<select id="filtro-local"><option value="todos">Todos</option></select>
-    </div>
+  <div class="acciones-superiores">
+  <p style="font-size: 0.9rem; color: gray;">Los filtros se aplican automáticamente al cambiar.</p>
+
+  <div class="filtro-grupo">
+    <label for="filtro-tipo">Tipo:</label>
+    <select id="filtro-tipo"><option value="todos">Todos</option></select>
+  </div>
+
+  <div class="filtro-grupo">
+    <label for="filtro-local">Local:</label>
+    <select id="filtro-local"><option value="todos">Todos</option></select>
+  </div>
+</div>
 
     <!-- 📊 Resúmenes -->
     <div id="resumen-dia" class="estado-lineal"></div>
