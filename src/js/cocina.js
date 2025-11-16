@@ -42,7 +42,7 @@ async function verificarAcceso() {
   console.log("🧾 Usuario autenticado:", user);
 
   const { data, error } = await supabase
-    .from("usuarios")
+    .from("usuario")
     .select("rol, activo, nombre")
     .eq("id", user.id) // ← usa ID porque coincide con auth.user().id
     .maybeSingle();
