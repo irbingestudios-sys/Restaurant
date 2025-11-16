@@ -332,6 +332,16 @@ document.getElementById("btn-guardar-criterio").addEventListener("click", async 
 function revisarPedido() {
   console.group("🧾 Vista previa del pedido");
 
+  const cliente = document.getElementById("cliente").value.trim();
+  const piso = document.getElementById("piso").value.trim();
+  const apartamento = document.getElementById("apartamento").value.trim();
+
+  if (!cliente || !piso || !apartamento) {
+    alert("Por favor, complete los datos del cliente antes de revisar el pedido.");
+    console.warn("❌ Datos incompletos para revisión.");
+    return;
+  }
+
   const resumen = document.getElementById("contenido-resumen");
   resumen.innerHTML = "";
 
@@ -374,6 +384,8 @@ function revisarPedido() {
   document.getElementById("modal-resumen").style.display = "block";
   console.groupEnd();
 }
+
+window.revisarPedido = revisarPedido;
 
 // 🔄 Limpiar selección
 document.getElementById("btn-limpiar").addEventListener("click", () => {
@@ -459,3 +471,11 @@ function mostrarSeguimientoPedido() {
 }
 
 window.mostrarSeguimientoPedido = mostrarSeguimientoPedido;
+
+//VENTAJAS DEL GRUPO
+function toggleVentajasGrupo() {
+  const bloque = document.getElementById("ventajasGrupo");
+  bloque.style.display = bloque.style.display === "none" ? "block" : "none";
+}
+
+window.toggleVentajasGrupo = toggleVentajasGrupo;
