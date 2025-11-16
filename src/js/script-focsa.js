@@ -386,6 +386,8 @@ document.getElementById("btn-limpiar").addEventListener("click", () => {
 // 🌐 Exponer funciones al HTML
 window.revisarPedido = revisarPedido;
 window.mostrarSeguimientoPedido = iniciarSeguimiento;
+
+//ENVIAR POR WHASAPP
 function enviarWhatsApp() {
   console.group("📲 Enviar pedido por WhatsApp");
 
@@ -393,6 +395,13 @@ function enviarWhatsApp() {
   const piso = document.getElementById("piso").value.trim();
   const apartamento = document.getElementById("apartamento").value.trim();
   const telefono = document.getElementById("telefono").value.trim();
+  const unirse = document.getElementById("unirseGrupo").checked;
+
+  if (!cliente || !piso || !apartamento) {
+    alert("Por favor, complete los datos del cliente antes de enviar.");
+    console.warn("❌ Datos incompletos para WhatsApp.");
+    return;
+  }
 
   const items = [];
 
@@ -412,7 +421,9 @@ function enviarWhatsApp() {
     }
   }
 
-  const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n\n${items.join("\n")}\n\nTotal: ${document.getElementById("total-cup").textContent} CUP`;
+  const grupoTexto = unirse ? "✅ Desea unirse al grupo" : "❌ No desea unirse al grupo";
+
+  const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n${grupoTexto}\n\n${items.join("\n")}\n\nTotal: ${document.getElementById("total-cup").textContent} CUP`;
 
   const url = `https://wa.me/+5355582319?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
@@ -421,3 +432,30 @@ function enviarWhatsApp() {
 }
 
 window.enviarWhatsApp = enviarWhatsApp;
+
+//Cancelar pedido y cerrar modal
+function cancelarResumen() {
+  console.group("❌ Cancelar pedido");
+
+  cantidades = {};
+  cantidadesEnvases = {};
+  filtrarMenu();
+  calcularTotales();
+
+  document.getElementById("modal-resumen").style.display = "none";
+
+  console.log("🧹 Pedido cancelado y reiniciado");
+  console.groupEnd();
+}
+
+window.cancelarResumen = cancelarResumen;
+
+document.getElementById("modal-close-resumen").addEventListener("click", cancelarResumen);
+
+//Mostrar seguimiento del pedido
+function mostrarSeguimientoPedido() {
+  document.getElementById("seguimiento-pedido").style.display = "block";
+  iniciarSeguimiento();
+}
+
+window.mostrarSeguimientoPedido = mostrarSeguimientoPedido;
