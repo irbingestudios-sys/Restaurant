@@ -436,6 +436,7 @@ window.mostrarSeguimientoPedido = iniciarSeguimiento;
 async function enviarWhatsApp() {
   console.group("📲 Enviar pedido por WhatsApp");
 
+  // 🔍 Verificación de datos del cliente
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
   const apartamento = document.getElementById("apartamento").value.trim();
@@ -445,16 +446,22 @@ async function enviarWhatsApp() {
   if (!cliente || !piso || !apartamento) {
     alert("Por favor, complete los datos del cliente antes de enviar.");
     console.warn("❌ Datos incompletos para WhatsApp.");
+    console.groupEnd();
     return;
   }
+  console.log("✅ Datos del cliente verificados");
 
+  // 🔍 Verificación de envases
   const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
   if (!tieneEnvase) {
     alert("Debe seleccionar al menos un envase para realizar la entrega.");
     console.warn("❌ Pedido sin envases.");
+    console.groupEnd();
     return;
   }
+  console.log("✅ Al menos un envase seleccionado");
 
+  // 🧾 Construcción de ítems
   const items = [];
   let total = 0;
 
@@ -486,7 +493,9 @@ async function enviarWhatsApp() {
     }
   }
 
-  // RPC: registrar pedido
+  console.log("📦 Ítems construidos:", items);
+
+  // 🧩 RPC: registrar pedido
   const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
     p_cliente: cliente,
     p_piso: piso,
@@ -497,31 +506,45 @@ async function enviarWhatsApp() {
     p_items: JSON.stringify(items)
   });
 
-  if (error) return console.error("❌ Error RPC:", error);
+  if (error) {
+    console.error("❌ Error RPC:", error);
+    console.groupEnd();
+    return;
+  }
 
   const pedidoId = data?.pedido_id;
-  if (!pedidoId) return console.warn("⚠️ No se devolvió pedido_id");
+  if (!pedidoId) {
+    console.warn("⚠️ No se devolvió pedido_id");
+    console.groupEnd();
+    return;
+  }
 
   localStorage.setItem("pedido_id_actual", pedidoId);
   const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
   historial.push(pedidoId);
   localStorage.setItem("historial_pedidos", JSON.stringify(historial));
 
-  // WhatsApp
+  console.log("📥 Pedido registrado con ID:", pedidoId);
+
+  // 📲 WhatsApp
   const grupoTexto = unirse ? "✅ Desea unirse al grupo" : "❌ No desea unirse al grupo";
   const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n${grupoTexto}\n\n${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}\n\nTotal: ${total.toFixed(2)} CUP`;
   const url = `https://wa.me/+5355582319?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
+  console.log("📤 WhatsApp abierto con mensaje");
 
-  // Reiniciar flujo
+  // 🔄 Reinicio del flujo
   document.getElementById("modal-resumen").style.display = "none";
   cantidades = {};
   cantidadesEnvases = {};
   filtrarMenu();
   calcularTotales();
-  mostrarSeguimientoPedido();
+  console.log("🧹 Selección limpiada y menú reiniciado");
 
-  console.log("✅ Pedido registrado y enviado por WhatsApp");
+  // 🔎 Activar seguimiento
+  mostrarSeguimientoPedido();
+  console.log("📦 Seguimiento activado");
+
   console.groupEnd();
 }
 
