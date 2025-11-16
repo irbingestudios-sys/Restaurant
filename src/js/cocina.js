@@ -1,8 +1,6 @@
 // ┌────────────────────────────────────────────────────────────┐
 // │ Módulo: Cocina FOCSA                                       │
-// │ Script: cocina.js                                          │
-// │ Autor: Irbing Brizuela                                     │
-// │ Fecha: 2025-11-16                                          │
+// │ Script: cocina.js (Parte 1)                                │
 // └────────────────────────────────────────────────────────────┘
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
@@ -10,9 +8,8 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // 🔐 Conexión Supabase
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
-
 window.supabase = supabase;
 
 // 🟢 INICIALIZACIÓN
@@ -44,7 +41,7 @@ async function verificarAcceso() {
   const { data, error } = await supabase
     .from("usuario")
     .select("rol, activo, nombre")
-    .eq("id", user.id) // ← usa ID porque coincide con auth.user().id
+    .eq("id", user.id)
     .maybeSingle();
 
   if (error || !data) {
@@ -76,9 +73,12 @@ async function verificarAcceso() {
   console.groupEnd();
 }
 
-// 📥 CARGA DE PEDIDOS
+// 📥 CARGA DE PEDIDOS CON FILTROS
 async function cargarPedidosEnCocina() {
   console.group("📥 Carga de pedidos en cocina");
+
+  const tipoSeleccionado = document.getElementById("filtro-tipo").value;
+  const localSeleccionado = document.getElementById("filtro-local").value;
 
   const { data, error } = await supabase
     .from("vw_integridad_pedido")
@@ -91,9 +91,20 @@ async function cargarPedidosEnCocina() {
     return;
   }
 
-  console.log("✅ Pedidos cargados:", data.length);
-  renderizarPedidos(data);
-  renderResumenDia(data);
+  let pedidosFiltrados = data;
+
+  if (tipoSeleccionado !== "todos") {
+    pedidosFiltrados = pedidosFiltrados.filter(p => p.tipo === tipoSeleccionado);
+  }
+
+  if (localSeleccionado !== "todos") {
+    pedidosFiltrados = pedidosFiltrados.filter(p => p.local === localSeleccionado);
+  }
+
+  console.log("✅ Pedidos filtrados:", pedidosFiltrados.length);
+  renderizarPedidos(pedidosFiltrados);
+  renderResumenDia(pedidosFiltrados);
+  renderResumenPorLocal(pedidosFiltrados);
 
   console.groupEnd();
 }
@@ -103,20 +114,69 @@ function renderResumenDia(pedidos) {
   console.group("📊 Resumen del día");
 
   const resumen = document.getElementById("resumen-dia");
-  const total = pedidos.length;
-  const pendientes = pedidos.filter(p => p.estado_actual === "pendiente").length;
+  const hoy = new Date().toISOString().slice(0, 10);
+
+  const pendientesHoy = pedidos.filter(p =>
+    p.estado_actual === "pendiente" &&
+    p.fecha_registro.slice(0, 10) === hoy
+  );
+
+  const totalPedidos = pedidos.length;
+  const pendientes = pendientesHoy.length;
   const enCocina = pedidos.filter(p => p.estado_actual === "en cocina").length;
 
+  const totalCUP = pendientesHoy.reduce((sum, p) => {
+    const subtotal = Array.isArray(p.items)
+      ? p.items.reduce((acc, item) => acc + item.subtotal, 0)
+      : 0;
+    return sum + subtotal;
+  }, 0);
+
   resumen.innerHTML = `
-    <strong>📊 Resumen del Día:</strong>
-    Total: ${total} | Pendientes: ${pendientes} | En cocina: ${enCocina}
+    <strong>📊 Resumen del Día:</strong><br>
+    Total pedidos: ${totalPedidos}<br>
+    Pendientes hoy: ${pendientes} | En cocina: ${enCocina}<br>
+    Total CUP (pendientes hoy): ${totalCUP.toFixed(2)}
   `;
 
-  console.log("📊 Total:", total, "| Pendientes:", pendientes, "| En cocina:", enCocina);
+  console.log("📊 Total pedidos:", totalPedidos);
+  console.log("📌 Pendientes hoy:", pendientes);
+  console.log("👨‍🍳 En cocina:", enCocina);
+  console.log("💰 Total CUP (pendientes hoy):", totalCUP.toFixed(2));
+
   console.groupEnd();
 }
 
-// 🖼️ RENDERIZADO DE PEDIDOS
+// 📍 RESUMEN POR LOCAL
+function renderResumenPorLocal(pedidos) {
+  console.group("📍 Resumen por local");
+
+  const resumen = document.getElementById("resumen-local");
+  const locales = ["FOCSA", "LOCAL", "REPARTO"];
+  const resumenes = [];
+
+  locales.forEach(local => {
+    const pedidosLocal = pedidos.filter(p => p.local === local);
+    const totalPedidos = pedidosLocal.length;
+    const totalCUP = pedidosLocal.reduce((sum, p) => {
+      const subtotal = Array.isArray(p.items)
+        ? p.items.reduce((acc, item) => acc + item.subtotal, 0)
+        : 0;
+      return sum + subtotal;
+    }, 0);
+
+    resumenes.push({ local, totalPedidos, totalCUP });
+    console.log(`📍 ${local}: ${totalPedidos} pedidos | ${totalCUP.toFixed(2)} CUP`);
+  });
+
+  resumen.innerHTML = `
+    <strong>📍 Resumen por Local:</strong><br>
+    ${resumenes.map(r => `${r.local}: ${r.totalPedidos} pedidos | ${r.totalCUP.toFixed(2)} CUP`).join("<br>")}
+  `;
+
+  console.groupEnd();
+
+// 🖼️ RENDERIZADO DE PEDIDOS AGRUPADOS
 function renderizarPedidos(pedidos) {
   console.group("🖼️ Renderizado de pedidos");
 
@@ -135,12 +195,33 @@ function renderizarPedidos(pedidos) {
     const bloque = document.createElement("div");
     bloque.className = "pedido-bloque";
 
+    const agrupado = {};
+    pedido.items.forEach(item => {
+      const categoria = item.categoria || "Sin categoría";
+      if (!agrupado[categoria]) agrupado[categoria] = [];
+      agrupado[categoria].push(item);
+    });
+
+    for (const cat in agrupado) {
+      agrupado[cat].sort((a, b) => a.nombre.localeCompare(b.nombre));
+    }
+
+    let listaHTML = "";
+    for (const cat in agrupado) {
+      listaHTML += `<h4>${cat}</h4><ul>`;
+      agrupado[cat].forEach(i => {
+        listaHTML += `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`;
+      });
+      listaHTML += `</ul>`;
+    }
+
     bloque.innerHTML = `
       <h3>📦 Pedido ${pedido.pedido_id.slice(0, 8)}...</h3>
       <p><strong>Cliente:</strong> ${pedido.cliente}</p>
-      <p><strong>Canal:</strong> ${pedido.canal} | <strong>Estado:</strong> ${pedido.estado_actual}</p>
+      <p><strong>Tipo:</strong> ${pedido.tipo} | <strong>Local:</strong> ${pedido.local}</p>
+      <p><strong>Estado:</strong> ${pedido.estado_actual}</p>
       <p><strong>Fecha:</strong> ${new Date(pedido.fecha_registro).toLocaleString()}</p>
-      <ul>${pedido.items.map(i => `<li>${i.nombre} x${i.cantidad} = ${i.subtotal} CUP</li>`).join("")}</ul>
+      ${listaHTML}
       <p><strong>Total:</strong> ${total.toFixed(2)} CUP</p>
       <div class="acciones">
         <button onclick="marcarComoCocinado('${pedido.pedido_id}')">✅ Cocinado</button>
@@ -209,3 +290,7 @@ async function rechazarPedido(pedidoId) {
 
   console.groupEnd();
 }
+
+// 🌐 Exponer funciones al HTML
+window.marcarComoCocinado = marcarComoCocinado;
+window.rechazarPedido = rechazarPedido;
