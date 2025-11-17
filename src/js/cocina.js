@@ -30,9 +30,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("filtro-local").addEventListener("change", cargarPedidosEnCocina);
 
   document.getElementById("cerrar-sesion").addEventListener("click", async () => {
-    await supabase.auth.signOut();
-    window.close();
-  });
+ await supabase.auth.signOut();
+location.reload(); // vuelve a mostrar el login embebido
 
   console.groupEnd();
 });
