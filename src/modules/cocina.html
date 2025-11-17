@@ -42,6 +42,9 @@
     <button id="cerrar-sesion" onclick="supabase.auth.signOut().then(() => location.href = '/login.html')">
       🔒 Cerrar sesión
     </button>
+    <button id="btn-resumen-dia">📊 Ver resumen del día</button>
+
+<div id="bloque-resumen-dia" style="display:none;"></div>
   </div>
 
   <script type="module" src="../js/cocina.js"></script>
