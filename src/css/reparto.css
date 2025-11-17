@@ -1,0 +1,125 @@
+/* 1. 📦 Lista de pedidos */
+.lista-pedidos {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* 2. 🧱 Bloque individual de pedido */
+.pedido-bloque {
+  background-color: #fff;
+  border-left: 6px solid var(--color-principal); /* Diferente a cocina */
+  padding: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  text-align: left;
+}
+
+.pedido-bloque p {
+  margin-bottom: 0.5rem;
+}
+
+/* 3. 🔖 Estados visuales del pedido */
+.estado {
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* 🟡 Pendiente */
+.estado.pendiente {
+  background-color: #f1c40f;
+  color: #fff;
+}
+
+/* 🟣 Cocinado (listo para reparto) */
+.estado.cocinado {
+  background-color: #9b59b6;
+  color: #fff;
+}
+
+/* 🟢 Entregado */
+.estado.entregado {
+  background-color: #2ecc71;
+  color: #fff;
+}
+
+/* 🔴 Rechazado */
+.estado.rechazado {
+  background-color: #e74c3c;
+  color: #fff;
+}
+
+/* 4. 🎛️ Filtros superiores */
+.acciones-superiores {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.acciones-superiores label {
+  font-weight: bold;
+  margin-right: 0.5rem;
+}
+
+.acciones-superiores select {
+  padding: 0.4rem;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  min-width: 120px;
+}
+
+.filtro-grupo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* 5. 📊 Bloques de resumen */
+#resumen-dia,
+#resumen-repartidor {
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  padding: 1rem;
+  margin-top: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  font-family: 'Segoe UI', sans-serif;
+}
+
+#resumen-repartidor h3,
+#resumen-dia strong {
+  color: #333;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* 6. 🎯 Botones de acción en pedidos */
+.pedido-bloque .acciones {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.pedido-bloque button {
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* ✅ Entregado */
+.pedido-bloque button:first-child {
+  background-color: #2ecc71;
+  color: white;
+}
+
+/* ❌ Rechazado */
+.pedido-bloque button:last-child {
+  background-color: #e74c3c;
+  color: white;
+}
