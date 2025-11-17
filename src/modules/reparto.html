@@ -1,0 +1,44 @@
+//Reparto HTML
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Módulo Reparto | FOCSA</title>
+  <link rel="stylesheet" href="../css/styles-base.css" />
+  <link rel="stylesheet" href="../css/reparto.css" />
+</head>
+<body>
+  <div class="admin-container">
+    <img src="../assets/logo.png" alt="Logo del sistema" class="logo" />
+    <h1>🚚 Pedidos en Reparto</h1>
+
+    <p id="bienvenida" style="margin-bottom: 1rem;"></p>
+
+    <!-- Filtros -->
+    <div class="acciones-superiores">
+      <p style="font-size: 0.9rem; color: gray;">Los filtros se aplican automáticamente al cambiar.</p>
+      <div class="filtro-grupo">
+        <label for="filtro-tipo">Tipo:</label>
+        <select id="filtro-tipo"><option value="todos">Todos</option></select>
+      </div>
+      <div class="filtro-grupo">
+        <label for="filtro-local">Local:</label>
+        <select id="filtro-local"><option value="todos">Todos</option></select>
+      </div>
+    </div>
+
+    <!-- Resumen -->
+    <div id="resumen-dia" class="estado-lineal"></div>
+    <div id="resumen-repartidor" style="margin-top: 1rem;"></div>
+
+    <!-- Lista de pedidos -->
+    <div id="lista-pedidos" class="lista-pedidos"></div>
+
+    <!-- Cierre de sesión -->
+    <button id="cerrar-sesion">🔒 Cerrar sesión</button>
+  </div>
+
+  <script type="module" src="../js/reparto.js"></script>
+</body>
+</html>
