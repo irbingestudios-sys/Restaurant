@@ -3,13 +3,35 @@
 // │ Script: cocina.js                                          │
 // └────────────────────────────────────────────────────────────┘
 
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
 
-// 🔐 Conexión Supabase
+// 1) Define un fetch seguro que elimina '?columns=' de la URL
+const safeFetch = (url, opts) => {
+  try {
+    let finalUrl = url;
+    if (typeof finalUrl === "string") {
+      // Remueve el parámetro columns si aparece en la URL
+      finalUrl = finalUrl.replace(/(\?|&)columns=[^&]*/g, "");
+    } else if (finalUrl instanceof URL) {
+      finalUrl.searchParams.delete("columns");
+    }
+    console.log("HTTP SAFE CALL:", finalUrl);
+    return window.fetch(finalUrl, opts);
+  } catch (e) {
+    console.warn("No se pudo sanitizar la URL, usando fetch estándar:", e);
+    return window.fetch(url, opts);
+  }
+};
+
+// 2) Crea el cliente Supabase usando el fetch seguro
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw" // anon public key (completa)
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw",
+  {
+    global: { fetch: safeFetch } // clave: usamos nuestro fetch
+  }
 );
+
 window.supabase = supabase;
 
 // 🟢 INICIALIZACIÓN
