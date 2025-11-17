@@ -218,7 +218,6 @@ async function cargarPedidosEnCocina() {
 
   renderizarPedidos(pedidosFiltrados);
   renderResumenDia(pedidosFiltrados);
-  renderResumenPorLocal();
   renderResumenCocineroDia();
   console.groupEnd();
 }
