@@ -414,7 +414,6 @@ async function rechazarPedido(pedidoId) {
   await cargarPedidosEnCocina();
   console.groupEnd();
 }
-
 // 🌐 Exponer funciones al HTML
 window.marcarComoCocinado = marcarComoCocinado;
 window.rechazarPedido = rechazarPedido;
