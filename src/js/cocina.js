@@ -45,15 +45,18 @@ async function verificarAcceso() {
   if (!sessionData?.session) {
     console.warn("❌ No hay sesión activa. Mostrando formulario de login.");
 
-    document.body.innerHTML = `
-      <div style="max-width: 400px; margin: 5rem auto; padding: 2rem; border: 1px solid #ccc; border-radius: 8px; font-family: sans-serif;">
-        <h2>🔐 Iniciar sesión</h2>
-        <input id="email" type="email" placeholder="Correo" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem;" />
-        <input id="password" type="password" placeholder="Contraseña" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem;" />
-        <button onclick="iniciarSesion()" style="width: 100%; padding: 0.5rem; background-color: #3498db; color: white; border: none; border-radius: 4px;">Iniciar sesión</button>
-        <p id="login-error" style="color: red; margin-top: 1rem;"></p>
-      </div>
-    `;
+document.body.innerHTML = `
+  <main class="login-container">
+    <img src="../assets/logo.png" alt="Logo del sistema" class="logo" />
+    <h1>Identificación de usuario</h1>
+    <form id="login-form">
+      <input type="email" id="email" placeholder="Correo electrónico" required />
+      <input type="password" id="password" placeholder="Contraseña" required />
+      <button type="submit">Ingresar</button>
+    </form>
+    <p id="login-error" class="error"></p>
+  </main>
+`;
     return false;
   }
 
