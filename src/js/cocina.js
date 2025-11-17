@@ -1,16 +1,15 @@
 // ┌────────────────────────────────────────────────────────────┐
 // │ Módulo: Cocina FOCSA                                       │
-// │ Script: cocina.js (Parte 1)                                │
+// │ Script: cocina.js                                          │
 // └────────────────────────────────────────────────────────────┘
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// 🔐 Conexión Supabase con sesión activa
+// 🔐 Conexión Supabase
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw" // clave pública
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw" // anon public key (completa)
 );
-
 window.supabase = supabase;
 
 // 🟢 INICIALIZACIÓN
@@ -19,7 +18,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Script cocina.js inicializado");
 
   const accesoOk = await verificarAcceso();
-  if (!accesoOk) return;
+  if (!accesoOk) {
+    console.groupEnd();
+    return; // ⛔ Detiene ejecución si no hay sesión
+  }
 
   await cargarFiltrosDesdePedidos();
   await cargarPedidosEnCocina();
@@ -30,11 +32,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("filtro-local").addEventListener("change", cargarPedidosEnCocina);
 
   document.getElementById("cerrar-sesion").addEventListener("click", async () => {
+    console.log("🔒 Cerrando sesión...");
     await supabase.auth.signOut();
     location.reload(); // vuelve a mostrar el login embebido
   });
 
-  console.groupEnd(); // ✅ aquí sí cierra el grupo de inicialización
+  console.groupEnd();
 });
 
 // 🔐 VERIFICACIÓN DE USUARIO Y ROL
@@ -44,19 +47,40 @@ async function verificarAcceso() {
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData?.session) {
     console.warn("❌ No hay sesión activa. Mostrando formulario de login.");
+    document.body.innerHTML = `
+      <main class="login-container">
+        <img src="../assets/logo.png" alt="Logo del sistema" class="logo" />
+        <h1>Identificación de usuario</h1>
+        <form id="login-form">
+          <input type="email" id="email" placeholder="Correo electrónico" required />
+          <input type="password" id="password" placeholder="Contraseña" required />
+          <button type="submit">Ingresar</button>
+        </form>
+        <p id="login-error" class="error"></p>
+      </main>
+    `;
 
-document.body.innerHTML = `
-  <main class="login-container">
-    <img src="../assets/logo.png" alt="Logo del sistema" class="logo" />
-    <h1>Identificación de usuario</h1>
-    <form id="login-form">
-      <input type="email" id="email" placeholder="Correo electrónico" required />
-      <input type="password" id="password" placeholder="Contraseña" required />
-      <button type="submit">Ingresar</button>
-    </form>
-    <p id="login-error" class="error"></p>
-  </main>
-`;
+    // Listener de submit para el formulario embebido
+    document.addEventListener("submit", async (e) => {
+      if (e.target.id === "login-form") {
+        e.preventDefault();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const errorBox = document.getElementById("login-error");
+        errorBox.textContent = "";
+
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          console.error("❌ Error de login:", error.message);
+          errorBox.textContent = "Credenciales incorrectas o error de conexión.";
+        } else {
+          console.log("✅ Login exitoso. Recargando módulo...");
+          location.reload();
+        }
+      }
+    });
+
+    console.groupEnd();
     return false;
   }
 
@@ -64,9 +88,11 @@ document.body.innerHTML = `
   if (userError || !user?.id) {
     console.warn("❌ Error al obtener usuario:", userError);
     alert("Acceso denegado. Usuario no válido.");
-    window.close();
+    console.groupEnd();
     return false;
   }
+
+  console.log("🧾 Usuario autenticado:", user.email || user.id);
 
   const { data, error } = await supabase
     .from("usuario")
@@ -74,10 +100,17 @@ document.body.innerHTML = `
     .eq("id", user.id)
     .maybeSingle();
 
-  if (error || !data || !data.activo) {
-    console.warn("⛔ Usuario no autorizado o inactivo:", error || data);
-    alert("Acceso denegado.");
-    window.close();
+  if (error || !data) {
+    console.warn("❌ Usuario no registrado:", error);
+    alert("Usuario no registrado.");
+    console.groupEnd();
+    return false;
+  }
+
+  if (!data.activo) {
+    console.warn("⛔ Usuario inactivo:", data.nombre);
+    alert("Cuenta desactivada.");
+    console.groupEnd();
     return false;
   }
 
@@ -86,23 +119,24 @@ document.body.innerHTML = `
   if (!rolesPermitidos.includes(rol)) {
     console.warn("❌ Rol no autorizado:", rol);
     alert("Acceso restringido.");
-    window.close();
+    console.groupEnd();
     return false;
   }
 
-  console.log("✅ Acceso permitido para rol:", rol);
   document.getElementById("bienvenida").textContent = `👋 Bienvenido ${data.nombre} (${rol})`;
+  console.log("✅ Acceso permitido para rol:", rol);
   console.groupEnd();
   return true;
 }
-//DATOS DEL FILTRO EN LA BASE
+
 // 🔍 CARGA DINÁMICA DE FILTROS DESDE LA TABLA PEDIDOS
 async function cargarFiltrosDesdePedidos() {
   console.group("🔍 Cargando filtros dinámicos");
-
   const { data, error } = await supabase.from("pedidos").select("tipo, local");
+
   if (error) {
     console.error("❌ Error al cargar filtros:", error);
+    console.groupEnd();
     return;
   }
 
@@ -131,16 +165,14 @@ async function cargarFiltrosDesdePedidos() {
 
   tipoSelect.value = localStorage.getItem("filtro-tipo") || "todos";
   localSelect.value = localStorage.getItem("filtro-local") || "todos";
-
   tipoSelect.onchange = e => localStorage.setItem("filtro-tipo", e.target.value);
   localSelect.onchange = e => localStorage.setItem("filtro-local", e.target.value);
-
   console.groupEnd();
 }
+
 // 📥 CARGA DE PEDIDOS CON FILTROS
 async function cargarPedidosEnCocina() {
   console.group("📥 Carga de pedidos en cocina");
-
   const tipo = document.getElementById("filtro-tipo").value;
   const local = document.getElementById("filtro-local").value;
 
@@ -152,10 +184,11 @@ async function cargarPedidosEnCocina() {
 
   if (error) {
     console.error("❌ Error al cargar pedidos:", error);
+    console.groupEnd();
     return;
   }
 
-  let pedidosFiltrados = data;
+  let pedidosFiltrados = data || [];
   if (tipo !== "todos") pedidosFiltrados = pedidosFiltrados.filter(p => p.tipo === tipo);
   if (local !== "todos") pedidosFiltrados = pedidosFiltrados.filter(p => p.local === local);
 
@@ -165,16 +198,15 @@ async function cargarPedidosEnCocina() {
   renderResumenDia(pedidosFiltrados);
   renderResumenPorLocal();
   renderResumenCocineroDia();
-
   console.groupEnd();
 }
+
 // 📊 RESUMEN DEL DÍA
 function renderResumenDia(pedidos) {
   console.group("📊 Resumen del día");
-
   const resumen = document.getElementById("resumen-dia");
-  const hoy = new Date().toISOString().slice(0, 10);
 
+  const hoy = new Date().toISOString().slice(0, 10);
   const pendientesHoy = pedidos.filter(p =>
     p.estado_actual === "pendiente" &&
     p.fecha_registro.slice(0, 10) === hoy
@@ -186,7 +218,7 @@ function renderResumenDia(pedidos) {
 
   const totalCUP = pendientesHoy.reduce((sum, p) => {
     const subtotal = Array.isArray(p.items)
-      ? p.items.reduce((acc, item) => acc + item.subtotal, 0)
+      ? p.items.reduce((acc, item) => acc + (item.subtotal || 0), 0)
       : 0;
     return sum + subtotal;
   }, 0);
@@ -202,18 +234,15 @@ function renderResumenDia(pedidos) {
   console.log("📌 Pendientes hoy:", pendientes);
   console.log("👨‍🍳 En cocina:", enCocina);
   console.log("💰 Total CUP (pendientes hoy):", totalCUP.toFixed(2));
-
   console.groupEnd();
 }
 
-// 📍 RESUMEN POR LOCAL
+// 📍 RESUMEN POR LOCAL (RPC)
 async function renderResumenPorLocal() {
   console.group("📍 Resumen por local (RPC)");
-
   const resumen = document.getElementById("resumen-local");
 
   const { data, error } = await supabase.rpc("resumen_por_local");
-
   if (error) {
     console.error("❌ Error al obtener resumen por local:", error);
     resumen.innerHTML = "<p>Error al cargar resumen por local.</p>";
@@ -229,17 +258,15 @@ async function renderResumenPorLocal() {
   data.forEach(r => {
     console.log(`📍 ${r.local}: ${r.cantidad_pedidos} pedidos | ${Number(r.total_cup).toFixed(2)} CUP`);
   });
-
   console.groupEnd();
 }
-// 📊 RESUMEN DEL COCINERO (RPC)
+
+// 👨‍🍳 RESUMEN DEL COCINERO (RPC)
 async function renderResumenCocineroDia() {
   console.group("👨‍🍳 Resumen cocinero (RPC)");
-
   const resumen = document.getElementById("resumen-cocinero");
 
   const { data, error } = await supabase.rpc("resumen_cocinero_dia");
-
   if (error || !data || !data[0]) {
     console.error("❌ Error al obtener resumen_cocinero_dia:", error);
     resumen.innerHTML = "<p>Error al cargar resumen del cocinero.</p>";
@@ -248,7 +275,6 @@ async function renderResumenCocineroDia() {
   }
 
   const r = data[0];
-
   resumen.innerHTML = `
     <h3>👨‍🍳 Resumen del Cocinero</h3>
     <p><strong>Pendientes hoy:</strong> ${r.pendientes} pedidos | ${r.total_pendientes.toFixed(2)} CUP</p>
@@ -258,13 +284,12 @@ async function renderResumenCocineroDia() {
     <h4>🧾 Productos Elaborados</h4>
     <ul>${r.productos_elaborados?.map(p => `<li>${p.nombre}: ${p.cantidad} uds | ${p.subtotal.toFixed(2)} CUP</li>`).join("") || "<li>Sin productos</li>"}</ul>
   `;
-
   console.groupEnd();
 }
-// 🖼️ RENDERIZADO DE PEDIDOS AGRUPADOS CON VALIDACIÓN
+
+// 🖼️ RENDERIZADO DE PEDIDOS
 function renderizarPedidos(pedidos) {
   console.group("🖼️ Renderizado de pedidos");
-
   const contenedor = document.getElementById("lista-pedidos");
   contenedor.innerHTML = "";
 
@@ -276,35 +301,32 @@ function renderizarPedidos(pedidos) {
   }
 
   pedidos.forEach(pedido => {
-    // ✅ Validación de estructura de items
     if (!Array.isArray(pedido.items)) {
       console.warn("⚠️ Pedido omitido por estructura inválida de items:", pedido.pedido_id);
       return;
     }
 
-    const total = pedido.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
     const bloque = document.createElement("div");
     bloque.className = "pedido-bloque";
 
-    // 🧩 Agrupar por categoría
+    // Agrupar por categoría
     const agrupado = {};
     pedido.items.forEach(item => {
       if (!item || typeof item !== "object" || !item.nombre || !item.cantidad || typeof item.subtotal !== "number") {
         console.warn("⚠️ Ítem inválido en pedido:", pedido.pedido_id, item);
         return;
       }
-
       const categoria = item.categoria || "Sin categoría";
       if (!agrupado[categoria]) agrupado[categoria] = [];
       agrupado[categoria].push(item);
     });
 
-    // 🔠 Ordenar alfabéticamente dentro de cada categoría
+    // Ordenar alfabéticamente
     for (const cat in agrupado) {
       agrupado[cat].sort((a, b) => a.nombre.localeCompare(b.nombre));
     }
 
-    // 🧾 Construir HTML
+    // Construir lista HTML
     let listaHTML = "";
     for (const cat in agrupado) {
       listaHTML += `<h4>${cat}</h4><ul>`;
@@ -313,6 +335,8 @@ function renderizarPedidos(pedidos) {
       });
       listaHTML += `</ul>`;
     }
+
+    const total = pedido.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
 
     bloque.innerHTML = `
       <h3>📦 Pedido ${pedido.pedido_id.slice(0, 8)}...</h3>
@@ -349,12 +373,12 @@ async function marcarComoCocinado(pedidoId) {
 
   if (error) {
     console.error("❌ Error al registrar evento:", error);
+    console.groupEnd();
     return;
   }
 
   console.log("📦 Pedido marcado como cocinado");
-  cargarPedidosEnCocina();
-
+  await cargarPedidosEnCocina();
   console.groupEnd();
 }
 
@@ -380,34 +404,15 @@ async function rechazarPedido(pedidoId) {
 
   if (error) {
     console.error("❌ Error al registrar rechazo:", error);
+    console.groupEnd();
     return;
   }
 
   console.log("📦 Pedido rechazado con motivo:", motivo);
-  cargarPedidosEnCocina();
-
+  await cargarPedidosEnCocina();
   console.groupEnd();
 }
-//Funcion Gloval
-window.iniciarSesion = async function () {
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const errorBox = document.getElementById("login-error");
-
-  errorBox.textContent = "";
-
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    console.error("❌ Error de login:", error.message);
-    errorBox.textContent = "Credenciales incorrectas o error de conexión.";
-  } else {
-    console.log("✅ Login exitoso. Recargando módulo...");
-    location.reload();
-  }
-};
 
 // 🌐 Exponer funciones al HTML
 window.marcarComoCocinado = marcarComoCocinado;
 window.rechazarPedido = rechazarPedido;
-});
