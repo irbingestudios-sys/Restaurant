@@ -18,21 +18,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   console.group("🟢 Módulo Cocina — Inicialización");
   console.log("🚀 Script cocina.js inicializado");
 
-  await verificarAcceso(); // 🔐 Verifica sesión y rol
-  await cargarFiltrosDesdePedidos(); // 🔍 Filtros dinámicos
-  await cargarPedidosEnCocina(); // 📥 Carga inicial
+  const accesoOk = await verificarAcceso();
+  if (!accesoOk) return; // ⛔ Detiene ejecución si no hay sesión
 
-  // 🔄 Auto-refresh cada 15s
+  await cargarFiltrosDesdePedidos();
+  await cargarPedidosEnCocina();
+
   setInterval(cargarPedidosEnCocina, 15000);
 
-  // 🧠 Listeners para filtros
   document.getElementById("filtro-tipo").addEventListener("change", cargarPedidosEnCocina);
   document.getElementById("filtro-local").addEventListener("change", cargarPedidosEnCocina);
 
-  // 🔒 Cierre de sesión: solo cierra la pestaña
   document.getElementById("cerrar-sesion").addEventListener("click", async () => {
     await supabase.auth.signOut();
-    window.close(); // ✅ Cierra la pestaña
+    window.close();
   });
 
   console.groupEnd();
