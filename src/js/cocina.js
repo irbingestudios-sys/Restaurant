@@ -186,8 +186,6 @@ async function cargarPedidosEnCocina() {
 
   console.groupEnd();
 }
-renderizarPedidos(pedidosFiltrados);
-
 
 // 📊 RESUMEN DEL DÍA
 function renderResumenDia(pedidos) {
