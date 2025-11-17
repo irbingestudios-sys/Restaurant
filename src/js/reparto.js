@@ -5,7 +5,7 @@
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
 
-// OPCIONAL: fetch seguro para evitar params no deseados
+// 1) Define un fetch seguro que elimina '?columns=' de la URL
 const safeFetch = (url, opts) => {
   try {
     let finalUrl = url;
@@ -14,54 +14,106 @@ const safeFetch = (url, opts) => {
     } else if (finalUrl instanceof URL) {
       finalUrl.searchParams.delete("columns");
     }
+    console.log("HTTP SAFE CALL:", finalUrl);
     return window.fetch(finalUrl, opts);
-  } catch {
+  } catch (e) {
+    console.warn("No se pudo sanitizar la URL, usando fetch estándar:", e);
     return window.fetch(url, opts);
   }
 };
 
-// Cliente Supabase
+// 2) Crea el cliente Supabase usando el fetch seguro
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "TU_API_KEY",
-  { global: { fetch: safeFetch } }
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw",
+  {
+    global: { fetch: safeFetch }
+  }
 );
 
-// 🟢 Inicialización
+window.supabase = supabase;
+
+// 🟢 INICIALIZACIÓN
 document.addEventListener("DOMContentLoaded", async () => {
+  console.group("🟢 Módulo Reparto — Inicialización");
+  console.log("🚀 Script reparto.js inicializado");
+
   const accesoOk = await verificarAcceso();
-  if (!accesoOk) return;
+  if (!accesoOk) {
+    console.groupEnd();
+    return; // ⛔ Detiene ejecución si no hay sesión
+  }
 
   await cargarFiltrosDesdePedidos();
   await cargarPedidosEnReparto();
 
-  // Auto-refresh
   setInterval(cargarPedidosEnReparto, 15000);
 
-  // Filtros
   document.getElementById("filtro-tipo").addEventListener("change", cargarPedidosEnReparto);
   document.getElementById("filtro-local").addEventListener("change", cargarPedidosEnReparto);
 
-  // Cerrar sesión
   document.getElementById("cerrar-sesion").addEventListener("click", async () => {
+    console.log("🔒 Cerrando sesión...");
     await supabase.auth.signOut();
-    location.reload();
+    location.reload(); // vuelve a mostrar el login embebido
   });
+
+  console.groupEnd();
 });
 
-// 🔐 Verificación de usuario y rol
+// 🔐 VERIFICACIÓN DE USUARIO Y ROL
 async function verificarAcceso() {
+  console.group("🔐 Verificación de acceso");
+
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData?.session) {
-    alert("❌ No hay sesión activa. Inicie sesión.");
+    console.warn("❌ No hay sesión activa. Mostrando formulario de login.");
+    document.body.innerHTML = `
+      <main class="login-container">
+        <img src="../assets/logo.png" alt="Logo del sistema" class="logo" />
+        <h1>Identificación de usuario</h1>
+        <form id="login-form">
+          <input type="email" id="email" placeholder="Correo electrónico" required />
+          <input type="password" id="password" placeholder="Contraseña" required />
+          <button type="submit">Ingresar</button>
+        </form>
+        <p id="login-error" class="error"></p>
+      </main>
+    `;
+
+    // Listener de submit para el formulario embebido
+    document.addEventListener("submit", async (e) => {
+      if (e.target.id === "login-form") {
+        e.preventDefault();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const errorBox = document.getElementById("login-error");
+        errorBox.textContent = "";
+
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          console.error("❌ Error de login:", error.message);
+          errorBox.textContent = "Credenciales incorrectas o error de conexión.";
+        } else {
+          console.log("✅ Login exitoso. Recargando módulo...");
+          location.reload();
+        }
+      }
+    });
+
+    console.groupEnd();
     return false;
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user?.id) {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user?.id) {
+    console.warn("❌ Error al obtener usuario:", userError);
     alert("Acceso denegado. Usuario no válido.");
+    console.groupEnd();
     return false;
   }
+
+  console.log("🧾 Usuario autenticado:", user.email || user.id);
 
   const { data, error } = await supabase
     .from("usuario")
@@ -70,23 +122,31 @@ async function verificarAcceso() {
     .maybeSingle();
 
   if (error || !data) {
+    console.warn("❌ Usuario no registrado:", error);
     alert("Usuario no registrado.");
-    return false;
-  }
-  if (!data.activo) {
-    alert("Cuenta desactivada.");
+    console.groupEnd();
     return false;
   }
 
-  const rol = (data.rol || "").trim().toLowerCase();
+  if (!data.activo) {
+    console.warn("⛔ Usuario inactivo:", data.nombre);
+    alert("Cuenta desactivada.");
+    console.groupEnd();
+    return false;
+  }
+
+  const rol = data.rol?.trim().toLowerCase();
   const rolesPermitidos = ["super_admin", "admin", "gerente", "repartidor"];
   if (!rolesPermitidos.includes(rol)) {
-    alert("Acceso restringido. Rol no autorizado.");
+    console.warn("❌ Rol no autorizado:", rol);
+    alert("Acceso restringido.");
+    console.groupEnd();
     return false;
   }
 
-  const bienvenida = document.getElementById("bienvenida");
-  if (bienvenida) bienvenida.textContent = `👋 Bienvenido ${data.nombre} (${rol})`;
+  document.getElementById("bienvenida").textContent = `👋 Bienvenido ${data.nombre} (${rol})`;
+  console.log("✅ Acceso permitido para rol:", rol);
+  console.groupEnd();
   return true;
 }
 
