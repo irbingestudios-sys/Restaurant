@@ -55,7 +55,7 @@ async function verificarAcceso() {
         <p id="login-error" style="color: red; margin-top: 1rem;"></p>
       </div>
     `;
-    return;
+    return false;
   }
 
   const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -63,7 +63,7 @@ async function verificarAcceso() {
     console.warn("❌ Error al obtener usuario:", userError);
     alert("Acceso denegado. Usuario no válido.");
     window.close();
-    return;
+    return false;
   }
 
   const { data, error } = await supabase
@@ -76,7 +76,7 @@ async function verificarAcceso() {
     console.warn("⛔ Usuario no autorizado o inactivo:", error || data);
     alert("Acceso denegado.");
     window.close();
-    return;
+    return false;
   }
 
   const rol = data.rol?.trim().toLowerCase();
@@ -85,12 +85,13 @@ async function verificarAcceso() {
     console.warn("❌ Rol no autorizado:", rol);
     alert("Acceso restringido.");
     window.close();
-    return;
+    return false;
   }
 
-  document.getElementById("bienvenida").textContent = `👋 Bienvenido ${data.nombre} (${rol})`;
   console.log("✅ Acceso permitido para rol:", rol);
+  document.getElementById("bienvenida").textContent = `👋 Bienvenido ${data.nombre} (${rol})`;
   console.groupEnd();
+  return true;
 }
 //DATOS DEL FILTRO EN LA BASE
 // 🔍 CARGA DINÁMICA DE FILTROS DESDE LA TABLA PEDIDOS
