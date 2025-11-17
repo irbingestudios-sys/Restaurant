@@ -186,9 +186,10 @@ async function cargarPedidosEnCocina() {
 
   console.groupEnd();
 }
-renderResumenDia(pedidos);
+renderizarPedidos(pedidosFiltrados);
+renderResumenDia(pedidosFiltrados);
 renderResumenPorLocal();
-renderResumenCocineroDia();
+renderResumenCocineroDia(); // ✅ ahora dentro del flujo correcto
 
 // 📊 RESUMEN DEL DÍA
 function renderResumenDia(pedidos) {
@@ -272,13 +273,13 @@ async function renderResumenCocineroDia() {
   const r = data[0];
 
   resumen.innerHTML = `
-    <strong>👨‍🍳 Resumen del Cocinero:</strong><br>
-    Pendientes hoy: ${r.pendientes} | ${r.total_pendientes.toFixed(2)} CUP<br>
-    Elaborados por ti: ${r.elaborados} | ${r.total_elaborados.toFixed(2)} CUP<br>
-    <br><u>📍 Por Local:</u><br>
-    ${r.resumen_local?.map(l => `${l.local}: ${l.pedidos} pedidos | ${l.total_cup.toFixed(2)} CUP`).join("<br>") || "Sin datos"}<br>
-    <br><u>🧾 Productos Elaborados:</u><br>
-    ${r.productos_elaborados?.map(p => `${p.nombre}: ${p.cantidad} uds | ${p.subtotal.toFixed(2)} CUP`).join("<br>") || "Sin productos"}
+    <h3>👨‍🍳 Resumen del Cocinero</h3>
+    <p><strong>Pendientes hoy:</strong> ${r.pendientes} pedidos | ${r.total_pendientes.toFixed(2)} CUP</p>
+    <p><strong>Elaborados por ti:</strong> ${r.elaborados} pedidos | ${r.total_elaborados.toFixed(2)} CUP</p>
+    <h4>📍 Por Local</h4>
+    <ul>${r.resumen_local?.map(l => `<li>${l.local}: ${l.pedidos} pedidos | ${l.total_cup.toFixed(2)} CUP</li>`).join("") || "<li>Sin datos</li>"}</ul>
+    <h4>🧾 Productos Elaborados</h4>
+    <ul>${r.productos_elaborados?.map(p => `<li>${p.nombre}: ${p.cantidad} uds | ${p.subtotal.toFixed(2)} CUP</li>`).join("") || "<li>Sin productos</li>"}</ul>
   `;
 
   console.groupEnd();
