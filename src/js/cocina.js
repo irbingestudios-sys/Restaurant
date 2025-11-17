@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   console.log("🚀 Script cocina.js inicializado");
 
   const accesoOk = await verificarAcceso();
-  if (!accesoOk) return; // ⛔ Detiene ejecución si no hay sesión
+  if (!accesoOk) return;
 
   await cargarFiltrosDesdePedidos();
   await cargarPedidosEnCocina();
@@ -30,10 +30,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   document.getElementById("filtro-local").addEventListener("change", cargarPedidosEnCocina);
 
   document.getElementById("cerrar-sesion").addEventListener("click", async () => {
- await supabase.auth.signOut();
-location.reload(); // vuelve a mostrar el login embebido
+    await supabase.auth.signOut();
+    location.reload(); // vuelve a mostrar el login embebido
+  });
 
-  console.groupEnd();
+  console.groupEnd(); // ✅ aquí sí cierra el grupo de inicialización
 });
 
 // 🔐 VERIFICACIÓN DE USUARIO Y ROL
