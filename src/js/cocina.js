@@ -42,11 +42,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function verificarAcceso() {
   console.group("🔐 Verificación de acceso");
 
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError || !sessionData?.session) {
-    console.warn("❌ No hay sesión activa:", sessionError);
-    alert("Acceso denegado. No ha iniciado sesión.");
-    window.close();
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData?.session) {
+    console.warn("❌ No hay sesión activa. Mostrando formulario de login.");
+
+    document.body.innerHTML = `
+      <div style="max-width: 400px; margin: 5rem auto; padding: 2rem; border: 1px solid #ccc; border-radius: 8px; font-family: sans-serif;">
+        <h2>🔐 Iniciar sesión</h2>
+        <input id="email" type="email" placeholder="Correo" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem;" />
+        <input id="password" type="password" placeholder="Contraseña" style="width: 100%; padding: 0.5rem; margin-bottom: 1rem;" />
+        <button onclick="iniciarSesion()" style="width: 100%; padding: 0.5rem; background-color: #3498db; color: white; border: none; border-radius: 4px;">Iniciar sesión</button>
+        <p id="login-error" style="color: red; margin-top: 1rem;"></p>
+      </div>
+    `;
     return;
   }
 
@@ -58,24 +66,15 @@ async function verificarAcceso() {
     return;
   }
 
-  console.log("🧾 Usuario autenticado:", user.email || user.id);
-
   const { data, error } = await supabase
     .from("usuario")
     .select("rol, activo, nombre")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (error || !data) {
-    console.warn("❌ Usuario no registrado:", error);
-    alert("Usuario no registrado.");
-    window.close();
-    return;
-  }
-
-  if (!data.activo) {
-    console.warn("⛔ Usuario inactivo:", data.nombre);
-    alert("Cuenta desactivada.");
+  if (error || !data || !data.activo) {
+    console.warn("⛔ Usuario no autorizado o inactivo:", error || data);
+    alert("Acceso denegado.");
     window.close();
     return;
   }
@@ -386,6 +385,24 @@ async function rechazarPedido(pedidoId) {
 
   console.groupEnd();
 }
+//Funcion Gloval
+window.iniciarSesion = async function () {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const errorBox = document.getElementById("login-error");
+
+  errorBox.textContent = "";
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    console.error("❌ Error de login:", error.message);
+    errorBox.textContent = "Credenciales incorrectas o error de conexión.";
+  } else {
+    console.log("✅ Login exitoso. Recargando módulo...");
+    location.reload();
+  }
+};
 
 // 🌐 Exponer funciones al HTML
 window.marcarComoCocinado = marcarComoCocinado;
