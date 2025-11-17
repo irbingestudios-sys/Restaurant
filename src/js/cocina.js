@@ -320,20 +320,33 @@ function renderizarPedidos(pedidos) {
 
     const total = pedido.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
 
-    bloque.innerHTML = `
-      <h3>📦 Pedido ${pedido.pedido_id.slice(0, 8)}...</h3>
-      <p><strong>Cliente:</strong> ${pedido.cliente}</p>
-      <p><strong>Tipo:</strong> ${pedido.tipo} | <strong>Local:</strong> ${pedido.local}</p>
-      <p><strong>Estado:</strong> ${pedido.estado_actual}</p>
-      <p><strong>Fecha:</strong> ${new Date(pedido.fecha_registro).toLocaleString()}</p>
-      ${listaHTML}
-      <p><strong>Total:</strong> ${total.toFixed(2)} CUP</p>
-      <div class="acciones">
-        <button onclick="marcarComoCocinado('${pedido.pedido_id}')">✅ Cocinado</button>
-        <button onclick="rechazarPedido('${pedido.pedido_id}')">❌ Rechazar</button>
-      </div>
-    `;
+    // Calcular tiempo transcurrido desde que el cliente hizo el pedido
+const fechaPedido = new Date(pedido.fecha_registro);
+const ahora = new Date();
+const diffMs = ahora - fechaPedido; // diferencia en milisegundos
+const diffMin = Math.floor(diffMs / 60000); // minutos
+const diffHoras = Math.floor(diffMin / 60);
 
+let tiempoTranscurrido;
+if (diffHoras > 0) {
+  tiempoTranscurrido = `⏱ Esperando: ${diffHoras}h ${diffMin % 60}m`;
+} else {
+  tiempoTranscurrido = `⏱ Esperando: ${diffMin} minutos`;
+}
+   bloque.innerHTML = `
+  <h3>📦 Pedido ${pedido.pedido_id.slice(0, 8)}...</h3>
+  <p><strong>Cliente:</strong> ${pedido.cliente}</p>
+  <p><strong>Tipo:</strong> ${pedido.tipo} | <strong>Local:</strong> ${pedido.local}</p>
+  <p><strong>Estado:</strong> ${pedido.estado_actual}</p>
+  <p><strong>Fecha:</strong> ${new Date(pedido.fecha_registro).toLocaleString()}</p>
+  <p><strong>Tiempo en espera:</strong> ${tiempoTranscurrido}</p>
+  ${listaHTML}
+  <p><strong>Total:</strong> ${total.toFixed(2)} CUP</p>
+  <div class="acciones">
+    <button onclick="marcarComoCocinado('${pedido.pedido_id}')">✅ Cocinado</button>
+    <button onclick="rechazarPedido('${pedido.pedido_id}')">❌ Rechazar</button>
+  </div>
+`;
     contenedor.appendChild(bloque);
   });
 
