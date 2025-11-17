@@ -289,17 +289,18 @@ async function rechazarEntrega(pedidoId) {
       tipo: "rechazado",
       descripcion: motivo,
       usuario_id: user.id   // ← guardar repartidor
-      // id y fecha se generan por defecto
     }]);
 
   if (error) {
     console.error("❌ Error al registrar rechazo:", error);
-    alert("❌ Error al registrar rechazo");
+    alert("❌ Error al registrar rechazo: " + error.message);
     return;
   }
 
+  console.log("✅ Rechazo registrado correctamente");
   await cargarPedidosEnReparto();
 }
+
 // 📊 Resumen del día (simple)
 function renderResumenDia(pedidos) {
   const resumen = document.getElementById("resumen-dia");
