@@ -5,29 +5,35 @@
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// 🔐 Conexión Supabase.
+// 🔐 Conexión Supabase con sesión activa
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." // clave pública
 );
+
 window.supabase = supabase;
 
 // 🟢 INICIALIZACIÓN
 document.addEventListener("DOMContentLoaded", async () => {
   console.group("🟢 Módulo Cocina — Inicialización");
-
   console.log("🚀 Script cocina.js inicializado");
 
   await verificarAcceso(); // 🔐 Verifica sesión y rol
-  await cargarFiltrosDesdePedidos(); // 🔍 Carga dinámica de filtros
+  await cargarFiltrosDesdePedidos(); // 🔍 Filtros dinámicos
   await cargarPedidosEnCocina(); // 📥 Carga inicial
 
   // 🔄 Auto-refresh cada 15s
   setInterval(cargarPedidosEnCocina, 15000);
 
-  // 🧠 Listeners automáticos para filtros
+  // 🧠 Listeners para filtros
   document.getElementById("filtro-tipo").addEventListener("change", cargarPedidosEnCocina);
   document.getElementById("filtro-local").addEventListener("change", cargarPedidosEnCocina);
+
+  // 🔒 Cierre de sesión: solo cierra la pestaña
+  document.getElementById("cerrar-sesion").addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    window.close(); // ✅ Cierra la pestaña
+  });
 
   console.groupEnd();
 });
@@ -36,27 +42,24 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function verificarAcceso() {
   console.group("🔐 Verificación de acceso");
 
-  // 🧪 Verificar sesión activa
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (sessionError || !sessionData?.session) {
     console.warn("❌ No hay sesión activa:", sessionError);
     alert("Acceso denegado. No ha iniciado sesión.");
-    location.href = "/login.html";
+    window.close();
     return;
   }
 
-  // 🧾 Obtener usuario autenticado
   const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user || !user.id) {
+  if (userError || !user?.id) {
     console.warn("❌ Error al obtener usuario:", userError);
     alert("Acceso denegado. Usuario no válido.");
-    location.href = "/login.html";
+    window.close();
     return;
   }
 
   console.log("🧾 Usuario autenticado:", user.email || user.id);
 
-  // 🔍 Buscar rol en tabla usuario
   const { data, error } = await supabase
     .from("usuario")
     .select("rol, activo, nombre")
@@ -64,26 +67,25 @@ async function verificarAcceso() {
     .maybeSingle();
 
   if (error || !data) {
-    console.warn("❌ Usuario no registrado en tabla 'usuario':", error);
-    alert("Error al verificar rol. Usuario no registrado.");
-    location.href = "/login.html";
+    console.warn("❌ Usuario no registrado:", error);
+    alert("Usuario no registrado.");
+    window.close();
     return;
   }
 
   if (!data.activo) {
     console.warn("⛔ Usuario inactivo:", data.nombre);
-    alert("Su cuenta está desactivada.");
-    location.href = "/login.html";
+    alert("Cuenta desactivada.");
+    window.close();
     return;
   }
 
   const rol = data.rol?.trim().toLowerCase();
   const rolesPermitidos = ["admin", "super", "super_admin", "gerente", "cocina"];
-
   if (!rolesPermitidos.includes(rol)) {
     console.warn("❌ Rol no autorizado:", rol);
-    alert("Acceso restringido. Este módulo es solo para cocina, gerencia o administración.");
-    location.href = "/denegado.html";
+    alert("Acceso restringido.");
+    window.close();
     return;
   }
 
@@ -96,10 +98,7 @@ async function verificarAcceso() {
 async function cargarFiltrosDesdePedidos() {
   console.group("🔍 Cargando filtros dinámicos");
 
-  const { data, error } = await supabase
-    .from("pedidos")
-    .select("tipo, local");
-
+  const { data, error } = await supabase.from("pedidos").select("tipo, local");
   if (error) {
     console.error("❌ Error al cargar filtros:", error);
     return;
@@ -127,31 +126,21 @@ async function cargarFiltrosDesdePedidos() {
     opt.textContent = local;
     localSelect.appendChild(opt);
   });
-tipoSelect.value = localStorage.getItem("filtro-tipo") || "todos";
-localSelect.value = localStorage.getItem("filtro-local") || "todos";
 
-if (!tipoSelect.dataset.listenerAttached) {
-  tipoSelect.addEventListener("change", e => {
-    localStorage.setItem("filtro-tipo", e.target.value);
-  });
-  tipoSelect.dataset.listenerAttached = "true";
-}
+  tipoSelect.value = localStorage.getItem("filtro-tipo") || "todos";
+  localSelect.value = localStorage.getItem("filtro-local") || "todos";
 
-if (!localSelect.dataset.listenerAttached) {
-  localSelect.addEventListener("change", e => {
-    localStorage.setItem("filtro-local", e.target.value);
-  });
-  localSelect.dataset.listenerAttached = "true";
-}
+  tipoSelect.onchange = e => localStorage.setItem("filtro-tipo", e.target.value);
+  localSelect.onchange = e => localStorage.setItem("filtro-local", e.target.value);
+
   console.groupEnd();
 }
-
 // 📥 CARGA DE PEDIDOS CON FILTROS
 async function cargarPedidosEnCocina() {
   console.group("📥 Carga de pedidos en cocina");
 
-  const tipoSeleccionado = document.getElementById("filtro-tipo").value;
-  const localSeleccionado = document.getElementById("filtro-local").value;
+  const tipo = document.getElementById("filtro-tipo").value;
+  const local = document.getElementById("filtro-local").value;
 
   const { data, error } = await supabase
     .from("vw_integridad_pedido")
@@ -165,28 +154,18 @@ async function cargarPedidosEnCocina() {
   }
 
   let pedidosFiltrados = data;
-
-  if (tipoSeleccionado !== "todos") {
-    pedidosFiltrados = pedidosFiltrados.filter(p => p.tipo === tipoSeleccionado);
-  }
-
-  if (localSeleccionado !== "todos") {
-    pedidosFiltrados = pedidosFiltrados.filter(p => p.local === localSeleccionado);
-  }
+  if (tipo !== "todos") pedidosFiltrados = pedidosFiltrados.filter(p => p.tipo === tipo);
+  if (local !== "todos") pedidosFiltrados = pedidosFiltrados.filter(p => p.local === local);
 
   console.log("✅ Pedidos filtrados:", pedidosFiltrados.length);
+
   renderizarPedidos(pedidosFiltrados);
   renderResumenDia(pedidosFiltrados);
-  renderResumenPorLocal(); // ahora usa RPC
-  pedidosFiltrados.forEach(p => {
-  if (!p.local) {
-    console.warn("⚠️ Pedido sin local:", p.pedido_id);
-  }
-});
+  renderResumenPorLocal();
+  renderResumenCocineroDia();
 
   console.groupEnd();
 }
-
 // 📊 RESUMEN DEL DÍA
 function renderResumenDia(pedidos) {
   console.group("📊 Resumen del día");
