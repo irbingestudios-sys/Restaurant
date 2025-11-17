@@ -285,23 +285,21 @@ async function rechazarEntrega(pedidoId) {
   const { error } = await supabase
     .from("eventos_pedido")
     .insert([{
-      id: crypto.randomUUID(),
       pedido_id: pedidoId,
       tipo: "rechazado",
       descripcion: motivo,
-      origen: "reparto",                // opcional
-      usuario_id: user.id,              // ← guardar repartidor
-      fecha: new Date().toISOString()
+      usuario_id: user.id   // ← guardar repartidor
+      // id y fecha se generan por defecto
     }]);
 
   if (error) {
+    console.error("❌ Error al registrar rechazo:", error);
     alert("❌ Error al registrar rechazo");
     return;
   }
 
   await cargarPedidosEnReparto();
 }
-
 // 📊 Resumen del día (simple)
 function renderResumenDia(pedidos) {
   const resumen = document.getElementById("resumen-dia");
