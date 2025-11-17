@@ -5,29 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Módulo Reparto | FOCSA</title>
   <link rel="icon" href="../../favicon.ico" />
+  <!-- Estilos base compartidos -->
   <link rel="stylesheet" href="../css/styles-base.css" />
+  <!-- Estilos específicos de reparto -->
   <link rel="stylesheet" href="../css/reparto.css" />
 </head>
 <body>
   <div class="admin-container">
+    <!-- Logo -->
     <img src="../assets/logo.png" alt="Logo del sistema" class="logo" />
+
+    <!-- Título principal -->
     <h1>🚚 Pedidos en Reparto</h1>
 
-    <!-- 👋 Bienvenida -->
+    <!-- 👋 Bienvenida dinámica -->
     <p id="bienvenida" style="margin-bottom: 1rem;"></p>
 
-    <!-- 🔍 Filtros -->
+    <!-- 🎛️ Filtros superiores -->
     <div class="acciones-superiores">
-      <p style="font-size: 0.9rem; color: gray;">Los filtros se aplican automáticamente al cambiar.</p>
+      <p style="font-size: 0.9rem; color: gray;">
+        Los filtros se aplican automáticamente al cambiar.
+      </p>
 
       <div class="filtro-grupo">
         <label for="filtro-tipo">Tipo:</label>
-        <select id="filtro-tipo"><option value="todos">Todos</option></select>
+        <select id="filtro-tipo">
+          <option value="todos">Todos</option>
+        </select>
       </div>
 
       <div class="filtro-grupo">
         <label for="filtro-local">Local:</label>
-        <select id="filtro-local"><option value="todos">Todos</option></select>
+        <select id="filtro-local">
+          <option value="todos">Todos</option>
+        </select>
       </div>
     </div>
 
@@ -42,6 +53,7 @@
     <button id="cerrar-sesion">🔒 Cerrar sesión</button>
   </div>
 
+  <!-- Script principal del módulo Reparto -->
   <script type="module" src="../js/reparto.js"></script>
 </body>
 </html>
