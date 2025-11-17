@@ -365,10 +365,11 @@ async function marcarComoCocinado(pedidoId) {
   const { error } = await supabase
     .from("evento_pedido")
     .insert([{
-      pedido_id: pedidoId,
-      etapa: "cocinado",
-      origen: "cocina",
-      fecha: new Date().toISOString()
+      id: crypto.randomUUID(),              // id único del evento
+      pedido_id: pedidoId,                  // id del pedido
+      etapa: "cocinado",                    // etapa del evento
+      origen: "cocina",                     // origen del evento
+      fecha: new Date().toISOString()       // fecha actual
     }]);
 
   if (error) {
@@ -396,10 +397,11 @@ async function rechazarPedido(pedidoId) {
   const { error } = await supabase
     .from("eventos_pedido")
     .insert([{
-      pedido_id: pedidoId,
-      tipo: "rechazado",
-      descripcion: motivo,
-      fecha: new Date().toISOString()
+      id: crypto.randomUUID(),              // id único del evento
+      pedido_id: pedidoId,                  // id del pedido
+      tipo: "rechazado",                    // tipo de evento
+      descripcion: motivo,                  // motivo del rechazo
+      fecha: new Date().toISOString()       // fecha actual
     }]);
 
   if (error) {
