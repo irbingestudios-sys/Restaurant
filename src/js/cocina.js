@@ -410,3 +410,4 @@ window.iniciarSesion = async function () {
 // 🌐 Exponer funciones al HTML
 window.marcarComoCocinado = marcarComoCocinado;
 window.rechazarPedido = rechazarPedido;
+});
