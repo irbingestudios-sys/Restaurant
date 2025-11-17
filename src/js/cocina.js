@@ -186,6 +186,9 @@ async function cargarPedidosEnCocina() {
 
   console.groupEnd();
 }
+renderResumenDia(pedidos);
+renderResumenPorLocal();
+renderResumenCocineroDia();
 
 // 📊 RESUMEN DEL DÍA
 function renderResumenDia(pedidos) {
@@ -251,7 +254,35 @@ async function renderResumenPorLocal() {
 
   console.groupEnd();
 }
+// 📊 RESUMEN DEL COCINERO (RPC)
+async function renderResumenCocineroDia() {
+  console.group("👨‍🍳 Resumen cocinero (RPC)");
 
+  const resumen = document.getElementById("resumen-cocinero");
+
+  const { data, error } = await supabase.rpc("resumen_cocinero_dia");
+
+  if (error || !data || !data[0]) {
+    console.error("❌ Error al obtener resumen_cocinero_dia:", error);
+    resumen.innerHTML = "<p>Error al cargar resumen del cocinero.</p>";
+    console.groupEnd();
+    return;
+  }
+
+  const r = data[0];
+
+  resumen.innerHTML = `
+    <strong>👨‍🍳 Resumen del Cocinero:</strong><br>
+    Pendientes hoy: ${r.pendientes} | ${r.total_pendientes.toFixed(2)} CUP<br>
+    Elaborados por ti: ${r.elaborados} | ${r.total_elaborados.toFixed(2)} CUP<br>
+    <br><u>📍 Por Local:</u><br>
+    ${r.resumen_local?.map(l => `${l.local}: ${l.pedidos} pedidos | ${l.total_cup.toFixed(2)} CUP`).join("<br>") || "Sin datos"}<br>
+    <br><u>🧾 Productos Elaborados:</u><br>
+    ${r.productos_elaborados?.map(p => `${p.nombre}: ${p.cantidad} uds | ${p.subtotal.toFixed(2)} CUP`).join("<br>") || "Sin productos"}
+  `;
+
+  console.groupEnd();
+}
 // 🖼️ RENDERIZADO DE PEDIDOS AGRUPADOS CON VALIDACIÓN
 function renderizarPedidos(pedidos) {
   console.group("🖼️ Renderizado de pedidos");
