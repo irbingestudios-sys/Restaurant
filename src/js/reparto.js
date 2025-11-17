@@ -5,7 +5,7 @@
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/+esm";
 
-// 1) Fetch seguro como en cocina (remueve ?columns=)
+// OPCIONAL: fetch seguro para evitar params no deseados
 const safeFetch = (url, opts) => {
   try {
     let finalUrl = url;
@@ -14,66 +14,52 @@ const safeFetch = (url, opts) => {
     } else if (finalUrl instanceof URL) {
       finalUrl.searchParams.delete("columns");
     }
-    console.log("HTTP SAFE CALL:", finalUrl);
     return window.fetch(finalUrl, opts);
-  } catch (e) {
-    console.warn("No se pudo sanitizar la URL, usando fetch estándar:", e);
+  } catch {
     return window.fetch(url, opts);
   }
 };
 
-// 2) Cliente Supabase usando fetch seguro
+// Cliente Supabase
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw",
+  "TU_API_KEY",
   { global: { fetch: safeFetch } }
 );
 
-window.supabase = supabase;
-
 // 🟢 Inicialización
 document.addEventListener("DOMContentLoaded", async () => {
-  console.group("🟢 Módulo Reparto — Inicialización");
-  console.log("🚀 Script reparto.js inicializado");
-
   const accesoOk = await verificarAcceso();
-  if (!accesoOk) {
-    console.groupEnd();
-    return;
-  }
+  if (!accesoOk) return;
 
   await cargarFiltrosDesdePedidos();
   await cargarPedidosEnReparto();
 
+  // Auto-refresh
   setInterval(cargarPedidosEnReparto, 15000);
 
+  // Filtros
   document.getElementById("filtro-tipo").addEventListener("change", cargarPedidosEnReparto);
   document.getElementById("filtro-local").addEventListener("change", cargarPedidosEnReparto);
 
+  // Cerrar sesión
   document.getElementById("cerrar-sesion").addEventListener("click", async () => {
-    console.log("🔒 Cerrando sesión...");
     await supabase.auth.signOut();
     location.reload();
   });
-
-  console.groupEnd();
 });
 
-// 🔐 Verificación de usuario y rol (solo: super_admin, admin, gerente, repartidor)
+// 🔐 Verificación de usuario y rol
 async function verificarAcceso() {
-  console.group("🔐 Verificación de acceso");
-
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData?.session) {
     alert("❌ No hay sesión activa. Inicie sesión.");
-    console.groupEnd();
     return false;
   }
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user?.id) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id) {
     alert("Acceso denegado. Usuario no válido.");
-    console.groupEnd();
     return false;
   }
 
@@ -85,47 +71,36 @@ async function verificarAcceso() {
 
   if (error || !data) {
     alert("Usuario no registrado.");
-    console.groupEnd();
     return false;
   }
-
   if (!data.activo) {
     alert("Cuenta desactivada.");
-    console.groupEnd();
     return false;
   }
 
-  const rol = data.rol?.trim().toLowerCase();
+  const rol = (data.rol || "").trim().toLowerCase();
   const rolesPermitidos = ["super_admin", "admin", "gerente", "repartidor"];
-
   if (!rolesPermitidos.includes(rol)) {
     alert("Acceso restringido. Rol no autorizado.");
-    console.groupEnd();
     return false;
   }
 
-  document.getElementById("bienvenida").textContent = `👋 Bienvenido ${data.nombre} (${rol})`;
-  console.log("✅ Acceso permitido para rol:", rol);
-  console.groupEnd();
+  const bienvenida = document.getElementById("bienvenida");
+  if (bienvenida) bienvenida.textContent = `👋 Bienvenido ${data.nombre} (${rol})`;
   return true;
 }
 
 // 🔍 Cargar filtros dinámicos
 async function cargarFiltrosDesdePedidos() {
-  console.group("🔍 Cargando filtros dinámicos");
   const { data, error } = await supabase.from("pedidos").select("tipo, local");
+  if (error) return;
 
-  if (error) {
-    console.error("❌ Error al cargar filtros:", error);
-    console.groupEnd();
-    return;
-  }
-
-  const tipos = [...new Set(data.map(p => p.tipo).filter(Boolean))];
-  const locales = [...new Set(data.map(p => p.local).filter(Boolean))];
+  const tipos = [...new Set((data || []).map(p => p.tipo).filter(Boolean))];
+  const locales = [...new Set((data || []).map(p => p.local).filter(Boolean))];
 
   const tipoSelect = document.getElementById("filtro-tipo");
   const localSelect = document.getElementById("filtro-local");
+  if (!tipoSelect || !localSelect) return;
 
   tipoSelect.innerHTML = '<option value="todos">Todos</option>';
   localSelect.innerHTML = '<option value="todos">Todos</option>';
@@ -143,16 +118,12 @@ async function cargarFiltrosDesdePedidos() {
     opt.textContent = local;
     localSelect.appendChild(opt);
   });
-
-  console.groupEnd();
 }
 
 // 📥 Cargar pedidos en reparto (solo cocinados)
 async function cargarPedidosEnReparto() {
-  console.group("📥 Carga de pedidos en reparto");
-
-  const tipo = document.getElementById("filtro-tipo").value;
-  const local = document.getElementById("filtro-local").value;
+  const tipo = document.getElementById("filtro-tipo")?.value || "todos";
+  const local = document.getElementById("filtro-local")?.value || "todos";
 
   const { data, error } = await supabase
     .from("vw_integridad_pedido")
@@ -160,36 +131,24 @@ async function cargarPedidosEnReparto() {
     .eq("estado_actual", "cocinado")
     .order("fecha_registro", { ascending: true });
 
-  if (error) {
-    console.error("❌ Error al cargar pedidos:", error);
-    console.groupEnd();
-    return;
-  }
+  if (error) return;
 
   let pedidosFiltrados = data || [];
   if (tipo !== "todos") pedidosFiltrados = pedidosFiltrados.filter(p => p.tipo === tipo);
   if (local !== "todos") pedidosFiltrados = pedidosFiltrados.filter(p => p.local === local);
 
-  console.log("✅ Pedidos filtrados:", pedidosFiltrados.length);
-
   renderizarPedidos(pedidosFiltrados);
   renderResumenDia(pedidosFiltrados);
-  renderResumenRepartidor(pedidosFiltrados);
-
-  console.groupEnd();
+  await renderResumenRepartidor(); // ← RPC “Entregados por ti”
 }
 
 // 🖼️ Renderizado de pedidos
 function renderizarPedidos(pedidos) {
-  console.group("🖼️ Renderizado de pedidos");
   const contenedor = document.getElementById("lista-pedidos");
+  if (!contenedor) return;
   contenedor.innerHTML = "";
 
-  if (pedidos.length === 0) {
-    console.log("📭 Sin pedidos en reparto");
-    console.groupEnd();
-    return;
-  }
+  if (!pedidos?.length) return;
 
   pedidos.forEach(pedido => {
     const fechaPedido = new Date(pedido.fecha_registro);
@@ -209,28 +168,29 @@ function renderizarPedidos(pedidos) {
     const bloque = document.createElement("div");
     bloque.className = "pedido-bloque";
     bloque.innerHTML = `
-      <h3>🚚 Pedido ${pedido.pedido_id.slice(0, 8)}...</h3>
-      <p><strong>Cliente:</strong> ${pedido.cliente}</p>
-      <p><strong>Tipo:</strong> ${pedido.tipo} | <strong>Local:</strong> ${pedido.local}</p>
-      <p><strong>Estado:</strong> ${pedido.estado_actual}</p>
+      <h3>🚚 Pedido ${String(pedido.pedido_id || "").slice(0, 8)}...</h3>
+      <p><strong>Cliente:</strong> ${pedido.cliente ?? "-"}</p>
+      <p><strong>Tipo:</strong> ${pedido.tipo ?? "-"} | <strong>Local:</strong> ${pedido.local ?? "-"}</p>
+      <p><strong>Estado:</strong> <span class="estado cocinado">cocinado</span></p>
       <p><strong>Fecha:</strong> ${fechaPedido.toLocaleString()}</p>
       <p><strong>Tiempo en espera:</strong> ${tiempoTranscurrido}</p>
-      <p><strong>Total:</strong> ${total.toFixed(2)} CUP</p>
+      <p><strong>Total:</strong> ${Number(total).toFixed(2)} CUP</p>
       <div class="acciones">
         <button onclick="marcarComoEntregado('${pedido.pedido_id}')">✅ Entregado</button>
         <button onclick="rechazarEntrega('${pedido.pedido_id}')">❌ Rechazar</button>
       </div>
     `;
-
     contenedor.appendChild(bloque);
   });
-
-  console.groupEnd();
 }
 
 // ✅ Marcar como entregado
 async function marcarComoEntregado(pedidoId) {
-  console.group("✅ Marcar como entregado:", pedidoId);
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id) {
+    alert("❌ No hay usuario autenticado");
+    return;
+  }
 
   const { error } = await supabase
     .from("evento_pedido")
@@ -239,28 +199,26 @@ async function marcarComoEntregado(pedidoId) {
       pedido_id: pedidoId,
       etapa: "entregado",
       origen: "reparto",
+      usuario_id: user.id,              // ← guardar repartidor
       fecha: new Date().toISOString()
     }]);
 
   if (error) {
-    console.error("❌ Error al registrar entrega:", error);
-    console.groupEnd();
+    alert("❌ Error al registrar entrega");
     return;
   }
 
-  console.log("📦 Pedido marcado como entregado");
   await cargarPedidosEnReparto();
-  console.groupEnd();
 }
 
 // ❌ Rechazar entrega
 async function rechazarEntrega(pedidoId) {
-  console.group("❌ Rechazar entrega:", pedidoId);
-
   const motivo = prompt("Motivo del rechazo:");
-  if (!motivo) {
-    console.warn("⚠️ Rechazo cancelado por falta de motivo");
-    console.groupEnd();
+  if (!motivo) return;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id) {
+    alert("❌ No hay usuario autenticado");
     return;
   }
 
@@ -271,34 +229,49 @@ async function rechazarEntrega(pedidoId) {
       pedido_id: pedidoId,
       tipo: "rechazado",
       descripcion: motivo,
+      origen: "reparto",                // opcional
+      usuario_id: user.id,              // ← guardar repartidor
       fecha: new Date().toISOString()
     }]);
 
   if (error) {
-    console.error("❌ Error al registrar rechazo:", error);
-    console.groupEnd();
+    alert("❌ Error al registrar rechazo");
     return;
   }
 
-  console.log("📦 Entrega rechazada con motivo:", motivo);
   await cargarPedidosEnReparto();
-  console.groupEnd();
 }
 
 // 📊 Resumen del día (simple)
 function renderResumenDia(pedidos) {
-  console.group("📊 Resumen del día");
   const resumen = document.getElementById("resumen-dia");
+  if (!resumen) return;
   resumen.innerHTML = `<strong>📊 Total pedidos en reparto:</strong> ${pedidos.length}`;
-  console.groupEnd();
 }
 
-// 👨‍🚚 Resumen del repartidor (placeholder)
-function renderResumenRepartidor(pedidos) {
-  console.group("👨‍🚚 Resumen del repartidor");
+// 👨‍🚚 Resumen del repartidor (RPC)
+async function renderResumenRepartidor() {
   const resumen = document.getElementById("resumen-repartidor");
-  resumen.innerHTML = `<strong>👨‍🚚 Entregados por ti:</strong> (Próximo: conectar a RPC)`;
-  console.groupEnd();
+  if (!resumen) return;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user?.id) {
+    resumen.innerHTML = "<p>No se pudo obtener el usuario.</p>";
+    return;
+  }
+
+  const { data, error } = await supabase.rpc("resumen_repartidor_dia", { uid: user.id });
+
+  if (error || !data || !data[0]) {
+    resumen.innerHTML = "<p>Error al cargar resumen del repartidor.</p>";
+    return;
+  }
+
+  const r = data[0];
+  resumen.innerHTML = `
+    <h3>👨‍🚚 Resumen del Repartidor</h3>
+    <p><strong>Entregados por ti:</strong> ${r.entregados} pedidos | ${Number(r.total_entregados).toFixed(2)} CUP</p>
+  `;
 }
 
 // 🌐 Exponer funciones al HTML
