@@ -226,69 +226,33 @@ async function cargarPedidosEnCocina() {
 // 📊 RESUMEN DEL DÍA
 function renderResumenDia(pedidos) {
   console.group("📊 Resumen del día");
-  const resumen = document.getElementById("resumen-dia");
 
+  const resumen = document.getElementById("resumen-dia");
   const hoy = new Date().toISOString().slice(0, 10);
+
   const pendientesHoy = pedidos.filter(p =>
     p.estado_actual === "pendiente" &&
     p.fecha_registro.slice(0, 10) === hoy
   );
 
-  const totalPedidos = pedidos.length;
-  const pendientes = pendientesHoy.length;
-  const enCocina = pedidos.filter(p => p.estado_actual === "en cocina").length;
-
-  const totalCUP = pendientesHoy.reduce((sum, p) => {
-    const subtotal = Array.isArray(p.items)
-      ? p.items.reduce((acc, item) => acc + (item.subtotal || 0), 0)
-      : 0;
-    return sum + subtotal;
-  }, 0);
+  const totalPedidos = pendientesHoy.length;
 
   resumen.innerHTML = `
     <strong>📊 Resumen del Día:</strong><br>
-    Total pedidos: ${totalPedidos}<br>
-    Pendientes hoy: ${pendientes} | En cocina: ${enCocina}<br>
-    Total CUP (pendientes hoy): ${totalCUP.toFixed(2)}
+    Total pedidos pendientes hoy: ${totalPedidos}
   `;
 
-  console.log("📊 Total pedidos:", totalPedidos);
-  console.log("📌 Pendientes hoy:", pendientes);
-  console.log("👨‍🍳 En cocina:", enCocina);
-  console.log("💰 Total CUP (pendientes hoy):", totalCUP.toFixed(2));
-  console.groupEnd();
-}
-
-// 📍 RESUMEN POR LOCAL (RPC)
-async function renderResumenPorLocal() {
-  console.group("📍 Resumen por local (RPC)");
-  const resumen = document.getElementById("resumen-local");
-
-  const { data, error } = await supabase.rpc("resumen_por_local");
-  if (error) {
-    console.error("❌ Error al obtener resumen por local:", error);
-    resumen.innerHTML = "<p>Error al cargar resumen por local.</p>";
-    console.groupEnd();
-    return;
-  }
-
-  resumen.innerHTML = `
-    <strong>📍 Resumen por Local:</strong><br>
-    ${data.map(r => `${r.local}: ${r.cantidad_pedidos} pedidos | ${Number(r.total_cup).toFixed(2)} CUP`).join("<br>")}
-  `;
-
-  data.forEach(r => {
-    console.log(`📍 ${r.local}: ${r.cantidad_pedidos} pedidos | ${Number(r.total_cup).toFixed(2)} CUP`);
-  });
+  console.log("📊 Total pedidos pendientes hoy:", totalPedidos);
   console.groupEnd();
 }
 
 // 👨‍🍳 RESUMEN DEL COCINERO (RPC)
 async function renderResumenCocineroDia() {
   console.group("👨‍🍳 Resumen cocinero (RPC)");
-  const resumen = document.getElementById("resumen-cocinero");
 
+  const resumen = document.getElementById("resumen-cocinero");
   const { data, error } = await supabase.rpc("resumen_cocinero_dia");
+
   if (error || !data || !data[0]) {
     console.error("❌ Error al obtener resumen_cocinero_dia:", error);
     resumen.innerHTML = "<p>Error al cargar resumen del cocinero.</p>";
@@ -297,15 +261,12 @@ async function renderResumenCocineroDia() {
   }
 
   const r = data[0];
+
   resumen.innerHTML = `
     <h3>👨‍🍳 Resumen del Cocinero</h3>
-    <p><strong>Pendientes hoy:</strong> ${r.pendientes} pedidos | ${r.total_pendientes.toFixed(2)} CUP</p>
     <p><strong>Elaborados por ti:</strong> ${r.elaborados} pedidos | ${r.total_elaborados.toFixed(2)} CUP</p>
-    <h4>📍 Por Local</h4>
-    <ul>${r.resumen_local?.map(l => `<li>${l.local}: ${l.pedidos} pedidos | ${l.total_cup.toFixed(2)} CUP</li>`).join("") || "<li>Sin datos</li>"}</ul>
-    <h4>🧾 Productos Elaborados</h4>
-    <ul>${r.productos_elaborados?.map(p => `<li>${p.nombre}: ${p.cantidad} uds | ${p.subtotal.toFixed(2)} CUP</li>`).join("") || "<li>Sin productos</li>"}</ul>
   `;
+
   console.groupEnd();
 }
 
@@ -439,3 +400,70 @@ async function rechazarPedido(pedidoId) {
 // 🌐 Exponer funciones al HTML
 window.marcarComoCocinado = marcarComoCocinado;
 window.rechazarPedido = rechazarPedido;
+
+// 📊 Acción del botón "Ver resumen del día"
+document.getElementById("btn-resumen-dia").addEventListener("click", async () => {
+  console.group("📊 Ver resumen del día");
+
+  const { data, error } = await supabase
+    .from("vw_integridad_pedido")
+    .select("*")
+    .eq("estado_actual", "cocinado"); // solo pedidos elaborados
+
+  if (error) {
+    console.error("❌ Error al cargar resumen del día:", error);
+    return;
+  }
+
+  let totalPedidos = 0;
+  let totalCUP = 0;
+  const resumenPorLocal = {};
+  const categorias = {};
+
+  data.forEach(p => {
+    totalPedidos++;
+    const subtotal = Array.isArray(p.items)
+      ? p.items.reduce((acc, i) => acc + (i.subtotal || 0), 0)
+      : 0;
+    totalCUP += subtotal;
+
+    // Agrupar por local
+    if (!resumenPorLocal[p.local]) resumenPorLocal[p.local] = { pedidos: 0, cup: 0 };
+    resumenPorLocal[p.local].pedidos++;
+    resumenPorLocal[p.local].cup += subtotal;
+
+    // Agrupar por categoría
+    if (Array.isArray(p.items)) {
+      p.items.forEach(i => {
+        const nombre = i.nombre;
+        if (!categorias[nombre]) categorias[nombre] = { cantidad: 0, cup: 0 };
+        categorias[nombre].cantidad += i.cantidad;
+        categorias[nombre].cup += i.subtotal;
+      });
+    }
+  });
+
+  // Construir HTML
+  let html = `<h3>📊 Resumen del Día</h3>`;
+  html += `<p>Total pedidos elaborados: ${totalPedidos}</p>`;
+  html += `<p>Total CUP: ${totalCUP.toFixed(2)}</p>`;
+
+  html += `<h4>📍 Por Local</h4><ul>`;
+  for (const local in resumenPorLocal) {
+    html += `<li>${local}: ${resumenPorLocal[local].pedidos} pedidos | ${resumenPorLocal[local].cup.toFixed(2)} CUP</li>`;
+  }
+  html += `</ul>`;
+
+  html += `<h4>🧾 Productos Elaborados</h4><ul>`;
+  Object.keys(categorias).sort().forEach(nombre => {
+    const c = categorias[nombre];
+    html += `<li>${nombre}: ${c.cantidad} uds | ${c.cup.toFixed(2)} CUP</li>`;
+  });
+  html += `</ul>`;
+
+  const bloque = document.getElementById("bloque-resumen-dia");
+  bloque.style.display = "block";
+  bloque.innerHTML = html;
+
+  console.groupEnd();
+});
