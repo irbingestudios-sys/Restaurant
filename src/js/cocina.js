@@ -201,7 +201,7 @@ async function cargarPedidosEnCocina() {
   const { data, error } = await supabase
     .from("vw_integridad_pedido")
     .select("*")
-    .or("estado_actual.in.(pendiente,en cocina),estado_actual.is.null")
+    .or("estado_actual.in.(pendiente,en cocina)")
     .order("fecha_registro", { ascending: true });
 
   if (error) {
