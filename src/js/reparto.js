@@ -271,7 +271,7 @@ async function marcarComoEntregado(pedidoId) {
   await cargarPedidosEnReparto();
 }
 
-// ❌ Rechazar entrega
+// ❌ Rechazar entrega (corregido)
 async function rechazarEntrega(pedidoId) {
   const motivo = prompt("Motivo del rechazo:");
   if (!motivo) return;
@@ -282,22 +282,41 @@ async function rechazarEntrega(pedidoId) {
     return;
   }
 
-  const { error } = await supabase
-    .from("eventos_pedido")
+  // 1) Insertar evento de rechazo en evento_pedido
+  const { error: insertError } = await supabase
+    .from("evento_pedido")   // ← usa la tabla singular
     .insert([{
+      id: crypto.randomUUID(),
       pedido_id: pedidoId,
-      tipo: "rechazado",
-      descripcion: motivo,
-      usuario_id: user.id   // ← guardar repartidor
+      etapa: "rechazado",
+      origen: "reparto",
+      motivo_rechazo: motivo,   // ← nuevo campo que añadimos
+      usuario_id: user.id,
+      fecha: new Date().toISOString()
     }]);
 
-  if (error) {
-    console.error("❌ Error al registrar rechazo:", error);
-    alert("❌ Error al registrar rechazo: " + error.message);
+  if (insertError) {
+    console.error("❌ Error al registrar rechazo:", insertError);
+    alert("❌ Error al registrar rechazo: " + insertError.message);
     return;
   }
 
-  console.log("✅ Rechazo registrado correctamente");
+  // 2) Actualizar estado del pedido
+  const { error: updateError } = await supabase
+    .from("pedidos")
+    .update({ estado_actual: "rechazado", motivo_rechazo: motivo })
+    .eq("id", pedidoId);
+
+  if (updateError) {
+    console.error("❌ Error al actualizar estado:", updateError);
+    alert("❌ Error al actualizar estado del pedido: " + updateError.message);
+    return;
+  }
+
+  console.log("✅ Rechazo registrado y estado actualizado correctamente");
+  alert("✅ Pedido rechazado correctamente");
+
+  // 3) Recargar pedidos para limpiar la vista
   await cargarPedidosEnReparto();
 }
 
