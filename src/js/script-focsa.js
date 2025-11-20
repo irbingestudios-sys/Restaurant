@@ -13,18 +13,10 @@ console.log("🟢 FOCSA — Inicialización");
 console.log("🚀 Script FOCSA inicializado");
 
 // Inicialización Supabase (necesario para RPC)
+// ⚠️ Sustituye con tu URL y ANON KEY reales de Supabase
 const supabaseUrl = "https://https://qeqltwrkubtyrmgvgaai.supabase.co";
 const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw";
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-// Inicialización FOCSA
-async function initFOCSA() {
-  await cargarMenu();
-  await cargarEnvases();
-  actualizarTotales();
-}
-
-document.addEventListener("DOMContentLoaded", initFOCSA);
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // Estado global
 let cantidadesMenu = {};      // {itemId: {cantidad, precio, subtotal, nombre}}
@@ -32,10 +24,17 @@ let cantidadesEnvases = {};   // {envaseId: {cantidad, precio, subtotal, nombre}
 let pedidoActual = null;      // último pedido registrado {pedido_id, ...}
 let seguimientoActivo = false;
 let seguimientoTimer = null;
-let usuarioActual = null;     // UUID del usuario autenticado
 
-// Supón que ya tienes un cliente supabase inicializado como `supabase`
+// =========================
+// Inicialización FOCSA
+// =========================
+async function initFOCSA() {
+  await cargarMenu();
+  await cargarEnvases();
+  actualizarTotales();
+}
 
+document.addEventListener("DOMContentLoaded", initFOCSA);
 
 // =========================
 // Carga del menú y envases
