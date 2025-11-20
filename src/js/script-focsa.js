@@ -13,8 +13,8 @@ console.log("🚀 Script FOCSA inicializado");
 
 // Inicialización Supabase (necesario para RPC)
 // ⚠️ Sustituye con tu URL y ANON KEY reales de Supabase
-const supabaseUrl = "https://TU-PROJECT.supabase.co";
-const supabaseKey = "TU-ANON-KEY";
+const supabaseUrl = "https://qeqltwrkubtyrmgvgaai.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw";
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 // Estado global
