@@ -5,7 +5,6 @@
 // │ Autor: Irbing Brizuela                                     │
 // │ Fecha: 2025-11-08                                          │
 // └────────────────────────────────────────────────────────────┘
-
 // =========================
 // FOCSA — Estado y utilidades
 // =========================
@@ -14,15 +13,14 @@ console.log("🚀 Script FOCSA inicializado");
 
 // Inicialización Supabase (necesario para RPC)
 // ⚠️ Sustituye con tu URL y ANON KEY reales de Supabase
-const supabaseUrl = "https://https://qeqltwrkubtyrmgvgaai.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw";
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = "https://TU-PROJECT.supabase.co";
+const supabaseKey = "TU-ANON-KEY";
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 // Estado global
-let cantidadesMenu = {};      // {itemId: {cantidad, precio, subtotal, nombre}}
-let cantidadesEnvases = {};   // {envaseId: {cantidad, precio, subtotal, nombre}}
-let pedidoActual = null;      // último pedido registrado {pedido_id, ...}
-let seguimientoActivo = false;
+let cantidadesMenu = {};
+let cantidadesEnvases = {};
+let pedidoActual = null;
 let seguimientoTimer = null;
 
 // =========================
@@ -33,35 +31,31 @@ async function initFOCSA() {
   await cargarEnvases();
   actualizarTotales();
 }
-
 document.addEventListener("DOMContentLoaded", initFOCSA);
 
 // =========================
 // Carga del menú y envases
 // =========================
 async function cargarMenu() {
-  console.log("📥 Carga de menú");
   const { data, error } = await supabase.from("menu_especial").select("*").order("orden", { ascending: true });
   if (error) {
     console.error("❌ Error cargando menú:", error);
     return [];
   }
-  console.log("✅ Menú cargado:", data?.length || 0, "items");
   renderMenu(data || []);
   return data || [];
 }
 
 async function cargarEnvases() {
-  console.log("📥 Carga de envases");
   const { data, error } = await supabase.from("envases").select("*").order("orden", { ascending: true });
   if (error) {
     console.error("❌ Error cargando envases:", error);
     return [];
   }
-  console.log("🧴 Envases cargados:", data?.length || 0);
   renderEnvases(data || []);
   return data || [];
 }
+
 // =========================
 // Render de menú y envases
 // =========================
@@ -173,10 +167,8 @@ function actualizarTotales() {
   const total = totalMenu + totalEnv;
   const cantidad = cantMenu + cantEnv;
 
-  const totalEl = document.getElementById("total-pedido");
-  const cantEl = document.getElementById("cantidad-pedido");
-  if (totalEl) totalEl.textContent = total;
-  if (cantEl) cantEl.textContent = cantidad;
+  document.getElementById("total-cup").textContent = total;
+  document.getElementById("total-items").textContent = cantidad;
 }
 
 // =========================
@@ -217,7 +209,7 @@ async function enviarWhatsApp() {
 
   const total = items.reduce((acc, i) => acc + i.subtotal, 0);
 
-  const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
+   const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
     p_cliente: cliente,
     p_piso: piso,
     p_apartamento: apartamento,
@@ -230,13 +222,15 @@ async function enviarWhatsApp() {
 
   if (error) {
     console.error("❌ Error RPC:", error);
+    alert("Hubo un error registrando el pedido.");
     return;
   }
 
-  const pedidoId = data?.[0]?.pedido_id;
+  const pedidoId = data;
   localStorage.setItem("pedido_id_actual", pedidoId);
 
-  const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n${unirseGrupo ? "✅ Desea unirse al grupo" : "❌ No desea unirse"}\n\n${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}\n\nTotal: ${total.toFixed(2)} CUP`;
+  // Construir mensaje para WhatsApp
+  const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n${unirseGrupo ? "✅ Desea unirse al grupo" : "❌ No desea unirse"}\n\n${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}\n\nTotal: ${total.toFixed(2)} CUP\nPedido ID: ${pedidoId}`;
   const url = `https://wa.me/+5355582319?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
 
@@ -251,59 +245,46 @@ async function iniciarSeguimiento() {
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (!pedidoId) return;
   await verificarIntegridadPedido(pedidoId);
-  // Refresco controlado cada 15s
   seguimientoTimer = setTimeout(iniciarSeguimiento, 15000);
 }
 
 async function verificarIntegridadPedido(pedidoId) {
-  try {
-    console.log("🔎 Seguimiento del pedido");
-    const { data, error } = await supabase
-      .from("vw_integridad_pedido")
-      .select("*")
-      .eq("pedido_id", pedidoId)
-      .maybeSingle();
+  const { data, error } = await supabase
+    .from("vw_integridad_pedido")
+    .select("*")
+    .eq("pedido_id", pedidoId)
+    .maybeSingle();
 
-    if (error || !data) {
-      console.warn("⚠️ Error o pedido no encontrado");
-      return;
-    }
+  if (error || !data) {
+    console.warn("⚠️ Error o pedido no encontrado");
+    return;
+  }
 
-    // Mostrar estado
-    let estadoTexto = `🧾 ${data.estado_actual}`;
-    if (data.estado_actual !== "entregado") {
-      const cocina = data.replicado_en_cocina ? "✅ Cocina OK" : "⚠️ Sin cocina";
-      const reparto = data.replicado_en_reparto ? "✅ Reparto OK" : "⚠️ Sin reparto";
-      estadoTexto += ` | ${cocina} | ${reparto}`;
-    }
-    const estadoEl = document.getElementById("estado-actual");
-    if (estadoEl) estadoEl.textContent = estadoTexto;
+  let estadoTexto = `🧾 ${data.estado_actual}`;
+  if (data.estado_actual !== "entregado") {
+    const cocina = data.replicado_en_cocina ? "✅ Cocina OK" : "⚠️ Sin cocina";
+    const reparto = data.replicado_en_reparto ? "✅ Reparto OK" : "⚠️ Sin reparto";
+    estadoTexto += ` | ${cocina} | ${reparto}`;
+  }
+  document.getElementById("estado-actual").textContent = estadoTexto;
 
-    // Habilitar botón de entrega si está replicado en cocina y reparto
-    const btnEntregar = document.getElementById("btn-entregar");
-    if (btnEntregar) {
-      btnEntregar.disabled = !(data.replicado_en_cocina && data.replicado_en_reparto);
-    }
+  const btnEntregar = document.getElementById("btn-entregado");
+  if (btnEntregar) {
+    btnEntregar.disabled = !(data.replicado_en_cocina && data.replicado_en_reparto);
+  }
 
-    // Si ya está entregado, mostrar bloque de criterio
-    if (data.estado_actual === "entregado") {
-      const criterioBloque = document.getElementById("bloque-criterio");
-      if (criterioBloque) criterioBloque.style.display = "block";
-      // Opcional: parar seguimiento si ya está entregado
-      // clearTimeout(seguimientoTimer);
-    }
-  } catch (e) {
-    console.error("❌ Error en verificarIntegridadPedido:", e);
+  if (data.estado_actual === "entregado") {
+    document.getElementById("bloque-criterio").style.display = "block";
   }
 }
 
 // =========================
-// Marcar como entregado (RPC evento_pedido)
+// Marcar como entregado
 // =========================
 async function marcarComoEntregado() {
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (!pedidoId) {
-    console.warn("⚠️ No hay pedido activo para entregar");
+    alert("No hay pedido activo para entregar.");
     return;
   }
 
@@ -316,43 +297,39 @@ async function marcarComoEntregado() {
 
   if (error) {
     console.error("❌ Error al marcar como entregado:", error);
+    alert("Error al marcar como entregado.");
     return;
   }
 
   console.log("✅ Pedido marcado como entregado:", pedidoId);
-  const criterioBloque = document.getElementById("bloque-criterio");
-  if (criterioBloque) criterioBloque.style.display = "block";
-  // Refrescar estado
+  document.getElementById("bloque-criterio").style.display = "block";
   await verificarIntegridadPedido(pedidoId);
 }
 
-// Vincular botón
-document.getElementById("btn-entregar")?.addEventListener("click", marcarComoEntregado);
+document.getElementById("btn-entregado")?.addEventListener("click", marcarComoEntregado);
 
 // =========================
-// Utilidades de limpieza
+// Utilidades
 // =========================
 function resetSeleccion() {
   cantidadesMenu = {};
   cantidadesEnvases = {};
   actualizarTotales();
-  // Reinicia contadores visuales
   document.querySelectorAll("[id^='cant-menu-']").forEach(el => (el.textContent = "0"));
   document.querySelectorAll("[id^='cant-env-']").forEach(el => (el.textContent = "0"));
 }
 
-function resetFOCSA() {
+function resetearFOCSA() {
   clearTimeout(seguimientoTimer);
-  seguimientoActivo = false;
   localStorage.removeItem("pedido_id_actual");
   pedidoActual = null;
   resetSeleccion();
-  console.log("🔄 FOCSA reiniciado");
+  document.getElementById("estado-actual").textContent = "🕓 Pendiente";
+  document.getElementById("bloque-criterio").style.display = "none";
 }
 
 // =========================
 // Exponer funciones al HTML
 // =========================
 window.enviarWhatsApp = enviarWhatsApp;
-window.resetFOCSA = resetFOCSA;
-window.marcarComoEntregado = marcarComoEntregado;
+window.resetearFOCSA = resetearFOCSA;
