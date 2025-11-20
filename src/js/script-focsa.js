@@ -12,6 +12,20 @@
 console.log("🟢 FOCSA — Inicialización");
 console.log("🚀 Script FOCSA inicializado");
 
+// Inicialización Supabase (necesario para RPC)
+const supabaseUrl = "https://https://qeqltwrkubtyrmgvgaai.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw";
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+// Inicialización FOCSA
+async function initFOCSA() {
+  await cargarMenu();
+  await cargarEnvases();
+  actualizarTotales();
+}
+
+document.addEventListener("DOMContentLoaded", initFOCSA);
+
 // Estado global
 let cantidadesMenu = {};      // {itemId: {cantidad, precio, subtotal, nombre}}
 let cantidadesEnvases = {};   // {envaseId: {cantidad, precio, subtotal, nombre}}
@@ -22,29 +36,6 @@ let usuarioActual = null;     // UUID del usuario autenticado
 
 // Supón que ya tienes un cliente supabase inicializado como `supabase`
 
-// =========================
-// Autenticación y acceso
-// =========================
-async function verificarAcceso() {
-  console.log("🔐 Verificación de acceso");
-  const { data: user, error } = await supabase.auth.getUser();
-  if (error || !user || !user.user) {
-    console.error("❌ Usuario no autenticado");
-    throw new Error("Usuario no autenticado");
-  }
-  usuarioActual = user.user.id;
-  console.log("🧾 Usuario autenticado:", user.user.email);
-
-  // Validar rol si aplica (opcional)
-  const { data: rolData, error: rolError } = await supabase
-    .from("usuario")
-    .select("rol, activo, nombre")
-    .eq("id", usuarioActual)
-    .maybeSingle();
-
-  if (rolError) console.warn("⚠️ No se pudo verificar rol:", rolError);
-  if (rolData) console.log("✅ Acceso permitido para rol:", rolData.rol);
-}
 
 // =========================
 // Carga del menú y envases
@@ -72,7 +63,6 @@ async function cargarEnvases() {
   renderEnvases(data || []);
   return data || [];
 }
-
 // =========================
 // Render de menú y envases
 // =========================
@@ -122,7 +112,6 @@ function renderMenu(items) {
       actualizarTotales();
     }
   });
-  console.log("🖼️ Renderizado en menu-especial");
 }
 
 function renderEnvases(items) {
@@ -171,7 +160,6 @@ function renderEnvases(items) {
       actualizarTotales();
     }
   });
-  console.log("🖼️ Renderizado en envases-contenedor");
 }
 
 // =========================
@@ -186,7 +174,6 @@ function actualizarTotales() {
   const total = totalMenu + totalEnv;
   const cantidad = cantMenu + cantEnv;
 
-  console.log("🧮 Totales actualizados:", { total, cantidad });
   const totalEl = document.getElementById("total-pedido");
   const cantEl = document.getElementById("cantidad-pedido");
   if (totalEl) totalEl.textContent = total;
@@ -194,150 +181,79 @@ function actualizarTotales() {
 }
 
 // =========================
-// Validaciones y vista previa
+// Construcción de items
 // =========================
 function construirItemsSeleccionados() {
   const items = [];
   Object.entries(cantidadesMenu).forEach(([id, v]) => {
-    if (v.cantidad > 0) items.push({ nombre: v.nombre, precio: v.precio, cantidad: v.cantidad, subtotal: v.subtotal, tipo: "menu", id });
+    if (v.cantidad > 0) items.push({ nombre: v.nombre, precio: v.precio, cantidad: v.cantidad, subtotal: v.subtotal });
   });
   Object.entries(cantidadesEnvases).forEach(([id, v]) => {
-    if (v.cantidad > 0) items.push({ nombre: v.nombre, precio: v.precio, cantidad: v.cantidad, subtotal: v.subtotal, tipo: "envase", id });
+    if (v.cantidad > 0) items.push({ nombre: v.nombre, precio: v.precio, cantidad: v.cantidad, subtotal: v.subtotal });
   });
   return items;
 }
 
-function revisarPedido() {
-  console.log("🧾 Vista previa del pedido");
-  const cliente = document.getElementById("cliente")?.value?.trim();
-  const telefono = document.getElementById("telefono")?.value?.trim();
-  const direccion = document.getElementById("direccion")?.value?.trim();
-  const piso = document.getElementById("piso")?.value?.trim();
-  const apartamento = document.getElementById("apartamento")?.value?.trim();
-  const unirseGrupo = Boolean(document.getElementById("unirse-grupo")?.checked);
-
-  if (!cliente || !telefono) {
-    console.warn("❌ Datos incompletos para revisión.");
-    return false;
-  }
-
-  const items = construirItemsSeleccionados();
-  const tieneEnvase = items.some(i => i.tipo === "envase" && i.cantidad > 0);
-  if (!tieneEnvase) {
-    console.warn("❌ Pedido sin envases.");
-    return false;
-  }
-
-  const total = items.reduce((acc, i) => acc + i.subtotal, 0);
-  console.log("🧮 Resumen:", { cliente, telefono, direccion, piso, apartamento, unirseGrupo, total, cantidad: items.length });
-  // Render del modal/resumen si aplica…
-  return { cliente, telefono, direccion, piso, apartamento, unirseGrupo, items, total };
-}
-
-// =========================
-// Filtros (opcional)
-// =========================
-function filtrarCategoria(cat) {
-  console.log("🔍 Filtro de categoría");
-  console.log("📌 Categoría seleccionada:", cat || "todos");
-  // Implementa tu lógica de filtro sobre los elementos renderizados
-}
-
-// =========================
-// Inicialización
-// =========================
-async function initFOCSA() {
-  await verificarAcceso();
-  await cargarMenu();
-  await cargarEnvases();
-  actualizarTotales();
-}
-
-document.addEventListener("DOMContentLoaded", initFOCSA);
 // =========================
 // Envío por WhatsApp + RPC
 // =========================
 async function enviarWhatsApp() {
-  console.log("📲 Enviar pedido por WhatsApp");
-  const resumen = revisarPedido();
-  if (!resumen) return;
+  const cliente = document.getElementById("cliente")?.value?.trim();
+  const telefono = document.getElementById("telefono")?.value?.trim();
+  const piso = document.getElementById("piso")?.value?.trim();
+  const apartamento = document.getElementById("apartamento")?.value?.trim();
+  const unirseGrupo = Boolean(document.getElementById("unirseGrupo")?.checked);
 
-  console.log("✅ Datos del cliente verificados");
-  const items = resumen.items;
-  console.log("✅ Al menos un envase seleccionado");
-  console.log("📦 Ítems construidos:", items);
+  if (!cliente || !piso || !apartamento) {
+    alert("Por favor, complete los datos del cliente antes de enviar.");
+    return;
+  }
 
-  // Payload RPC — registrar_pedido_focsa(text, text, text, text, text, boolean, json, text) -> uuid
-  const payload = {
-    p_cliente: resumen.cliente,
-    p_telefono: resumen.telefono,
-    p_local: "FOCSA",
-    p_tipo: "especial",
-    p_canal: "whatsapp",
-    p_unirse_grupo: resumen.unirseGrupo,
+  const items = construirItemsSeleccionados();
+  const tieneEnvase = items.some(i => i.nombre.toLowerCase().includes("envase") || i.nombre.toLowerCase().includes("bolsa"));
+  if (!tieneEnvase) {
+    alert("Debe seleccionar al menos un envase para realizar la entrega.");
+    return;
+  }
+
+  const total = items.reduce((acc, i) => acc + i.subtotal, 0);
+
+  const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
+    p_cliente: cliente,
+    p_piso: piso,
+    p_apartamento: apartamento,
+    p_telefono: telefono || null,
+    p_direccion: null,
+    p_unirse_grupo: unirseGrupo,
     p_items: JSON.stringify(items),
-    p_descripcion: construirDescripcionWhatsApp(resumen) // opcional
-  };
+    p_canal: "whatsapp"
+  });
 
-  const { data: pedidoId, error } = await supabase.rpc("registrar_pedido_focsa", payload);
   if (error) {
     console.error("❌ Error RPC:", error);
     return;
   }
 
-  console.log("📥 Pedido registrado con ID:", pedidoId);
-  pedidoActual = { pedido_id: pedidoId, total: resumen.total, cliente: resumen.cliente };
+  const pedidoId = data?.[0]?.pedido_id;
   localStorage.setItem("pedido_id_actual", pedidoId);
 
-  // Abrir WhatsApp con mensaje
-  abrirWhatsApp(resumen, pedidoId);
-
-  // Limpiar selección
-  resetSeleccion();
-  console.log("🧹 Selección limpiada y menú reiniciado");
-
-  // Activar seguimiento
-  activarSeguimiento();
-  console.log("📦 Seguimiento activado");
-}
-
-function construirDescripcionWhatsApp(resumen) {
-  const lineas = resumen.items.map(i => `- ${i.nombre} x${i.cantidad} (${i.subtotal})`);
-  return `Cliente: ${resumen.cliente}\nTel: ${resumen.telefono}\nDir: ${resumen.direccion || ""}\nPiso: ${resumen.piso || ""} Apt: ${resumen.apartamento || ""}\nItems:\n${lineas.join("\n")}\nTotal: ${resumen.total}`;
-}
-
-function abrirWhatsApp(resumen, pedidoId) {
-  const mensaje = encodeURIComponent(`${construirDescripcionWhatsApp(resumen)}\nPedido ID: ${pedidoId}`);
-  const url = `https://wa.me/${resumen.telefono}?text=${mensaje}`;
+  const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n${unirseGrupo ? "✅ Desea unirse al grupo" : "❌ No desea unirse"}\n\n${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}\n\nTotal: ${total.toFixed(2)} CUP`;
+  const url = `https://wa.me/+5355582319?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
-  console.log("📤 WhatsApp abierto con mensaje");
+
+  resetSeleccion();
+  iniciarSeguimiento();
 }
 
 // =========================
 // Seguimiento del pedido
 // =========================
-function activarSeguimiento() {
-  if (seguimientoActivo) return;
-  seguimientoActivo = true;
-  iniciarSeguimiento();
-}
-
-function desactivarSeguimiento() {
-  seguimientoActivo = false;
-  if (seguimientoTimer) {
-    clearTimeout(seguimientoTimer);
-    seguimientoTimer = null;
-  }
-}
-
 async function iniciarSeguimiento() {
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (!pedidoId) return;
   await verificarIntegridadPedido(pedidoId);
-  // Refresco controlado cada 15s (no loop infinito)
-  seguimientoTimer = setTimeout(() => {
-    if (seguimientoActivo) iniciarSeguimiento();
-  }, 15000);
+  // Refresco controlado cada 15s
+  seguimientoTimer = setTimeout(iniciarSeguimiento, 15000);
 }
 
 async function verificarIntegridadPedido(pedidoId) {
@@ -370,12 +286,12 @@ async function verificarIntegridadPedido(pedidoId) {
       btnEntregar.disabled = !(data.replicado_en_cocina && data.replicado_en_reparto);
     }
 
-    // Si ya está entregado, no tiene sentido seguir mostrando badges de replicación
+    // Si ya está entregado, mostrar bloque de criterio
     if (data.estado_actual === "entregado") {
       const criterioBloque = document.getElementById("bloque-criterio");
       if (criterioBloque) criterioBloque.style.display = "block";
       // Opcional: parar seguimiento si ya está entregado
-      // desactivarSeguimiento();
+      // clearTimeout(seguimientoTimer);
     }
   } catch (e) {
     console.error("❌ Error en verificarIntegridadPedido:", e);
@@ -395,8 +311,8 @@ async function marcarComoEntregado() {
   const { error } = await supabase.rpc("evento_pedido", {
     p_pedido_id: pedidoId,
     p_evento: "entregado",
-    p_usuario: usuarioActual, // UUID del repartidor autenticado
-    p_observacion: "Entrega confirmada por repartidor"
+    p_usuario: null, // FOCSA no requiere autenticación
+    p_observacion: "Entrega confirmada"
   });
 
   if (error) {
@@ -407,7 +323,7 @@ async function marcarComoEntregado() {
   console.log("✅ Pedido marcado como entregado:", pedidoId);
   const criterioBloque = document.getElementById("bloque-criterio");
   if (criterioBloque) criterioBloque.style.display = "block";
-  // Forzar un refresco inmediato del seguimiento
+  // Refrescar estado
   await verificarIntegridadPedido(pedidoId);
 }
 
@@ -427,15 +343,17 @@ function resetSeleccion() {
 }
 
 function resetFOCSA() {
-  desactivarSeguimiento();
+  clearTimeout(seguimientoTimer);
+  seguimientoActivo = false;
   localStorage.removeItem("pedido_id_actual");
   pedidoActual = null;
   resetSeleccion();
+  console.log("🔄 FOCSA reiniciado");
 }
 
 // =========================
-// Exponer funciones (si las necesitas en HTML)
+// Exponer funciones al HTML
 // =========================
 window.enviarWhatsApp = enviarWhatsApp;
-window.filtrarCategoria = filtrarCategoria;
 window.resetFOCSA = resetFOCSA;
+window.marcarComoEntregado = marcarComoEntregado;
