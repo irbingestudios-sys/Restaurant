@@ -209,7 +209,7 @@ async function enviarWhatsApp() {
 
   const total = items.reduce((acc, i) => acc + i.subtotal, 0);
 
-   const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
+  const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
     p_cliente: cliente,
     p_piso: piso,
     p_apartamento: apartamento,
@@ -226,11 +226,22 @@ async function enviarWhatsApp() {
     return;
   }
 
-  const pedidoId = data;
+    const pedidoId = data;
   localStorage.setItem("pedido_id_actual", pedidoId);
 
   // Construir mensaje para WhatsApp
-  const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n${unirseGrupo ? "✅ Desea unirse al grupo" : "❌ No desea unirse"}\n\n${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}\n\nTotal: ${total.toFixed(2)} CUP\nPedido ID: ${pedidoId}`;
+  const mensaje = `🧾 Pedido FOCSA
+Cliente: ${cliente}
+Piso: ${piso}
+Apartamento: ${apartamento}
+Teléfono: ${telefono || "—"}
+${unirseGrupo ? "✅ Desea unirse al grupo" : "❌ No desea unirse"}
+
+${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}
+
+Total: ${total.toFixed(2)} CUP
+Pedido ID: ${pedidoId}`;
+
   const url = `https://wa.me/+5355582319?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
 
@@ -333,3 +344,4 @@ function resetearFOCSA() {
 // =========================
 window.enviarWhatsApp = enviarWhatsApp;
 window.resetearFOCSA = resetearFOCSA;
+window.marcarComoEntregado = marcarComoEntregado;
