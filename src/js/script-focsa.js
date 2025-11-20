@@ -37,25 +37,36 @@ document.addEventListener("DOMContentLoaded", initFOCSA);
 // Carga del menú y envases
 // =========================
 async function cargarMenu() {
-  const { data, error } = await supabase.from("menu_especial").select("*").order("orden", { ascending: true });
+  console.log("📥 Carga de menú");
+  const { data, error } = await supabase
+    .from("menu_focsa")   // 👈 nombre real de la tabla
+    .select("*")
+    .order("orden", { ascending: true });
+
   if (error) {
     console.error("❌ Error cargando menú:", error);
     return [];
   }
+  console.log("✅ Menú cargado:", data?.length || 0, "items");
   renderMenu(data || []);
   return data || [];
 }
 
 async function cargarEnvases() {
-  const { data, error } = await supabase.from("envases").select("*").order("orden", { ascending: true });
+  console.log("📥 Carga de envases");
+  const { data, error } = await supabase
+    .from("menu_item")    // 👈 nombre real de la tabla
+    .select("*")
+    .order("orden", { ascending: true });
+
   if (error) {
     console.error("❌ Error cargando envases:", error);
     return [];
   }
+  console.log("🧴 Envases cargados:", data?.length || 0);
   renderEnvases(data || []);
   return data || [];
 }
-
 // =========================
 // Render de menú y envases
 // =========================
