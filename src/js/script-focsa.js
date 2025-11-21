@@ -586,7 +586,7 @@ async function enviarWhatsApp() {
   // 📲 WhatsApp
   const grupoTexto = unirse ? "✅ Desea unirse al grupo" : "❌ No desea unirse al grupo";
   const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n${grupoTexto}\n\n${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}\n\nTotal: ${total.toFixed(2)} CUP`;
-  const url = `https://wa.me/+5355582319?text=${encodeURIComponent(mensaje)}`;
+  const url = `https://wa.me/+5350977340?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
   console.log("📤 WhatsApp abierto con mensaje");
 
