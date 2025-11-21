@@ -39,9 +39,10 @@ document.addEventListener("DOMContentLoaded", initFOCSA);
 async function cargarMenu() {
   console.log("📥 Carga de menú");
   const { data, error } = await supabase
-    .from("menu_focsa")   // 👈 nombre real de la tabla
+    .from("menu_focsa")
     .select("*")
-    .order("orden", { ascending: true });
+    .order("categoria", { ascending: true }) // 👈 primero por categoría
+    .order("nombre", { ascending: true });   // 👈 luego por nombre
 
   if (error) {
     console.error("❌ Error cargando menú:", error);
@@ -55,9 +56,10 @@ async function cargarMenu() {
 async function cargarEnvases() {
   console.log("📥 Carga de envases");
   const { data, error } = await supabase
-    .from("menu_item")    // 👈 nombre real de la tabla
+    .from("menu_item")
     .select("*")
-    .order("orden", { ascending: true });
+    .order("categoria", { ascending: true }) // 👈 primero por categoría
+    .order("nombre", { ascending: true });   // 👈 luego por nombre
 
   if (error) {
     console.error("❌ Error cargando envases:", error);
