@@ -5,222 +5,238 @@
 // │ Autor: Irbing Brizuela                                     │
 // │ Fecha: 2025-11-08                                          │
 // └────────────────────────────────────────────────────────────┘
-// =========================
-// FOCSA — Estado y utilidades
-// =========================
-console.log("🟢 FOCSA — Inicialización");
-console.log("🚀 Script FOCSA inicializado");
 
-// Inicialización Supabase (necesario para RPC)
-// ⚠️ Sustituye con tu URL y ANON KEY reales de Supabase
-const supabaseUrl = "https://qeqltwrkubtyrmgvgaai.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw";
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+// INICIALIZACIÓN
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// Estado global
-let cantidadesMenu = {};
+const supabase = createClient("https://qeqltwrkubtyrmgvgaai.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw");
+window.supabase = supabase;
+
+let menu = [];
+let envases = [];
+let cantidades = {};
 let cantidadesEnvases = {};
-let pedidoActual = null;
-let seguimientoTimer = null;
 
-// =========================
-// Inicialización FOCSA
-// =========================
-async function initFOCSA() {
-  await cargarMenu();
-  await cargarEnvases();
-  actualizarTotales();
-}
-document.addEventListener("DOMContentLoaded", initFOCSA);
+document.addEventListener("DOMContentLoaded", () => {
+  console.group("🟢 FOCSA — Inicialización");
+  console.log("🚀 Script FOCSA inicializado");
 
-// =========================
-// Carga del menú y envases
-// =========================
-async function cargarMenu() {
-  console.log("📥 Carga de menú");
-  const { data, error } = await supabase
-    .from("menu_focsa")
-    .select("*")
-    .order("categoria", { ascending: true }) // 👈 primero por categoría
-    .order("nombre", { ascending: true });   // 👈 luego por nombre
+  cargarMenuEspecial();
+  cargarEnvases();
+  iniciarSeguimiento();
 
-  if (error) {
-    console.error("❌ Error cargando menú:", error);
-    return [];
+  // 🔎 Mostrar seguimiento si hay pedido activo
+  const pedidoId = localStorage.getItem("pedido_id_actual");
+  if (pedidoId) {
+    document.getElementById("seguimiento-pedido").style.display = "block";
   }
-  console.log("✅ Menú cargado:", data?.length || 0, "items");
-  renderMenu(data || []);
-  return data || [];
+renderizarSeguimientoPedidos();
+  console.groupEnd();
+});
+
+// CARGA DE MENÚ Y ENVASES
+async function cargarMenuEspecial() {
+  console.group("📥 Carga de menú");
+  const { data, error } = await supabase.rpc("obtener_menu_focsa");
+  if (error) return console.error("❌ Error al cargar menú:", error);
+  menu = data;
+  console.log("✅ Menú cargado:", menu.length, "items");
+  renderMenuEspecial(menu);
+
+  const filtro = document.getElementById("filtro");
+  filtro.innerHTML = '<option value="todos">Todas</option>';
+  const categoriasUnicas = [...new Set(menu.map(item => item.categoria))];
+  if (!categoriasUnicas.includes("Envases")) categoriasUnicas.push("Envases");
+
+  categoriasUnicas.forEach(cat => {
+    const opcion = document.createElement("option");
+    opcion.value = cat;
+    opcion.textContent = cat;
+    filtro.appendChild(opcion);
+  });
+
+  console.groupEnd();
 }
 
 async function cargarEnvases() {
-  console.log("📥 Carga de envases");
+  console.group("📥 Carga de envases");
   const { data, error } = await supabase
     .from("menu_item")
     .select("*")
-    .order("categoria", { ascending: true }) // 👈 primero por categoría
-    .order("nombre", { ascending: true });   // 👈 luego por nombre
+    .eq("categoria", "Envases")
+    .eq("disponible", true)
+    .gt("stock", 0)
+    .order("precio", { ascending: true });
 
-  if (error) {
-    console.error("❌ Error cargando envases:", error);
-    return [];
+  if (error) return console.error("❌ Error al cargar envases:", error);
+  envases = data;
+  console.log("🧴 Envases cargados:", envases.length);
+  renderEnvases(envases);
+  console.groupEnd();
+}
+
+// RENDERIZADO MODULAR
+function renderGrupo(lista, contenedorId, destinoCantidades) {
+  console.group(`🖼️ Renderizado en ${contenedorId}`);
+  const contenedor = document.getElementById(contenedorId);
+  contenedor.innerHTML = "";
+
+  const agrupado = {};
+  lista.forEach(item => {
+    if (!agrupado[item.categoria]) agrupado[item.categoria] = [];
+    agrupado[item.categoria].push(item);
+  });
+
+  for (const categoria in agrupado) {
+    const grupo = document.createElement("div");
+    grupo.className = "categoria-grupo";
+    grupo.innerHTML += `<h3 class="titulo-seccion">${categoria}</h3>`;
+
+    agrupado[categoria].forEach(item => {
+      const stockTexto = item.stock <= 3
+        ? `<span style="color:red">Stock: ${item.stock}</span>`
+        : `Stock: ${item.stock}`;
+
+      grupo.innerHTML += `
+        <div class="producto-lineal">
+          <div class="producto-izquierda">
+            <strong>${item.nombre}</strong>
+            ${item.descripcion ? `<button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">
+              <img src="../assets/info-icon.svg" alt="Descripción" />
+            </button>` : ""}
+          </div>
+          <div class="producto-derecha">
+            <span>${stockTexto}</span>
+            <span>${item.precio} CUP</span>
+            <input type="number" min="0" value="${destinoCantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
+          </div>
+        </div>`;
+    });
+
+    contenedor.appendChild(grupo);
   }
-  console.log("🧴 Envases cargados:", data?.length || 0);
-  renderEnvases(data || []);
-  return data || [];
-}
-// =========================
-// Render de menú y envases
-// =========================
-function renderMenu(items) {
-  const cont = document.getElementById("menu-especial");
-  if (!cont) return;
-  cont.innerHTML = "";
-  items.forEach(item => {
-    const li = document.createElement("div");
-    li.className = "menu-item";
-    li.innerHTML = `
-      <div class="menu-nombre">${item.nombre}</div>
-      <div class="menu-precio">${item.precio}</div>
-      <div class="menu-controles">
-        <button class="menos" data-id="${item.id}">-</button>
-        <span class="cantidad" id="cant-menu-${item.id}">0</span>
-        <button class="mas" data-id="${item.id}" data-precio="${item.precio}" data-nombre="${item.nombre}">+</button>
-      </div>
-    `;
-    cont.appendChild(li);
+
+  document.querySelectorAll(`#${contenedorId} input[type='number']`).forEach(input => {
+    input.addEventListener("input", () => {
+      destinoCantidades[input.dataset.name] = parseInt(input.value) || 0;
+      calcularTotales();
+    });
   });
-  cont.addEventListener("click", e => {
-    if (e.target.classList.contains("mas")) {
-      const id = e.target.dataset.id;
-      const precio = Number(e.target.dataset.precio);
-      const nombre = e.target.dataset.nombre;
-      const prev = cantidadesMenu[id]?.cantidad || 0;
-      const cantidad = prev + 1;
-      const subtotal = cantidad * precio;
-      cantidadesMenu[id] = { cantidad, precio, subtotal, nombre };
-      document.getElementById(`cant-menu-${id}`).textContent = cantidad;
-      actualizarTotales();
-    }
-    if (e.target.classList.contains("menos")) {
-      const id = e.target.dataset.id;
-      const prev = cantidadesMenu[id]?.cantidad || 0;
-      const cantidad = Math.max(0, prev - 1);
-      if (cantidad === 0) {
-        delete cantidadesMenu[id];
-      } else {
-        const precio = cantidadesMenu[id].precio;
-        const nombre = cantidadesMenu[id].nombre;
-        const subtotal = cantidad * precio;
-        cantidadesMenu[id] = { cantidad, precio, subtotal, nombre };
-      }
-      document.getElementById(`cant-menu-${id}`).textContent = cantidad;
-      actualizarTotales();
-    }
-  });
+
+  console.groupEnd();
 }
 
-function renderEnvases(items) {
-  const cont = document.getElementById("envases-contenedor");
-  if (!cont) return;
-  cont.innerHTML = "";
-  items.forEach(item => {
-    const li = document.createElement("div");
-    li.className = "envase-item";
-    li.innerHTML = `
-      <div class="envase-nombre">${item.nombre}</div>
-      <div class="envase-precio">${item.precio}</div>
-      <div class="envase-controles">
-        <button class="menos-env" data-id="${item.id}">-</button>
-        <span class="cantidad" id="cant-env-${item.id}">0</span>
-        <button class="mas-env" data-id="${item.id}" data-precio="${item.precio}" data-nombre="${item.nombre}">+</button>
-      </div>
-    `;
-    cont.appendChild(li);
-  });
-  cont.addEventListener("click", e => {
-    if (e.target.classList.contains("mas-env")) {
-      const id = e.target.dataset.id;
-      const precio = Number(e.target.dataset.precio);
-      const nombre = e.target.dataset.nombre;
-      const prev = cantidadesEnvases[id]?.cantidad || 0;
-      const cantidad = prev + 1;
-      const subtotal = cantidad * precio;
-      cantidadesEnvases[id] = { cantidad, precio, subtotal, nombre };
-      document.getElementById(`cant-env-${id}`).textContent = cantidad;
-      actualizarTotales();
-    }
-    if (e.target.classList.contains("menos-env")) {
-      const id = e.target.dataset.id;
-      const prev = cantidadesEnvases[id]?.cantidad || 0;
-      const cantidad = Math.max(0, prev - 1);
-      if (cantidad === 0) {
-        delete cantidadesEnvases[id];
-      } else {
-        const precio = cantidadesEnvases[id].precio;
-        const nombre = cantidadesEnvases[id].nombre;
-        const subtotal = cantidad * precio;
-        cantidadesEnvases[id] = { cantidad, precio, subtotal, nombre };
-      }
-      document.getElementById(`cant-env-${id}`).textContent = cantidad;
-      actualizarTotales();
-    }
-  });
+function renderMenuEspecial(lista) {
+  renderGrupo(lista, "menu-especial", cantidades);
 }
 
-// =========================
-// Totales
-// =========================
-function actualizarTotales() {
-  const totalMenu = Object.values(cantidadesMenu).reduce((acc, v) => acc + v.subtotal, 0);
-  const totalEnv = Object.values(cantidadesEnvases).reduce((acc, v) => acc + v.subtotal, 0);
-  const cantMenu = Object.values(cantidadesMenu).reduce((acc, v) => acc + v.cantidad, 0);
-  const cantEnv = Object.values(cantidadesEnvases).reduce((acc, v) => acc + v.cantidad, 0);
+function renderEnvases(lista) {
+  renderGrupo(lista, "envases-contenedor", cantidadesEnvases);
+}
 
-  const total = totalMenu + totalEnv;
-  const cantidad = cantMenu + cantEnv;
+// FILTRO POR CATEGORÍA
+function filtrarMenu() {
+  console.group("🔍 Filtro de categoría");
+  const categoriaSeleccionada = document.getElementById("filtro").value;
+  console.log("📌 Categoría seleccionada:", categoriaSeleccionada);
 
-  document.getElementById("total-cup").textContent = total;
+  if (categoriaSeleccionada === "todos") {
+    renderMenuEspecial(menu);
+    renderEnvases(envases);
+  } else if (categoriaSeleccionada === "Envases") {
+    renderGrupo(envases.filter(item => item.categoria === "Envases"), "envases-contenedor", cantidadesEnvases);
+    document.getElementById("menu-especial").innerHTML = "";
+  } else {
+    renderGrupo(menu.filter(item => item.categoria === categoriaSeleccionada), "menu-especial", cantidades);
+    document.getElementById("envases-contenedor").innerHTML = "";
+  }
+
+  console.groupEnd();
+}
+window.filtrarMenu = filtrarMenu;
+
+// CÁLCULO DE TOTALES
+function calcularTotales() {
+  console.group("🧮 Cálculo de totales");
+  let total = 0, cantidad = 0;
+
+  for (const nombre in cantidades) {
+    const cant = cantidades[nombre];
+    const item = menu.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      total += cant * item.precio;
+      cantidad += cant;
+    }
+  }
+
+  for (const nombre in cantidadesEnvases) {
+    const cant = cantidadesEnvases[nombre];
+    const item = envases.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      total += cant * item.precio;
+      cantidad += cant;
+    }
+  }
+
+  document.getElementById("total-cup").textContent = total.toFixed(2);
   document.getElementById("total-items").textContent = cantidad;
+  console.log("🧮 Totales actualizados:", { total, cantidad });
+  console.groupEnd();
 }
 
-// =========================
-// Construcción de items
-// =========================
-function construirItemsSeleccionados() {
-  const items = [];
-  Object.entries(cantidadesMenu).forEach(([id, v]) => {
-    if (v.cantidad > 0) items.push({ nombre: v.nombre, precio: v.precio, cantidad: v.cantidad, subtotal: v.subtotal });
-  });
-  Object.entries(cantidadesEnvases).forEach(([id, v]) => {
-    if (v.cantidad > 0) items.push({ nombre: v.nombre, precio: v.precio, cantidad: v.cantidad, subtotal: v.subtotal });
-  });
-  return items;
-}
+// ENVÍO DE PEDIDO
+window.enviarPedido = async () => {
+  console.group("📤 RPC — registrar_pedido_focsa");
 
-// =========================
-// Envío por WhatsApp + RPC
-// =========================
-async function enviarWhatsApp() {
-  const cliente = document.getElementById("cliente")?.value?.trim();
-  const telefono = document.getElementById("telefono")?.value?.trim();
-  const piso = document.getElementById("piso")?.value?.trim();
-  const apartamento = document.getElementById("apartamento")?.value?.trim();
-  const unirseGrupo = Boolean(document.getElementById("unirseGrupo")?.checked);
+  const cliente = document.getElementById("cliente").value.trim();
+  const piso = document.getElementById("piso").value.trim();
+  const apartamento = document.getElementById("apartamento").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const unirse = document.getElementById("unirseGrupo").checked;
 
   if (!cliente || !piso || !apartamento) {
-    alert("Por favor, complete los datos del cliente antes de enviar.");
+    alert("Por favor, complete los datos del cliente antes de enviar el pedido.");
+    console.warn("❌ Datos del cliente incompletos.");
     return;
   }
 
-  const items = construirItemsSeleccionados();
-  const tieneEnvase = items.some(i => i.nombre.toLowerCase().includes("envase") || i.nombre.toLowerCase().includes("bolsa"));
+  const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
   if (!tieneEnvase) {
     alert("Debe seleccionar al menos un envase para realizar la entrega.");
+    console.warn("❌ Pedido sin envases.");
     return;
   }
 
-  const total = items.reduce((acc, i) => acc + i.subtotal, 0);
+  const items = [];
+  let total = 0;
+
+  for (const nombre in cantidades) {
+    const cant = cantidades[nombre];
+    const item = menu.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      items.push({
+        nombre: item.nombre,
+        cantidad: cant,
+        precio: item.precio,
+        subtotal: cant * item.precio
+      });
+      total += cant * item.precio;
+    }
+  }
+
+  for (const nombre in cantidadesEnvases) {
+    const cant = cantidadesEnvases[nombre];
+    const item = envases.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      items.push({
+        nombre: item.nombre,
+        cantidad: cant,
+        precio: item.precio,
+        subtotal: cant * item.precio
+      });
+      total += cant * item.precio;
+    }
+  }
 
   const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
     p_cliente: cliente,
@@ -228,133 +244,452 @@ async function enviarWhatsApp() {
     p_apartamento: apartamento,
     p_telefono: telefono || null,
     p_direccion: null,
-    p_unirse_grupo: unirseGrupo,
+    p_unirse_grupo: unirse,
     p_items: JSON.stringify(items),
-    p_canal: "whatsapp"
+    p_canal: "rpc" // ✅ canal agregado
   });
 
-  if (error) {
-    console.error("❌ Error RPC:", error);
-    alert("Hubo un error registrando el pedido.");
-    return;
-  }
+  if (error) return console.error("❌ Error RPC:", error);
 
-    const pedidoId = data;
+  const pedidoId = data?.[0]?.pedido_id; // ✅ acceso corregido
+  if (!pedidoId) return console.warn("⚠️ No se devolvió pedido_id");
+
   localStorage.setItem("pedido_id_actual", pedidoId);
+  const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
+  historial.push(pedidoId);
+  localStorage.setItem("historial_pedidos", JSON.stringify(historial));
+  renderizarSeguimientoPedidos();
 
-  // Construir mensaje para WhatsApp
-  const mensaje = `🧾 Pedido FOCSA
-Cliente: ${cliente}
-Piso: ${piso}
-Apartamento: ${apartamento}
-Teléfono: ${telefono || "—"}
-${unirseGrupo ? "✅ Desea unirse al grupo" : "❌ No desea unirse"}
+  console.log("📥 pedido_id_actual guardado:", pedidoId);
+  console.groupEnd();
 
-${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}
+  mostrarSeguimientoPedido();
+};
 
-Total: ${total.toFixed(2)} CUP
-Pedido ID: ${pedidoId}`;
-
-  const url = `https://wa.me/+5355582319?text=${encodeURIComponent(mensaje)}`;
-  window.open(url, "_blank");
-
-  resetSeleccion();
-  iniciarSeguimiento();
-}
-
-// =========================
-// Seguimiento del pedido
-// =========================
-async function iniciarSeguimiento() {
+// 🔎 SEGUIMIENTO Y CRITERIO DEL CLIENTE
+function iniciarSeguimiento() {
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (!pedidoId) return;
-  await verificarIntegridadPedido(pedidoId);
-  seguimientoTimer = setTimeout(iniciarSeguimiento, 15000);
+  setInterval(() => verificarIntegridadPedido(pedidoId), 10000);
 }
 
 async function verificarIntegridadPedido(pedidoId) {
+  console.group("🔎 Seguimiento del pedido");
+
   const { data, error } = await supabase
     .from("vw_integridad_pedido")
     .select("*")
     .eq("pedido_id", pedidoId)
     .maybeSingle();
 
-  if (error || !data) {
-    console.warn("⚠️ Error o pedido no encontrado");
-    return;
-  }
+  if (error || !data) return console.warn("⚠️ Error o pedido no encontrado");
 
-  let estadoTexto = `🧾 ${data.estado_actual}`;
-  if (data.estado_actual !== "entregado") {
-    const cocina = data.replicado_en_cocina ? "✅ Cocina OK" : "⚠️ Sin cocina";
-    const reparto = data.replicado_en_reparto ? "✅ Reparto OK" : "⚠️ Sin reparto";
-    estadoTexto += ` | ${cocina} | ${reparto}`;
-  }
-  document.getElementById("estado-actual").textContent = estadoTexto;
+  const estado = data.estado_actual || "⏳ En espera";
+  const cocina = data.replicado_en_cocina ? "✅ Cocina OK" : "⚠️ Sin cocina";
+  const reparto = data.replicado_en_reparto ? "✅ Reparto OK" : "⚠️ Sin reparto";
+
+  document.getElementById("estado-actual").textContent = `🧾 ${estado} | ${cocina} | ${reparto}`;
 
   const btnEntregar = document.getElementById("btn-entregado");
-  if (btnEntregar) {
-    btnEntregar.disabled = !(data.replicado_en_cocina && data.replicado_en_reparto);
+  btnEntregar.disabled = !(data.replicado_en_cocina && data.replicado_en_reparto);
+  btnEntregar.addEventListener("click", () => {
+    document.getElementById("bloque-criterio").style.display = "block";
+  });
+
+  const contenedor = document.getElementById("contenido-resumen");
+  contenedor.innerHTML = "";
+
+  for (const item of data.items || []) {
+    const { data: stockData } = await supabase
+      .from("menu_item")
+      .select("stock")
+      .eq("nombre", item.nombre)
+      .maybeSingle();
+
+    const stock = stockData?.stock ?? "—";
+    const stockTexto = stock <= 3
+      ? `<span style="color:red">Stock: ${stock}</span>`
+      : `Stock: ${stock}`;
+
+    contenedor.innerHTML += `
+      <div class="producto-lineal">
+        <div class="producto-izquierda">
+          <strong>${item.nombre}</strong>
+        </div>
+        <div class="producto-derecha">
+          <span>${stockTexto}</span>
+          <span>x${item.cantidad}</span>
+          <span>= ${item.subtotal} CUP</span>
+        </div>
+      </div>`;
   }
 
-  if (data.estado_actual === "entregado") {
-    document.getElementById("bloque-criterio").style.display = "block";
-  }
+  console.groupEnd();
 }
 
-// =========================
-// Marcar como entregado
-// =========================
-async function marcarComoEntregado() {
+async function renderizarSeguimientoPedidos() {
+  console.group("📦 Seguimiento múltiple de pedidos");
+
+  const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
+  const contenedor = document.getElementById("seguimiento-multiple");
+  contenedor.innerHTML = "";
+
+  for (const pedidoId of historial.slice(-5).reverse()) {
+    const { data, error } = await supabase
+      .from("vw_integridad_pedido")
+      .select("*")
+      .eq("pedido_id", pedidoId)
+      .maybeSingle();
+
+    if (error || !data) continue;
+
+    const estado = data.estado_actual || "⏳ En espera";
+    const cocina = data.replicado_en_cocina ? "✅ Cocina OK" : "⚠️ Sin cocina";
+    const reparto = data.replicado_en_reparto ? "✅ Reparto OK" : "⚠️ Sin reparto";
+
+    let html = `
+      <div class="seguimiento-bloque">
+        <h4>📦 Pedido: ${pedidoId.slice(0, 8)}...</h4>
+        <p><strong>Estado:</strong> ${estado} | ${cocina} | ${reparto}</p>
+        <ul>
+    `;
+
+let totalPedido = 0;
+
+for (const item of data.items || []) {
+  html += `<li>${item.nombre} x${item.cantidad} = ${item.subtotal} CUP</li>`;
+  totalPedido += item.subtotal;
+}
+
+html += `</ul>
+  <p><strong>Total del pedido:</strong> ${totalPedido.toFixed(2)} CUP</p>
+</div>`;
+    contenedor.innerHTML += html;
+  }
+
+  console.groupEnd();
+}
+
+window.renderizarSeguimientoPedidos = renderizarSeguimientoPedidos;
+
+document.getElementById("btn-guardar-criterio").addEventListener("click", async () => {
+  console.group("📝 Guardar criterio del cliente");
+
+  const criterio = document.getElementById("criterio").value.trim();
   const pedidoId = localStorage.getItem("pedido_id_actual");
-  if (!pedidoId) {
-    alert("No hay pedido activo para entregar.");
+
+  if (!criterio || !pedidoId) {
+    console.warn("⚠️ No hay criterio o pedido activo.");
     return;
   }
 
-  const { error } = await supabase.rpc("evento_pedido", {
-    p_pedido_id: pedidoId,
-    p_evento: "entregado",
-    p_usuario: null, // FOCSA no requiere autenticación
-    p_observacion: "Entrega confirmada"
+  const { error } = await supabase
+    .from("criterios_pedido")
+    .insert([{ pedido_id: pedidoId, criterio }]);
+
+  if (error) {
+    console.error("❌ Error al guardar criterio:", error);
+  } else {
+    console.log("✅ Criterio guardado:", criterio);
+    alert("¡Gracias por su opinión!");
+    document.getElementById("bloque-criterio").style.display = "none";
+  }
+
+  console.groupEnd();
+});
+
+// 🧾 Vista previa del pedido
+function revisarPedido() {
+  console.group("🧾 Vista previa del pedido");
+
+  const cliente = document.getElementById("cliente").value.trim();
+  const piso = document.getElementById("piso").value.trim();
+  const apartamento = document.getElementById("apartamento").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const unirse = document.getElementById("unirseGrupo").checked;
+
+  if (!cliente || !piso || !apartamento) {
+    alert("Por favor, complete los datos del cliente antes de revisar el pedido.");
+    console.warn("❌ Datos incompletos para revisión.");
+    return;
+  }
+
+  const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
+  if (!tieneEnvase) {
+    alert("Debe seleccionar al menos un envase para realizar la entrega.");
+    console.warn("❌ Pedido sin envases.");
+    return;
+  }
+
+  const resumen = document.getElementById("contenido-resumen");
+  resumen.innerHTML = `
+    <div class="cliente-datos">
+      <p><strong>Cliente:</strong> ${cliente}</p>
+      <p><strong>Piso:</strong> ${piso}</p>
+      <p><strong>Apartamento:</strong> ${apartamento}</p>
+      <p><strong>Teléfono:</strong> ${telefono || "—"}</p>
+      <p><strong>Grupo La Casona:</strong> ${unirse ? "✅ Sí desea unirse" : "❌ No desea unirse"}</p>
+    </div>
+    <hr />
+  `;
+
+  const items = [];
+
+  for (const nombre in cantidades) {
+    const cant = cantidades[nombre];
+    const item = menu.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      items.push({ ...item, cantidad: cant });
+    }
+  }
+
+  for (const nombre in cantidadesEnvases) {
+    const cant = cantidadesEnvases[nombre];
+    const item = envases.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      items.push({ ...item, cantidad: cant });
+    }
+  }
+
+  if (items.length === 0) {
+    resumen.innerHTML += "<p>No ha seleccionado ningún producto.</p>";
+  } else {
+    items.forEach(item => {
+      const subtotal = item.precio * item.cantidad;
+      resumen.innerHTML += `
+        <div class="producto-lineal">
+          <div class="producto-izquierda">
+            <strong>${item.nombre}</strong>
+          </div>
+          <div class="producto-derecha">
+            <span>x${item.cantidad}</span>
+            <span>= ${subtotal} CUP</span>
+          </div>
+        </div>`;
+    });
+  }
+
+  document.getElementById("modal-resumen").style.display = "block";
+  console.groupEnd();
+}
+
+window.revisarPedido = revisarPedido;
+
+// 🔄 Limpiar selección
+document.getElementById("btn-limpiar").addEventListener("click", () => {
+  cantidades = {};
+  cantidadesEnvases = {};
+  filtrarMenu();
+  calcularTotales();
+});
+
+// 🌐 Exponer funciones al HTML
+window.revisarPedido = revisarPedido;
+window.mostrarSeguimientoPedido = iniciarSeguimiento;
+
+//ENVIAR POR WHATSAPP
+async function enviarWhatsApp() {
+  console.group("📲 Enviar pedido por WhatsApp");
+
+  // 🔍 Verificación de datos del cliente
+  const cliente = document.getElementById("cliente").value.trim();
+  const piso = document.getElementById("piso").value.trim();
+  const apartamento = document.getElementById("apartamento").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const unirse = document.getElementById("unirseGrupo").checked;
+
+  if (!cliente || !piso || !apartamento) {
+    alert("Por favor, complete los datos del cliente antes de enviar.");
+    console.warn("❌ Datos incompletos para WhatsApp.");
+    console.groupEnd();
+    return;
+  }
+  console.log("✅ Datos del cliente verificados");
+
+  // 🔍 Verificación de envases
+  const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
+  if (!tieneEnvase) {
+    alert("Debe seleccionar al menos un envase para realizar la entrega.");
+    console.warn("❌ Pedido sin envases.");
+    console.groupEnd();
+    return;
+  }
+  console.log("✅ Al menos un envase seleccionado");
+
+  // 🧾 Construcción de ítems
+  const items = [];
+  let total = 0;
+
+  for (const nombre in cantidades) {
+    const cant = cantidades[nombre];
+    const item = menu.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      items.push({
+        nombre: item.nombre,
+        cantidad: cant,
+        precio: item.precio,
+        subtotal: cant * item.precio
+      });
+      total += cant * item.precio;
+    }
+  }
+
+  for (const nombre in cantidadesEnvases) {
+    const cant = cantidadesEnvases[nombre];
+    const item = envases.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      items.push({
+        nombre: item.nombre,
+        cantidad: cant,
+        precio: item.precio,
+        subtotal: cant * item.precio
+      });
+      total += cant * item.precio;
+    }
+  }
+
+  console.log("📦 Ítems construidos:", items);
+
+  // 🧩 RPC: registrar pedido
+  const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
+    p_cliente: cliente,
+    p_piso: piso,
+    p_apartamento: apartamento,
+    p_telefono: telefono || null,
+    p_direccion: null,
+    p_unirse_grupo: unirse,
+    p_items: items,
+    p_canal: "whatsapp"
   });
 
   if (error) {
-    console.error("❌ Error al marcar como entregado:", error);
-    alert("Error al marcar como entregado.");
+    console.error("❌ Error RPC:", error);
+    console.groupEnd();
     return;
   }
 
-  console.log("✅ Pedido marcado como entregado:", pedidoId);
-  document.getElementById("bloque-criterio").style.display = "block";
-  await verificarIntegridadPedido(pedidoId);
-}
+  const pedidoId = data?.[0]?.pedido_id;
+  if (!pedidoId) {
+    console.warn("⚠️ No se devolvió pedido_id");
+    console.groupEnd();
+    return;
+  }
 
-document.getElementById("btn-entregado")?.addEventListener("click", marcarComoEntregado);
+  localStorage.setItem("pedido_id_actual", pedidoId);
+  const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
+  historial.push(pedidoId);
+  localStorage.setItem("historial_pedidos", JSON.stringify(historial));
+  renderizarSeguimientoPedidos();
 
-// =========================
-// Utilidades
-// =========================
-function resetSeleccion() {
-  cantidadesMenu = {};
+  console.log("📥 Pedido registrado con ID:", pedidoId);
+
+  // 📲 WhatsApp
+  const grupoTexto = unirse ? "✅ Desea unirse al grupo" : "❌ No desea unirse al grupo";
+  const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n${grupoTexto}\n\n${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}\n\nTotal: ${total.toFixed(2)} CUP`;
+  const url = `https://wa.me/+5355582319?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, "_blank");
+  console.log("📤 WhatsApp abierto con mensaje");
+
+  // 🔄 Reinicio del flujo
+  document.getElementById("modal-resumen").style.display = "none";
+  cantidades = {};
   cantidadesEnvases = {};
-  actualizarTotales();
-  document.querySelectorAll("[id^='cant-menu-']").forEach(el => (el.textContent = "0"));
-  document.querySelectorAll("[id^='cant-env-']").forEach(el => (el.textContent = "0"));
-}
+  filtrarMenu();
+  calcularTotales();
+  console.log("🧹 Selección limpiada y menú reiniciado");
 
-function resetearFOCSA() {
-  clearTimeout(seguimientoTimer);
-  localStorage.removeItem("pedido_id_actual");
-  pedidoActual = null;
-  resetSeleccion();
-  document.getElementById("estado-actual").textContent = "🕓 Pendiente";
-  document.getElementById("bloque-criterio").style.display = "none";
-}
+  // 🔎 Activar seguimiento
+  mostrarSeguimientoPedido();
+  console.log("📦 Seguimiento activado");
 
-// =========================
-// Exponer funciones al HTML
-// =========================
+  console.groupEnd();
+} // ← Este cierre es el único necesario
+
 window.enviarWhatsApp = enviarWhatsApp;
+
+//Cancelar pedido y cerrar modal
+function cancelarResumen() {
+  console.group("❌ Cancelar pedido");
+
+  cantidades = {};
+  cantidadesEnvases = {};
+  filtrarMenu();
+  calcularTotales();
+
+  document.getElementById("modal-resumen").style.display = "none";
+
+  console.log("🧹 Pedido cancelado y reiniciado");
+  console.groupEnd();
+}
+
+window.cancelarResumen = cancelarResumen;
+
+document.getElementById("modal-close-resumen").addEventListener("click", cancelarResumen);
+
+//Mostrar seguimiento del pedido
+function mostrarSeguimientoPedido() {
+  document.getElementById("seguimiento-pedido").style.display = "block";
+  iniciarSeguimiento();
+}
+
+window.mostrarSeguimientoPedido = mostrarSeguimientoPedido;
+
+//FUNCION RESETEAR
+function resetearFOCSA() {
+  console.group("🔄 Reinicio completo FOCSA");
+
+  // 🧹 Limpiar almacenamiento local y de sesión
+  localStorage.clear();
+  sessionStorage.clear();
+
+  // 🧼 Resetear variables
+  cantidades = {};
+  cantidadesEnvases = {};
+
+  // 🧾 Reiniciar menú y envases
+  filtrarMenu();
+  calcularTotales();
+
+  // 🧤 Ocultar seguimiento y modales
+  document.getElementById("seguimiento-pedido").style.display = "none";
+  document.getElementById("modal-resumen").style.display = "none";
+  document.getElementById("bloque-criterio").style.display = "none";
+
+  // 🧼 Limpiar campos del cliente
+  document.getElementById("cliente").value = "";
+  document.getElementById("piso").value = "";
+  document.getElementById("apartamento").value = "";
+  document.getElementById("telefono").value = "";
+  document.getElementById("unirseGrupo").checked = false;
+
+  console.log("✅ Sistema listo para nuevo pedido");
+  console.groupEnd();
+}
+
 window.resetearFOCSA = resetearFOCSA;
-window.marcarComoEntregado = marcarComoEntregado;
+
+//VENTAJAS DEL GRUPO
+function toggleVentajasGrupo() {
+  const bloque = document.getElementById("ventajasGrupo");
+  bloque.style.display = bloque.style.display === "none" ? "block" : "none";
+}
+
+window.toggleVentajasGrupo = toggleVentajasGrupo;
+//DESCRIPCION
+function mostrarDescripcion(descripcion, imagenUrl) {
+  console.group("📝 Mostrar descripción del producto");
+
+  document.getElementById("modal-texto").textContent = descripcion;
+  document.getElementById("modal-imagen").src = imagenUrl || "";
+  document.getElementById("modal-descripcion").style.display = "block";
+
+  console.log("🖼️ Descripción mostrada:", descripcion);
+  console.groupEnd();
+}
+
+window.mostrarDescripcion = mostrarDescripcion;
+document.getElementById("modal-close").addEventListener("click", () => {
+  document.getElementById("modal-descripcion").style.display = "none";
+});
+
+
