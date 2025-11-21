@@ -30,7 +30,7 @@
       <div id="menu-especial" class="scrollable-menu"></div>
     </section>
 
-    <!-- Envases -->
+    <!-- Envases (sección fija) -->
     <section>
       <h2 class="titulo-seccion">Envases</h2>
       <div id="envases-contenedor" class="scrollable-menu"></div>
@@ -41,7 +41,7 @@
       <h2 class="titulo-seccion">Resumen del Pedido</h2>
       <p>Total: <span id="total-cup">0</span> CUP</p>
       <p>Cantidad de ítems: <span id="total-items">0</span></p>
-      <button id="btn-limpiar" onclick="resetearFOCSA()">Limpiar selección</button>
+      <button id="btn-limpiar">Limpiar selección</button>
       <button onclick="revisarPedido()" class="btn-secundario">🕵️ Revisar pedido</button>
     </section>
 
@@ -128,11 +128,8 @@
       </a>
     </footer>
 
-    <!-- Librería Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- Script principal FOCSA -->
-    <script src="https://irbingestudios-sys.github.io/Restaurant/src/js/script-focsa.js"></script>
+    <!-- Script principal -->
+    <script type="module" src="https://irbingestudios-sys.github.io/Restaurant/src/js/script-focsa.js"></script>
 
     <!-- Contenedor de confirmación del pedido -->
     <div id="confirmacion" style="display:none;">
@@ -141,3 +138,4 @@
   </div>
 </body>
 </html>
+
