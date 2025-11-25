@@ -141,6 +141,38 @@
       </div>
     </div>
 
+    <!-- Modal de acceso cliente -->
+<div id="modal-cliente" class="modal" style="display:none;">
+  <div class="modal-content">
+    <span id="modal-close-cliente">&times;</span>
+    <h2>Acceso Cliente</h2>
+
+    <!-- Botones para alternar -->
+    <div class="tabs">
+      <button id="tab-login" class="tab-active">Entrar</button>
+      <button id="tab-registro">Nuevo Cliente</button>
+    </div>
+
+    <!-- Formulario Login -->
+    <div id="login-form">
+      <input type="email" id="login-email" placeholder="Correo">
+      <input type="password" id="login-password" placeholder="Contraseña">
+      <button id="btn-login">Aceptar</button>
+    </div>
+
+    <!-- Formulario Registro -->
+    <div id="registro-form" style="display:none;">
+      <input type="email" id="reg-email" placeholder="Correo">
+      <input type="text" id="reg-usuario" placeholder="Nombre de usuario">
+      <input type="password" id="reg-password" placeholder="Contraseña">
+      <input type="text" id="reg-piso" placeholder="Piso">
+      <input type="text" id="reg-apartamento" placeholder="Apartamento">
+      <input type="text" id="reg-empresa" placeholder="Empresa (opcional)">
+      <button id="btn-crear-cliente">Crear Cliente</button>
+    </div>
+  </div>
+</div>
+    
     <!-- Footer con redes sociales -->
     <footer class="footer-redes">
       <a href="https://facebook.com" target="_blank">
