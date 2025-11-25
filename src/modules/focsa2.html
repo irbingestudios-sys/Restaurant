@@ -15,9 +15,8 @@
       <h1 class="titulo-seccion">MENÚ ESPECIAL FOCSA</h1>
       <p>Clientes del Edificio FOCSA</p>
 
-      <!-- Botón CLIENTE -->      
+      <!-- Botón CLIENTE -->
       <button id="btn-cliente" class="btn-secundario">👤 Cliente</button>
-      
     </header>
 
     <!-- Filtro por categoría -->
@@ -34,7 +33,7 @@
       <div id="menu-especial" class="scrollable-menu"></div>
     </section>
 
-    <!-- Envases (sección fija) -->
+    <!-- Envases -->
     <section>
       <h2 class="titulo-seccion">Envases</h2>
       <div id="envases-contenedor" class="scrollable-menu"></div>
@@ -54,9 +53,7 @@
       <div class="estado-lineal">
         <strong>Estado actual:</strong> <span id="estado-actual">🕓 Pendiente</span>
       </div>
-
       <div id="seguimiento-multiple" class="scrollable-menu" style="margin-top:20px;"></div>
-
       <button id="btn-entregado" class="btn-secundario">✅ Marcar como entregado</button>
       <button onclick="renderizarSeguimientoPedidos()" class="btn-secundario">📦 Ver todos mis pedidos</button>
 
@@ -67,13 +64,13 @@
       </div>
     </section>
 
-    <!-- Datos del cliente -->
+    <!-- Datos del cliente (pedido anónimo) -->
     <section>
       <h2 class="titulo-seccion">Datos del Cliente</h2>
-      <input type="text" id="cliente" placeholder="Nombre del cliente" required />
-      <input type="text" id="piso" placeholder="Piso (ej. 14)" required />
-      <input type="text" id="apartamento" placeholder="Apartamento (ej. 1405)" required />
-      <input type="text" id="telefono" placeholder="Teléfono (opcional)" />
+      <input type="text" id="pedido-cliente" placeholder="Nombre del cliente" required />
+      <input type="text" id="pedido-piso" placeholder="Piso (ej. 14)" required />
+      <input type="text" id="pedido-apartamento" placeholder="Apartamento (ej. 1405)" required />
+      <input type="text" id="pedido-telefono" placeholder="Teléfono (opcional)" />
 
       <div class="grupo-checkbox">
         <label for="unirseGrupo">
@@ -95,12 +92,12 @@
       </div>
     </section>
 
-    <!-- Histórico de pedidos (solo visible si autenticado) -->
+    <!-- Histórico de pedidos -->
     <button id="btn-historico" style="display:none;">📦 Histórico de Pedidos</button>
     <div id="historico-pedidos"></div>
 
     <!-- Modal de descripción -->
-    <div id="modal-descripcion" class="modal" role="dialog" aria-label="Descripción del producto" style="display:none;">
+    <div id="modal-descripcion" class="modal" style="display:none;">
       <div class="modal-content">
         <span id="modal-close">&times;</span>
         <h3 class="titulo-seccion">Descripción del producto</h3>
@@ -110,7 +107,7 @@
     </div>
 
     <!-- Modal: Vista previa del pedido -->
-    <div id="modal-resumen" class="modal" role="dialog" aria-label="Vista previa del pedido" style="display:none;">
+    <div id="modal-resumen" class="modal" style="display:none;">
       <div class="modal-content">
         <span id="modal-close-resumen">&times;</span>
         <h3 class="titulo-seccion">🧾 Vista previa del pedido</h3>
@@ -122,59 +119,38 @@
       </div>
     </div>
 
-    <!-- Modal CLIENTE -->
-    <div id="modal-cliente" style="display:none;">
-      <h2>Acceso Cliente</h2>
-      <div id="login-cliente">
-        <input type="email" id="login-email" placeholder="Correo">
-        <input type="password" id="login-password" placeholder="Contraseña">
-        <button id="btn-login">Aceptar</button>
-      </div>
-      <hr>
-      <div id="registro-cliente">
-        <input type="email" id="reg-email" placeholder="Correo">
-        <input type="text" id="reg-usuario" placeholder="Nombre de usuario">
-        <input type="password" id="reg-password" placeholder="Contraseña">
-        <input type="text" id="reg-piso" placeholder="Piso">
-        <input type="text" id="reg-apartamento" placeholder="Apartamento">
-        <input type="text" id="reg-empresa" placeholder="Empresa (opcional)">
-        <button id="btn-crear-cliente">Crear Cliente</button>
-      </div>
-    </div>
-
     <!-- Modal de acceso cliente -->
-<div id="modal-cliente" class="modal" style="display:none;">
-  <div class="modal-content">
-    <span id="modal-close-cliente">&times;</span>
-    <h2>Acceso Cliente</h2>
+    <div id="modal-cliente" class="modal" style="display:none;">
+      <div class="modal-content">
+        <span id="modal-close-cliente">&times;</span>
+        <h2>Acceso Cliente</h2>
 
-    <!-- Botones para alternar -->
-    <div class="tabs">
-      <button id="tab-login" class="tab-active">Entrar</button>
-      <button id="tab-registro">Nuevo Cliente</button>
+        <div class="tabs">
+          <button id="tab-login" class="tab-active">Entrar</button>
+          <button id="tab-registro">Nuevo Cliente</button>
+        </div>
+
+        <!-- Login -->
+        <div id="login-form">
+          <input type="email" id="login-email" placeholder="Correo">
+          <input type="password" id="login-password" placeholder="Contraseña">
+          <button id="btn-login">Aceptar</button>
+        </div>
+
+        <!-- Registro -->
+        <div id="registro-form" style="display:none;">
+          <input type="email" id="reg-email" placeholder="Correo">
+          <input type="text" id="reg-usuario" placeholder="Nombre de usuario">
+          <input type="password" id="reg-password" placeholder="Contraseña">
+          <input type="text" id="reg-piso" placeholder="Piso">
+          <input type="text" id="reg-apartamento" placeholder="Apartamento">
+          <input type="text" id="reg-empresa" placeholder="Empresa (opcional)">
+          <button id="btn-crear-cliente">Crear Cliente</button>
+        </div>
+      </div>
     </div>
 
-    <!-- Formulario Login -->
-    <div id="login-form">
-      <input type="email" id="login-email" placeholder="Correo">
-      <input type="password" id="login-password" placeholder="Contraseña">
-      <button id="btn-login">Aceptar</button>
-    </div>
-
-    <!-- Formulario Registro -->
-    <div id="registro-form" style="display:none;">
-      <input type="email" id="reg-email" placeholder="Correo">
-      <input type="text" id="reg-usuario" placeholder="Nombre de usuario">
-      <input type="password" id="reg-password" placeholder="Contraseña">
-      <input type="text" id="reg-piso" placeholder="Piso">
-      <input type="text" id="reg-apartamento" placeholder="Apartamento">
-      <input type="text" id="reg-empresa" placeholder="Empresa (opcional)">
-      <button id="btn-crear-cliente">Crear Cliente</button>
-    </div>
-  </div>
-</div>
-    
-    <!-- Footer con redes sociales -->
+    <!-- Footer -->
     <footer class="footer-redes">
       <a href="https://facebook.com" target="_blank">
         <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/facebook.svg" alt="Facebook" />
