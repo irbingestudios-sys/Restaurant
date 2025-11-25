@@ -41,8 +41,7 @@
       <h2 class="titulo-seccion">Resumen del Pedido</h2>
       <p>Total: <span id="total-cup">0</span> CUP</p>
       <p>Cantidad de ítems: <span id="total-items">0</span></p>
-      <button id="btn-limpiar">Limpiar selección</button>
-      <button onclick="revisarPedido()" class="btn-secundario">🕵️ Revisar pedido</button>
+      <button onclick="revisarPedido()" class="btn-secundario">📤 Enviar Pedido</button>
     </section>
 
     <!-- Seguimiento del pedido -->
@@ -51,7 +50,9 @@
       <div class="estado-lineal">
         <strong>Estado actual:</strong> <span id="estado-actual">🕓 Pendiente</span>
       </div>
+
       <div id="seguimiento-multiple" class="scrollable-menu" style="margin-top:20px;"></div>
+
       <button id="btn-entregado" class="btn-secundario">✅ Marcar como entregado</button>
       <button onclick="renderizarSeguimientoPedidos()" class="btn-secundario">📦 Ver todos mis pedidos</button>
 
@@ -61,8 +62,6 @@
         <button id="btn-guardar-criterio" class="btn-secundario">Guardar criterio</button>
       </div>
     </section>
-
-    <button onclick="resetearFOCSA()" class="btn-secundario">🔄 Reiniciar pedido</button>
 
     <!-- Datos del cliente -->
     <section>
@@ -138,4 +137,3 @@
   </div>
 </body>
 </html>
-
