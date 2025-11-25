@@ -1,12 +1,9 @@
-// ┌────────────────────────────────────────────────────────────┐
-// │ Módulo: FOCSA                                              │
-// │ Script: script-focsa.js                                    │
-// │ Descripción: Menú especial para clientes del edificio FOCSA│
-// │ Autor: Irbing Brizuela                                     │
-// │ Fecha: 2025-11-08                                          │
-// └────────────────────────────────────────────────────────────┘
+// ┌───────────────────────────────────────────────┐
+// │ Módulo: FOCSA                                 │
+// │ Script: script-focsa.js (versión completa)    │
+// │ Ajustado según cambios solicitados            │
+// └───────────────────────────────────────────────┘
 
-// INICIALIZACIÓN
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 const supabase = createClient("https://qeqltwrkubtyrmgvgaai.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw");
@@ -25,12 +22,12 @@ document.addEventListener("DOMContentLoaded", () => {
   cargarEnvases();
   iniciarSeguimiento();
 
-  // 🔎 Mostrar seguimiento si hay pedido activo
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (pedidoId) {
     document.getElementById("seguimiento-pedido").style.display = "block";
   }
-renderizarSeguimientoPedidos();
+
+  renderizarSeguimientoPedidos();
   console.groupEnd();
 });
 
@@ -38,8 +35,12 @@ renderizarSeguimientoPedidos();
 async function cargarMenuEspecial() {
   console.group("📥 Carga de menú");
   const { data, error } = await supabase.rpc("obtener_menu_focsa");
-  if (error) return console.error("❌ Error al cargar menú:", error);
-  menu = data;
+  if (error) {
+    console.error("❌ Error al cargar menú:", error);
+    console.groupEnd();
+    return;
+  }
+  menu = data || [];
   console.log("✅ Menú cargado:", menu.length, "items");
   renderMenuEspecial(menu);
 
@@ -47,14 +48,12 @@ async function cargarMenuEspecial() {
   filtro.innerHTML = '<option value="todos">Todas</option>';
   const categoriasUnicas = [...new Set(menu.map(item => item.categoria))];
   if (!categoriasUnicas.includes("Envases")) categoriasUnicas.push("Envases");
-
   categoriasUnicas.forEach(cat => {
     const opcion = document.createElement("option");
     opcion.value = cat;
     opcion.textContent = cat;
     filtro.appendChild(opcion);
   });
-
   console.groupEnd();
 }
 
@@ -68,20 +67,24 @@ async function cargarEnvases() {
     .gt("stock", 0)
     .order("precio", { ascending: true });
 
-  if (error) return console.error("❌ Error al cargar envases:", error);
-  envases = data;
+  if (error) {
+    console.error("❌ Error al cargar envases:", error);
+    console.groupEnd();
+    return;
+  }
+  envases = data || [];
   console.log("🧴 Envases cargados:", envases.length);
   renderEnvases(envases);
   console.groupEnd();
 }
 
-// RENDERIZADO MODULAR
+// RENDERIZADO (sin stock)
 function renderGrupo(lista, contenedorId, destinoCantidades) {
   console.group(`🖼️ Renderizado en ${contenedorId}`);
   const contenedor = document.getElementById(contenedorId);
   contenedor.innerHTML = "";
-
   const agrupado = {};
+
   lista.forEach(item => {
     if (!agrupado[item.categoria]) agrupado[item.categoria] = [];
     agrupado[item.categoria].push(item);
@@ -91,28 +94,22 @@ function renderGrupo(lista, contenedorId, destinoCantidades) {
     const grupo = document.createElement("div");
     grupo.className = "categoria-grupo";
     grupo.innerHTML += `<h3 class="titulo-seccion">${categoria}</h3>`;
-
     agrupado[categoria].forEach(item => {
-      const stockTexto = item.stock <= 3
-        ? `<span style="color:red">Stock: ${item.stock}</span>`
-        : `Stock: ${item.stock}`;
-
       grupo.innerHTML += `
         <div class="producto-lineal">
           <div class="producto-izquierda">
             <strong>${item.nombre}</strong>
-            ${item.descripcion ? `<button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url}')">
-              <img src="../assets/info-icon.svg" alt="Descripción" />
+            ${item.descripcion ? `<button class="btn-icono" onclick="mostrarDescripcion('${escapeHtml(item.descripcion)}', '${item.imagen_url || ""}')">
+              <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/info-icon.svg" alt="Descripción" />
             </button>` : ""}
           </div>
           <div class="producto-derecha">
-            <span>${stockTexto}</span>
             <span>${item.precio} CUP</span>
-            <input type="number" min="0" value="${destinoCantidades[item.nombre] || 0}" data-name="${item.nombre}" data-price="${item.precio}" />
+            <input type="number" min="0" value="${destinoCantidades[item.nombre] || 0}" 
+                   data-name="${item.nombre}" data-price="${item.precio}" />
           </div>
         </div>`;
     });
-
     contenedor.appendChild(grupo);
   }
 
@@ -122,19 +119,17 @@ function renderGrupo(lista, contenedorId, destinoCantidades) {
       calcularTotales();
     });
   });
-
   console.groupEnd();
 }
 
 function renderMenuEspecial(lista) {
   renderGrupo(lista, "menu-especial", cantidades);
 }
-
 function renderEnvases(lista) {
   renderGrupo(lista, "envases-contenedor", cantidadesEnvases);
 }
 
-// FILTRO POR CATEGORÍA
+// FILTRO
 function filtrarMenu() {
   console.group("🔍 Filtro de categoría");
   const categoriaSeleccionada = document.getElementById("filtro").value;
@@ -150,12 +145,11 @@ function filtrarMenu() {
     renderGrupo(menu.filter(item => item.categoria === categoriaSeleccionada), "menu-especial", cantidades);
     document.getElementById("envases-contenedor").innerHTML = "";
   }
-
   console.groupEnd();
 }
 window.filtrarMenu = filtrarMenu;
 
-// CÁLCULO DE TOTALES
+// TOTALES
 function calcularTotales() {
   console.group("🧮 Cálculo de totales");
   let total = 0, cantidad = 0;
@@ -168,7 +162,6 @@ function calcularTotales() {
       cantidad += cant;
     }
   }
-
   for (const nombre in cantidadesEnvases) {
     const cant = cantidadesEnvases[nombre];
     const item = envases.find(p => p.nombre === nombre);
@@ -184,224 +177,9 @@ function calcularTotales() {
   console.groupEnd();
 }
 
-// ENVÍO DE PEDIDO
-window.enviarPedido = async () => {
-  console.group("📤 RPC — registrar_pedido_focsa");
-
-  const cliente = document.getElementById("cliente").value.trim();
-  const piso = document.getElementById("piso").value.trim();
-  const apartamento = document.getElementById("apartamento").value.trim();
-  const telefono = document.getElementById("telefono").value.trim();
-  const unirse = document.getElementById("unirseGrupo").checked;
-
-  if (!cliente || !piso || !apartamento) {
-    alert("Por favor, complete los datos del cliente antes de enviar el pedido.");
-    console.warn("❌ Datos del cliente incompletos.");
-    return;
-  }
-
-  const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
-  if (!tieneEnvase) {
-    alert("Debe seleccionar al menos un envase para realizar la entrega.");
-    console.warn("❌ Pedido sin envases.");
-    return;
-  }
-
-  const items = [];
-  let total = 0;
-
-  for (const nombre in cantidades) {
-    const cant = cantidades[nombre];
-    const item = menu.find(p => p.nombre === nombre);
-    if (item && cant > 0) {
-      items.push({
-        nombre: item.nombre,
-        cantidad: cant,
-        precio: item.precio,
-        subtotal: cant * item.precio
-      });
-      total += cant * item.precio;
-    }
-  }
-
-  for (const nombre in cantidadesEnvases) {
-    const cant = cantidadesEnvases[nombre];
-    const item = envases.find(p => p.nombre === nombre);
-    if (item && cant > 0) {
-      items.push({
-        nombre: item.nombre,
-        cantidad: cant,
-        precio: item.precio,
-        subtotal: cant * item.precio
-      });
-      total += cant * item.precio;
-    }
-  }
-
-  const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
-    p_cliente: cliente,
-    p_piso: piso,
-    p_apartamento: apartamento,
-    p_telefono: telefono || null,
-    p_direccion: null,
-    p_unirse_grupo: unirse,
-    p_items: JSON.stringify(items),
-    p_canal: "rpc" // ✅ canal agregado
-  });
-
-  if (error) return console.error("❌ Error RPC:", error);
-
-  const pedidoId = data?.[0]?.pedido_id; // ✅ acceso corregido
-  if (!pedidoId) return console.warn("⚠️ No se devolvió pedido_id");
-
-  localStorage.setItem("pedido_id_actual", pedidoId);
-  const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
-  historial.push(pedidoId);
-  localStorage.setItem("historial_pedidos", JSON.stringify(historial));
-  renderizarSeguimientoPedidos();
-
-  console.log("📥 pedido_id_actual guardado:", pedidoId);
-  console.groupEnd();
-
-  mostrarSeguimientoPedido();
-};
-
-// 🔎 SEGUIMIENTO Y CRITERIO DEL CLIENTE
-function iniciarSeguimiento() {
-  const pedidoId = localStorage.getItem("pedido_id_actual");
-  if (!pedidoId) return;
-  setInterval(() => verificarIntegridadPedido(pedidoId), 10000);
-}
-
-async function verificarIntegridadPedido(pedidoId) {
-  console.group("🔎 Seguimiento del pedido");
-
-  const { data, error } = await supabase
-    .from("vw_integridad_pedido")
-    .select("*")
-    .eq("pedido_id", pedidoId)
-    .maybeSingle();
-
-  if (error || !data) return console.warn("⚠️ Error o pedido no encontrado");
-
-  const estado = data.estado_actual || "⏳ En espera";
-  const cocina = data.replicado_en_cocina ? "✅ Cocina OK" : "⚠️ Sin cocina";
-  const reparto = data.replicado_en_reparto ? "✅ Reparto OK" : "⚠️ Sin reparto";
-
-  document.getElementById("estado-actual").textContent = `🧾 ${estado} | ${cocina} | ${reparto}`;
-
-  const btnEntregar = document.getElementById("btn-entregado");
-  btnEntregar.disabled = !(data.replicado_en_cocina && data.replicado_en_reparto);
-  btnEntregar.addEventListener("click", () => {
-    document.getElementById("bloque-criterio").style.display = "block";
-  });
-
-  const contenedor = document.getElementById("contenido-resumen");
-  contenedor.innerHTML = "";
-
-  for (const item of data.items || []) {
-    const { data: stockData } = await supabase
-      .from("menu_item")
-      .select("stock")
-      .eq("nombre", item.nombre)
-      .maybeSingle();
-
-    const stock = stockData?.stock ?? "—";
-    const stockTexto = stock <= 3
-      ? `<span style="color:red">Stock: ${stock}</span>`
-      : `Stock: ${stock}`;
-
-    contenedor.innerHTML += `
-      <div class="producto-lineal">
-        <div class="producto-izquierda">
-          <strong>${item.nombre}</strong>
-        </div>
-        <div class="producto-derecha">
-          <span>${stockTexto}</span>
-          <span>x${item.cantidad}</span>
-          <span>= ${item.subtotal} CUP</span>
-        </div>
-      </div>`;
-  }
-
-  console.groupEnd();
-}
-
-async function renderizarSeguimientoPedidos() {
-  console.group("📦 Seguimiento múltiple de pedidos");
-
-  const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
-  const contenedor = document.getElementById("seguimiento-multiple");
-  contenedor.innerHTML = "";
-
-  for (const pedidoId of historial.slice(-5).reverse()) {
-    const { data, error } = await supabase
-      .from("vw_integridad_pedido")
-      .select("*")
-      .eq("pedido_id", pedidoId)
-      .maybeSingle();
-
-    if (error || !data) continue;
-
-    const estado = data.estado_actual || "⏳ En espera";
-    const cocina = data.replicado_en_cocina ? "✅ Cocina OK" : "⚠️ Sin cocina";
-    const reparto = data.replicado_en_reparto ? "✅ Reparto OK" : "⚠️ Sin reparto";
-
-    let html = `
-      <div class="seguimiento-bloque">
-        <h4>📦 Pedido: ${pedidoId.slice(0, 8)}...</h4>
-        <p><strong>Estado:</strong> ${estado} | ${cocina} | ${reparto}</p>
-        <ul>
-    `;
-
-let totalPedido = 0;
-
-for (const item of data.items || []) {
-  html += `<li>${item.nombre} x${item.cantidad} = ${item.subtotal} CUP</li>`;
-  totalPedido += item.subtotal;
-}
-
-html += `</ul>
-  <p><strong>Total del pedido:</strong> ${totalPedido.toFixed(2)} CUP</p>
-</div>`;
-    contenedor.innerHTML += html;
-  }
-
-  console.groupEnd();
-}
-
-window.renderizarSeguimientoPedidos = renderizarSeguimientoPedidos;
-
-document.getElementById("btn-guardar-criterio").addEventListener("click", async () => {
-  console.group("📝 Guardar criterio del cliente");
-
-  const criterio = document.getElementById("criterio").value.trim();
-  const pedidoId = localStorage.getItem("pedido_id_actual");
-
-  if (!criterio || !pedidoId) {
-    console.warn("⚠️ No hay criterio o pedido activo.");
-    return;
-  }
-
-  const { error } = await supabase
-    .from("criterios_pedido")
-    .insert([{ pedido_id: pedidoId, criterio }]);
-
-  if (error) {
-    console.error("❌ Error al guardar criterio:", error);
-  } else {
-    console.log("✅ Criterio guardado:", criterio);
-    alert("¡Gracias por su opinión!");
-    document.getElementById("bloque-criterio").style.display = "none";
-  }
-
-  console.groupEnd();
-});
-
-// 🧾 Vista previa del pedido
+// VISTA PREVIA DEL PEDIDO (modal)
 function revisarPedido() {
   console.group("🧾 Vista previa del pedido");
-
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
   const apartamento = document.getElementById("apartamento").value.trim();
@@ -409,8 +187,9 @@ function revisarPedido() {
   const unirse = document.getElementById("unirseGrupo").checked;
 
   if (!cliente || !piso || !apartamento) {
-    alert("Por favor, complete los datos del cliente antes de revisar el pedido.");
+    alert("Por favor, complete los datos del cliente antes de revisar/enviar el pedido.");
     console.warn("❌ Datos incompletos para revisión.");
+    console.groupEnd();
     return;
   }
 
@@ -418,6 +197,7 @@ function revisarPedido() {
   if (!tieneEnvase) {
     alert("Debe seleccionar al menos un envase para realizar la entrega.");
     console.warn("❌ Pedido sin envases.");
+    console.groupEnd();
     return;
   }
 
@@ -434,20 +214,24 @@ function revisarPedido() {
   `;
 
   const items = [];
+  let total = 0;
 
   for (const nombre in cantidades) {
     const cant = cantidades[nombre];
     const item = menu.find(p => p.nombre === nombre);
     if (item && cant > 0) {
-      items.push({ ...item, cantidad: cant });
+      const subtotal = cant * item.precio;
+      items.push({ nombre: item.nombre, cantidad: cant, precio: item.precio, subtotal });
+      total += subtotal;
     }
   }
-
   for (const nombre in cantidadesEnvases) {
     const cant = cantidadesEnvases[nombre];
     const item = envases.find(p => p.nombre === nombre);
     if (item && cant > 0) {
-      items.push({ ...item, cantidad: cant });
+      const subtotal = cant * item.precio;
+      items.push({ nombre: item.nombre, cantidad: cant, precio: item.precio, subtotal });
+      total += subtotal;
     }
   }
 
@@ -455,43 +239,27 @@ function revisarPedido() {
     resumen.innerHTML += "<p>No ha seleccionado ningún producto.</p>";
   } else {
     items.forEach(item => {
-      const subtotal = item.precio * item.cantidad;
       resumen.innerHTML += `
         <div class="producto-lineal">
-          <div class="producto-izquierda">
-            <strong>${item.nombre}</strong>
-          </div>
+          <div class="producto-izquierda"><strong>${item.nombre}</strong></div>
           <div class="producto-derecha">
             <span>x${item.cantidad}</span>
-            <span>= ${subtotal} CUP</span>
+            <span>= ${item.subtotal} CUP</span>
           </div>
         </div>`;
     });
+    resumen.innerHTML += `<p><strong>Total:</strong> ${total.toFixed(2)} CUP</p>`;
   }
 
   document.getElementById("modal-resumen").style.display = "block";
   console.groupEnd();
 }
-
 window.revisarPedido = revisarPedido;
 
-// 🔄 Limpiar selección
-document.getElementById("btn-limpiar").addEventListener("click", () => {
-  cantidades = {};
-  cantidadesEnvases = {};
-  filtrarMenu();
-  calcularTotales();
-});
-
-// 🌐 Exponer funciones al HTML
-window.revisarPedido = revisarPedido;
-window.mostrarSeguimientoPedido = iniciarSeguimiento;
-
-//ENVIAR POR WHATSAPP
+// ENVIAR POR WHATSAPP (RPC + abrir mensaje)
 async function enviarWhatsApp() {
   console.group("📲 Enviar pedido por WhatsApp");
 
-  // 🔍 Verificación de datos del cliente
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
   const apartamento = document.getElementById("apartamento").value.trim();
@@ -504,9 +272,7 @@ async function enviarWhatsApp() {
     console.groupEnd();
     return;
   }
-  console.log("✅ Datos del cliente verificados");
 
-  // 🔍 Verificación de envases
   const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
   if (!tieneEnvase) {
     alert("Debe seleccionar al menos un envase para realizar la entrega.");
@@ -514,9 +280,7 @@ async function enviarWhatsApp() {
     console.groupEnd();
     return;
   }
-  console.log("✅ Al menos un envase seleccionado");
 
-  // 🧾 Construcción de ítems
   const items = [];
   let total = 0;
 
@@ -524,33 +288,21 @@ async function enviarWhatsApp() {
     const cant = cantidades[nombre];
     const item = menu.find(p => p.nombre === nombre);
     if (item && cant > 0) {
-      items.push({
-        nombre: item.nombre,
-        cantidad: cant,
-        precio: item.precio,
-        subtotal: cant * item.precio
-      });
-      total += cant * item.precio;
+      const subtotal = cant * item.precio;
+      items.push({ nombre: item.nombre, cantidad: cant, precio: item.precio, subtotal });
+      total += subtotal;
     }
   }
-
   for (const nombre in cantidadesEnvases) {
     const cant = cantidadesEnvases[nombre];
     const item = envases.find(p => p.nombre === nombre);
     if (item && cant > 0) {
-      items.push({
-        nombre: item.nombre,
-        cantidad: cant,
-        precio: item.precio,
-        subtotal: cant * item.precio
-      });
-      total += cant * item.precio;
+      const subtotal = cant * item.precio;
+      items.push({ nombre: item.nombre, cantidad: cant, precio: item.precio, subtotal });
+      total += subtotal;
     }
   }
 
-  console.log("📦 Ítems construidos:", items);
-
-  // 🧩 RPC: registrar pedido
   const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
     p_cliente: cliente,
     p_piso: piso,
@@ -558,7 +310,7 @@ async function enviarWhatsApp() {
     p_telefono: telefono || null,
     p_direccion: null,
     p_unirse_grupo: unirse,
-    p_items: items,
+    p_items: items,           // ✅ siempre objeto
     p_canal: "whatsapp"
   });
 
@@ -580,116 +332,244 @@ async function enviarWhatsApp() {
   historial.push(pedidoId);
   localStorage.setItem("historial_pedidos", JSON.stringify(historial));
   renderizarSeguimientoPedidos();
-
   console.log("📥 Pedido registrado con ID:", pedidoId);
 
-  // 📲 WhatsApp
   const grupoTexto = unirse ? "✅ Desea unirse al grupo" : "❌ No desea unirse al grupo";
-  const mensaje = `🧾 Pedido FOCSA\nCliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}\n${grupoTexto}\n\n${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}\n\nTotal: ${total.toFixed(2)} CUP`;
+  const mensaje = `🧾 Pedido FOCSA
+Cliente: ${cliente}
+Piso: ${piso}
+Apartamento: ${apartamento}
+Teléfono: ${telefono || "—"}
+${grupoTexto}
+
+${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}
+
+Total: ${total.toFixed(2)} CUP`;
   const url = `https://wa.me/+5350977340?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
   console.log("📤 WhatsApp abierto con mensaje");
 
-  // 🔄 Reinicio del flujo
   document.getElementById("modal-resumen").style.display = "none";
   cantidades = {};
   cantidadesEnvases = {};
   filtrarMenu();
   calcularTotales();
-  console.log("🧹 Selección limpiada y menú reiniciado");
-
-  // 🔎 Activar seguimiento
   mostrarSeguimientoPedido();
-  console.log("📦 Seguimiento activado");
-
   console.groupEnd();
-} // ← Este cierre es el único necesario
-
+}
 window.enviarWhatsApp = enviarWhatsApp;
 
-//Cancelar pedido y cerrar modal
+// OPCIONAL: Enviar desde botón principal (misma validación, canal = "rpc")
+window.enviarPedido = async () => {
+  console.group("📤 RPC — registrar_pedido_focsa (canal rpc)");
+
+  const cliente = document.getElementById("cliente").value.trim();
+  const piso = document.getElementById("piso").value.trim();
+  const apartamento = document.getElementById("apartamento").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const unirse = document.getElementById("unirseGrupo").checked;
+
+  if (!cliente || !piso || !apartamento) {
+    alert("Por favor, complete los datos del cliente antes de enviar el pedido.");
+    console.warn("❌ Datos del cliente incompletos.");
+    console.groupEnd();
+    return;
+  }
+
+  const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
+  if (!tieneEnvase) {
+    alert("Debe seleccionar al menos un envase para realizar la entrega.");
+    console.warn("❌ Pedido sin envases.");
+    console.groupEnd();
+    return;
+  }
+
+  const items = [];
+  for (const nombre in cantidades) {
+    const cant = cantidades[nombre];
+    const item = menu.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      items.push({ nombre: item.nombre, cantidad: cant, precio: item.precio, subtotal: cant * item.precio });
+    }
+  }
+  for (const nombre in cantidadesEnvases) {
+    const cant = cantidadesEnvases[nombre];
+    const item = envases.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      items.push({ nombre: item.nombre, cantidad: cant, precio: item.precio, subtotal: cant * item.precio });
+    }
+  }
+
+  const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
+    p_cliente: cliente,
+    p_piso: piso,
+    p_apartamento: apartamento,
+    p_telefono: telefono || null,
+    p_direccion: null,
+    p_unirse_grupo: unirse,
+    p_items: items,           // ✅ objeto
+    p_canal: "rpc"
+  });
+  if (error) {
+    console.error("❌ Error RPC:", error);
+    console.groupEnd();
+    return;
+  }
+
+  const pedidoId = data?.[0]?.pedido_id;
+  if (!pedidoId) {
+    console.warn("⚠️ No se devolvió pedido_id");
+    console.groupEnd();
+    return;
+  }
+
+  localStorage.setItem("pedido_id_actual", pedidoId);
+  const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
+  historial.push(pedidoId);
+  localStorage.setItem("historial_pedidos", JSON.stringify(historial));
+  renderizarSeguimientoPedidos();
+  console.log("📥 pedido_id_actual guardado:", pedidoId);
+
+  mostrarSeguimientoPedido();
+  console.groupEnd();
+};
+
+// CANCELAR RESUMEN
 function cancelarResumen() {
   console.group("❌ Cancelar pedido");
-
   cantidades = {};
   cantidadesEnvases = {};
   filtrarMenu();
   calcularTotales();
-
   document.getElementById("modal-resumen").style.display = "none";
-
   console.log("🧹 Pedido cancelado y reiniciado");
   console.groupEnd();
 }
-
 window.cancelarResumen = cancelarResumen;
-
 document.getElementById("modal-close-resumen").addEventListener("click", cancelarResumen);
 
-//Mostrar seguimiento del pedido
+// MOSTRAR SEGUIMIENTO
 function mostrarSeguimientoPedido() {
   document.getElementById("seguimiento-pedido").style.display = "block";
   iniciarSeguimiento();
 }
-
 window.mostrarSeguimientoPedido = mostrarSeguimientoPedido;
 
-//FUNCION RESETEAR
-function resetearFOCSA() {
-  console.group("🔄 Reinicio completo FOCSA");
+// SEGUIMIENTO
+function iniciarSeguimiento() {
+  const pedidoId = localStorage.getItem("pedido_id_actual");
+  if (!pedidoId) return;
+  setInterval(() => verificarIntegridadPedido(pedidoId), 10000);
+}
 
-  // 🧹 Limpiar almacenamiento local y de sesión
-  localStorage.clear();
-  sessionStorage.clear();
+async function verificarIntegridadPedido(pedidoId) {
+  console.group("🔎 Seguimiento del pedido");
+  const { data, error } = await supabase
+    .from("vw_integridad_pedido")
+    .select("*")
+    .eq("pedido_id", pedidoId)
+    .maybeSingle();
 
-  // 🧼 Resetear variables
-  cantidades = {};
-  cantidadesEnvases = {};
+  if (error || !data) {
+    console.warn("⚠️ Error o pedido no encontrado");
+    console.groupEnd();
+    return;
+  }
 
-  // 🧾 Reiniciar menú y envases
-  filtrarMenu();
-  calcularTotales();
+  const estado = data.estado_actual || "⏳ En espera";
+  document.getElementById("estado-actual").textContent = `🧾 ${estado}`;
 
-  // 🧤 Ocultar seguimiento y modales
-  document.getElementById("seguimiento-pedido").style.display = "none";
-  document.getElementById("modal-resumen").style.display = "none";
-  document.getElementById("bloque-criterio").style.display = "none";
-
-  // 🧼 Limpiar campos del cliente
-  document.getElementById("cliente").value = "";
-  document.getElementById("piso").value = "";
-  document.getElementById("apartamento").value = "";
-  document.getElementById("telefono").value = "";
-  document.getElementById("unirseGrupo").checked = false;
-
-  console.log("✅ Sistema listo para nuevo pedido");
+  const btnEntregar = document.getElementById("btn-entregado");
+  btnEntregar.disabled = estado !== "entregado";
+  btnEntregar.onclick = () => {
+    if (estado === "entregado") {
+      document.getElementById("bloque-criterio").style.display = "block";
+    }
+  };
   console.groupEnd();
 }
 
-window.resetearFOCSA = resetearFOCSA;
+async function renderizarSeguimientoPedidos() {
+  console.group("📦 Seguimiento múltiple de pedidos");
+  const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
+  const contenedor = document.getElementById("seguimiento-multiple");
+  contenedor.innerHTML = "";
 
-//VENTAJAS DEL GRUPO
+  for (const pedidoId of historial.slice(-5).reverse()) {
+    const { data, error } = await supabase
+      .from("vw_integridad_pedido")
+      .select("*")
+      .eq("pedido_id", pedidoId)
+      .maybeSingle();
+
+    if (error || !data) continue;
+
+    const estado = data.estado_actual || "⏳ En espera";
+    let html = `
+      <div class="seguimiento-bloque">
+        <h4>📦 Pedido: ${pedidoId.slice(0, 8)}...</h4>
+        <p><strong>Estado:</strong> ${estado}</p>
+        <ul>`;
+    let totalPedido = 0;
+    for (const item of data.items || []) {
+      html += `<li>${item.nombre} x${item.cantidad} = ${item.subtotal} CUP</li>`;
+      totalPedido += item.subtotal;
+    }
+    html += `</ul>
+      <p><strong>Total del pedido:</strong> ${totalPedido.toFixed(2)} CUP</p>
+      </div>`;
+    contenedor.innerHTML += html;
+  }
+  console.groupEnd();
+}
+window.renderizarSeguimientoPedidos = renderizarSeguimientoPedidos;
+
+// GUARDAR CRITERIO
+document.getElementById("btn-guardar-criterio").addEventListener("click", async () => {
+  console.group("📝 Guardar criterio del cliente");
+  const criterio = document.getElementById("criterio").value.trim();
+  const pedidoId = localStorage.getItem("pedido_id_actual");
+  if (!criterio || !pedidoId) {
+    console.warn("⚠️ No hay criterio o pedido activo.");
+    console.groupEnd();
+    return;
+  }
+  const { error } = await supabase.from("criterios_pedido").insert([{ pedido_id: pedidoId, criterio }]);
+  if (error) {
+    console.error("❌ Error al guardar criterio:", error);
+  } else {
+    console.log("✅ Criterio guardado:", criterio);
+    alert("¡Gracias por su opinión!");
+    document.getElementById("bloque-criterio").style.display = "none";
+  }
+  console.groupEnd();
+});
+
+// UTILITARIOS DE UI
 function toggleVentajasGrupo() {
   const bloque = document.getElementById("ventajasGrupo");
   bloque.style.display = bloque.style.display === "none" ? "block" : "none";
 }
-
 window.toggleVentajasGrupo = toggleVentajasGrupo;
-//DESCRIPCION
+
 function mostrarDescripcion(descripcion, imagenUrl) {
   console.group("📝 Mostrar descripción del producto");
-
   document.getElementById("modal-texto").textContent = descripcion;
   document.getElementById("modal-imagen").src = imagenUrl || "";
   document.getElementById("modal-descripcion").style.display = "block";
-
-  console.log("🖼️ Descripción mostrada:", descripcion);
+  console.log("🖼️ Descripción mostrada.");
   console.groupEnd();
 }
-
 window.mostrarDescripcion = mostrarDescripcion;
+
 document.getElementById("modal-close").addEventListener("click", () => {
   document.getElementById("modal-descripcion").style.display = "none";
 });
 
-
+// Helper para escapar HTML en descripciones
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
