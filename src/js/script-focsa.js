@@ -524,27 +524,62 @@ async function renderizarSeguimientoPedidos() {
 }
 window.renderizarSeguimientoPedidos = renderizarSeguimientoPedidos;
 
-// GUARDAR CRITERIO
+// GUARDAR CRITERIO DEL CLIENTE
 document.getElementById("btn-guardar-criterio").addEventListener("click", async () => {
   console.group("📝 Guardar criterio del cliente");
+
   const criterio = document.getElementById("criterio").value.trim();
   const pedidoId = localStorage.getItem("pedido_id_actual");
+
+  // Validación
   if (!criterio || !pedidoId) {
     console.warn("⚠️ No hay criterio o pedido activo.");
     console.groupEnd();
     return;
   }
-  const { error } = await supabase.from("criterios_pedido").insert([{ pedido_id: pedidoId, criterio }]);
+
+  // Inserción en la tabla criterio_cliente
+  const { error } = await supabase
+    .from("criterio_cliente")
+    .insert([{ pedido_id: pedidoId, criterio }]);
+
   if (error) {
     console.error("❌ Error al guardar criterio:", error);
+    alert("Ocurrió un error al guardar su opinión. Intente nuevamente.");
   } else {
     console.log("✅ Criterio guardado:", criterio);
     alert("¡Gracias por su opinión!");
+
+    // 🧹 Limpieza total para nuevo pedido
     document.getElementById("bloque-criterio").style.display = "none";
+    document.getElementById("criterio").value = "";
+
+    // Borrar almacenamiento local
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Resetear variables
+    cantidades = {};
+    cantidadesEnvases = {};
+
+    // Reiniciar UI
+    filtrarMenu();
+    calcularTotales();
+    document.getElementById("seguimiento-pedido").style.display = "none";
+    document.getElementById("modal-resumen").style.display = "none";
+
+    // Limpiar campos del cliente
+    document.getElementById("cliente").value = "";
+    document.getElementById("piso").value = "";
+    document.getElementById("apartamento").value = "";
+    document.getElementById("telefono").value = "";
+    document.getElementById("unirseGrupo").checked = false;
+
+    console.log("✅ Sistema listo para nuevo pedido tras guardar criterio");
   }
+
   console.groupEnd();
 });
-
 // UTILITARIOS DE UI
 function toggleVentajasGrupo() {
   const bloque = document.getElementById("ventajasGrupo");
