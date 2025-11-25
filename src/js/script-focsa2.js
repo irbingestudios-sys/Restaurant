@@ -47,6 +47,26 @@ document.addEventListener("DOMContentLoaded", async () => {
 // ======================================================
 // 3. CLIENTE: login/registro, sesión, histórico
 // ======================================================
+
+// Abrir modal
+document.getElementById("btn-cliente").addEventListener("click", () => {
+  document.getElementById("modal-cliente").style.display = "block";
+});
+
+// Cerrar modal
+document.getElementById("modal-close-cliente").addEventListener("click", () => {
+  document.getElementById("modal-cliente").style.display = "none";
+});
+
+// Alternar entre login y registro
+document.getElementById("tab-login").addEventListener("click", () => {
+  document.getElementById("login-form").style.display = "block";
+  document.getElementById("registro-form").style.display = "none";
+});
+document.getElementById("tab-registro").addEventListener("click", () => {
+  document.getElementById("login-form").style.display = "none";
+  document.getElementById("registro-form").style.display = "block";
+});
 const modalCliente = document.getElementById("modal-cliente");
 const btnCliente = document.getElementById("btn-cliente");
 const btnLogin = document.getElementById("btn-login");
