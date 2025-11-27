@@ -3,6 +3,7 @@
 // ======================================================
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+// TODO: Reemplaza TU_API_KEY_PUBLICA por tu clave anónima pública de Supabase
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
@@ -32,10 +33,24 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   renderizarSeguimientoPedidos();
 
-  // Detectar sesión persistente
+  // Detectar sesión persistente y autocompletar datos del cliente
   const { data: { user } } = await supabase.auth.getUser();
-  if (user) mostrarClienteUI(user.email);
-  else ocultarClienteUI();
+  if (user) {
+    mostrarClienteUI(user.email);
+    const { data: clienteData, error } = await supabase
+      .from("clientes_focsa")
+      .select("usuario, piso, apartamento, telefono")
+      .eq("id", user.id)
+      .maybeSingle();
+    if (!error && clienteData) {
+      document.getElementById("cliente").value = clienteData.usuario || "";
+      document.getElementById("piso").value = clienteData.piso || "";
+      document.getElementById("apartamento").value = clienteData.apartamento || "";
+      document.getElementById("telefono").value = clienteData.telefono || "";
+    }
+  } else {
+    ocultarClienteUI();
+  }
 
   console.groupEnd();
 });
@@ -48,17 +63,19 @@ function mostrarClienteUI(email) {
   const infoCliente = document.getElementById("cliente-info");
   const nombreClienteUI = document.getElementById("cliente-nombre");
   const btnHistorico = document.getElementById("btn-historico");
-  infoCliente.style.display = "block";
-  nombreClienteUI.textContent = email;
-  btnHistorico.style.display = "inline-block";
+  if (infoCliente) infoCliente.style.display = "block";
+  if (nombreClienteUI) nombreClienteUI.textContent = email;
+  if (btnHistorico) btnHistorico.style.display = "inline-block";
 }
 
 function ocultarClienteUI() {
-  document.getElementById("cliente-info").style.display = "none";
-  document.getElementById("btn-historico").style.display = "none";
+  const infoCliente = document.getElementById("cliente-info");
+  const btnHistorico = document.getElementById("btn-historico");
+  if (infoCliente) infoCliente.style.display = "none";
+  if (btnHistorico) btnHistorico.style.display = "none";
 }
 
-// Abrir/cerrar modal cliente
+// Abrir/cerrar modal cliente (si existen botones)
 document.getElementById("btn-cliente")?.addEventListener("click", () => {
   document.getElementById("modal-cliente").style.display = "block";
 });
@@ -66,7 +83,7 @@ document.getElementById("modal-close-cliente")?.addEventListener("click", () => 
   document.getElementById("modal-cliente").style.display = "none";
 });
 
-// Tabs login/registro
+// Tabs login/registro (si existen tabs)
 document.getElementById("tab-login")?.addEventListener("click", () => {
   document.getElementById("login-form").style.display = "block";
   document.getElementById("registro-form").style.display = "none";
@@ -87,6 +104,20 @@ document.getElementById("btn-login")?.addEventListener("click", async () => {
   if (error) { toast("❌ Error de login: " + error.message); console.groupEnd(); return; }
 
   mostrarClienteUI(data.user.email);
+
+  // Autocompletar datos del cliente
+  const { data: clienteData } = await supabase
+    .from("clientes_focsa")
+    .select("usuario, piso, apartamento, telefono")
+    .eq("id", data.user.id)
+    .maybeSingle();
+  if (clienteData) {
+    document.getElementById("cliente").value = clienteData.usuario || "";
+    document.getElementById("piso").value = clienteData.piso || "";
+    document.getElementById("apartamento").value = clienteData.apartamento || "";
+    document.getElementById("telefono").value = clienteData.telefono || "";
+  }
+
   document.getElementById("modal-cliente").style.display = "none";
   console.log("✅ Sesión iniciada");
   console.groupEnd();
@@ -147,6 +178,7 @@ document.getElementById("btn-historico")?.addEventListener("click", async () => 
 
 function renderHistorico(pedidos) {
   const contHistorico = document.getElementById("historico-pedidos");
+  if (!contHistorico) return;
   contHistorico.innerHTML = "<h3>📦 Histórico de Pedidos</h3>";
   if (!pedidos.length) { contHistorico.innerHTML += "<p>No tiene pedidos registrados.</p>"; return; }
   pedidos.forEach(p => {
@@ -167,15 +199,17 @@ async function cargarMenuEspecial() {
 
   // Llenar filtro
   const filtro = document.getElementById("filtro");
-  filtro.innerHTML = '<option value="todos">Todas</option>';
-  const categoriasUnicas = [...new Set(menu.map(item => item.categoria))];
-  if (!categoriasUnicas.includes("Envases")) categoriasUnicas.push("Envases");
-  categoriasUnicas.forEach(cat => {
-    const opcion = document.createElement("option");
-    opcion.value = cat;
-    opcion.textContent = cat;
-    filtro.appendChild(opcion);
-  });
+  if (filtro) {
+    filtro.innerHTML = '<option value="todos">Todas</option>';
+    const categoriasUnicas = [...new Set(menu.map(item => item.categoria))];
+    if (!categoriasUnicas.includes("Envases")) categoriasUnicas.push("Envases");
+    categoriasUnicas.forEach(cat => {
+      const opcion = document.createElement("option");
+      opcion.value = cat;
+      opcion.textContent = cat;
+      filtro.appendChild(opcion);
+    });
+  }
   console.groupEnd();
 }
 
@@ -201,6 +235,7 @@ async function cargarEnvases() {
 function renderGrupo(lista, contenedorId, destinoCantidades) {
   console.group(`🖼️ Renderizado → ${contenedorId}`);
   const contenedor = document.getElementById(contenedorId);
+  if (!contenedor) { console.warn("⚠️ Contenedor no encontrado:", contenedorId); console.groupEnd(); return; }
   contenedor.innerHTML = "";
 
   lista.forEach(item => {
@@ -229,7 +264,8 @@ function renderEnvases(lista) { renderGrupo(lista, "envases-contenedor", cantida
 
 function filtrarMenu() {
   console.group("🔍 Filtro de categoría");
-  const categoriaSeleccionada = document.getElementById("filtro").value;
+  const filtro = document.getElementById("filtro");
+  const categoriaSeleccionada = filtro ? filtro.value : "todos";
   console.log("📌 Categoría:", categoriaSeleccionada);
 
   if (categoriaSeleccionada === "todos") {
@@ -237,10 +273,12 @@ function filtrarMenu() {
     renderEnvases(envases);
   } else if (categoriaSeleccionada === "Envases") {
     renderGrupo(envases.filter(item => item.categoria === "Envases"), "envases-contenedor", cantidadesEnvases);
-    document.getElementById("menu-especial").innerHTML = "";
+    const contMenu = document.getElementById("menu-especial");
+    if (contMenu) contMenu.innerHTML = "";
   } else {
     renderGrupo(menu.filter(item => item.categoria === categoriaSeleccionada), "menu-especial", cantidades);
-    document.getElementById("envases-contenedor").innerHTML = "";
+    const contEnv = document.getElementById("envases-contenedor");
+    if (contEnv) contEnv.innerHTML = "";
   }
   console.groupEnd();
 }
@@ -251,14 +289,14 @@ window.filtrarMenu = filtrarMenu;
 // ======================================================
 function calcularTotales() {
   console.group("🧮 Cálculo de totales");
-  let total = 0, cantidad = 0;
+  let total = 0, cantidadTotal = 0;
 
   for (const nombre in cantidades) {
     const cant = cantidades[nombre];
     const item = menu.find(p => p.nombre === nombre);
     if (item && cant > 0) {
       total += cant * item.precio;
-      cantidad += cant;
+      cantidadTotal += cant;
     }
   }
 
@@ -267,19 +305,23 @@ function calcularTotales() {
     const item = envases.find(p => p.nombre === nombre);
     if (item && cant > 0) {
       total += cant * item.precio;
-      cantidad += cant;
+      cantidadTotal += cant;
     }
   }
 
-  document.getElementById("total-cup").textContent = total.toFixed(2);
-  document.getElementById("total-items").textContent = cantidad;
-  console.log("🧮 Totales:", { total, cantidad });
+  const totalEl = document.getElementById("total-cup");
+  const itemsEl = document.getElementById("total-items");
+  if (totalEl) totalEl.textContent = total.toFixed(2);
+  if (itemsEl) itemsEl.textContent = cantidadTotal;
+
+  console.log("🧮 Totales:", { total, cantidad: cantidadTotal });
   console.groupEnd();
 }
 
 function revisarPedido() {
   console.group("🧾 Vista previa del pedido");
   const resumen = document.getElementById("contenido-resumen");
+  if (!resumen) { console.warn("⚠️ No se encontró contenedor de resumen"); console.groupEnd(); return; }
   resumen.innerHTML = "";
 
   // Construir resumen de items y total
@@ -328,25 +370,32 @@ window.revisarPedido = revisarPedido;
 async function enviarWhatsApp() {
   console.group("📲 Enviar pedido por WhatsApp");
 
-  const cliente = document.getElementById("cliente").value.trim();
-  const piso = document.getElementById("piso").value.trim();
-  const apartamento = document.getElementById("apartamento").value.trim();
-  const telefono = document.getElementById("telefono").value.trim();
-  const unirse = document.getElementById("unirseGrupo").checked;
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!cliente || !piso || !apartamento) {
-    alert("Por favor, complete los datos del cliente antes de enviar.");
-    console.groupEnd(); return;
-  }
+  const cliente = document.getElementById("cliente")?.value.trim() || "";
+  const piso = document.getElementById("piso")?.value.trim() || "";
+  const apartamento = document.getElementById("apartamento")?.value.trim() || "";
+  const telefono = document.getElementById("telefono")?.value.trim() || "";
+  const unirse = !!document.getElementById("unirseGrupo")?.checked;
+
+  // Validación: envase siempre requerido
   const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
   if (!tieneEnvase) {
     alert("Debe seleccionar al menos un envase para realizar la entrega.");
     console.groupEnd(); return;
   }
 
+  // Validación de datos del cliente SOLO si NO hay sesión
+  if (!user) {
+    if (!cliente || !piso || !apartamento) {
+      alert("Por favor, complete los datos del cliente (cliente, piso y apartamento).");
+      console.groupEnd(); return;
+    }
+  }
+
+  // Construir items y total
   const items = [];
   let total = 0;
-
   for (const nombre in cantidades) {
     const cant = cantidades[nombre];
     const item = menu.find(p => p.nombre === nombre);
@@ -366,9 +415,8 @@ async function enviarWhatsApp() {
     }
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // RPC según sesión
   let data, error;
-
   if (user) {
     ({ data, error } = await supabase.rpc("registrar_pedido_focsa_auth", {
       p_cliente_id: user.id,
@@ -393,36 +441,39 @@ async function enviarWhatsApp() {
   const pedidoId = data?.[0]?.pedido_id;
   if (!pedidoId) { console.warn("⚠️ No se devolvió pedido_id"); console.groupEnd(); return; }
 
-  // Persistencia
+  // Guardar en localStorage y actualizar seguimiento
   localStorage.setItem("pedido_id_actual", pedidoId);
   const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
   historial.push(pedidoId);
   localStorage.setItem("historial_pedidos", JSON.stringify(historial));
-
   renderizarSeguimientoPedidos();
 
-  // WhatsApp
+  // Mensaje WhatsApp
   const grupoTexto = unirse ? "✅ Desea unirse al grupo" : "❌ No desea unirse al grupo";
+  const cabeceraCliente = !user
+    ? `Cliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}`
+    : `Cliente autenticado: ${document.getElementById("cliente-nombre")?.textContent || "—"}`;
+
   const mensaje = `🧾 Pedido FOCSA
-Cliente: ${cliente}
-Piso: ${piso}
-Apartamento: ${apartamento}
-Teléfono: ${telefono || "—"}
+${cabeceraCliente}
 ${grupoTexto}
 ${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}
 Total: ${total.toFixed(2)} CUP`;
+
   const url = `https://wa.me/+5350977340?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
 
-  // Reset y seguimiento UI
+  // Reset
   document.getElementById("modal-resumen").style.display = "none";
-  cantidades = {}; cantidadesEnvases = {};
-  filtrarMenu(); calcularTotales(); mostrarSeguimientoPedido();
+  cantidades = {};
+  cantidadesEnvases = {};
+  filtrarMenu();
+  calcularTotales();
+  mostrarSeguimientoPedido();
 
   console.log("📥 Pedido registrado:", pedidoId);
   console.groupEnd();
 }
-
 window.enviarWhatsApp = enviarWhatsApp;
 
 // ======================================================
@@ -431,7 +482,6 @@ window.enviarWhatsApp = enviarWhatsApp;
 function iniciarSeguimiento() {
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (!pedidoId) return;
-  // Chequeo periódico
   setInterval(() => verificarIntegridadPedido(pedidoId), 10000);
 }
 
@@ -446,7 +496,8 @@ async function verificarIntegridadPedido(pedidoId) {
   if (error || !data) { console.warn("⚠️ Error o pedido no encontrado"); console.groupEnd(); return; }
 
   const estado = data.estado_actual || "⏳ En espera";
-  document.getElementById("estado-actual").textContent = `🧾 ${estado}`;
+  const estadoEl = document.getElementById("estado-actual");
+  if (estadoEl) estadoEl.textContent = `🧾 ${estado}`;
 
   const btnEntregar = document.getElementById("btn-entregado");
   if (btnEntregar) {
@@ -464,6 +515,7 @@ async function renderizarSeguimientoPedidos() {
   console.group("📦 Seguimiento múltiple de pedidos");
   const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
   const contenedor = document.getElementById("seguimiento-multiple");
+  if (!contenedor) { console.groupEnd(); return; }
   contenedor.innerHTML = "";
 
   for (const pedidoId of historial.slice(-5).reverse()) {
@@ -478,7 +530,7 @@ async function renderizarSeguimientoPedidos() {
     const estado = data.estado_actual || "⏳ En espera";
     let html = `
       <div class="seguimiento-bloque">
-        <h4>📦 Pedido: ${pedidoId.slice(0, 8)}...</h4>
+        <h4>📦 Pedido: ${String(pedidoId).slice(0, 8)}...</h4>
         <p><strong>Estado:</strong> ${estado}</p>
         <ul>`;
 
@@ -497,7 +549,8 @@ async function renderizarSeguimientoPedidos() {
 window.renderizarSeguimientoPedidos = renderizarSeguimientoPedidos;
 
 function mostrarSeguimientoPedido() {
-  document.getElementById("seguimiento-pedido").style.display = "block";
+  const bloque = document.getElementById("seguimiento-pedido");
+  if (bloque) bloque.style.display = "block";
   iniciarSeguimiento();
 }
 window.mostrarSeguimientoPedido = mostrarSeguimientoPedido;
@@ -507,8 +560,9 @@ window.mostrarSeguimientoPedido = mostrarSeguimientoPedido;
 // ======================================================
 document.getElementById("btn-guardar-criterio")?.addEventListener("click", async () => {
   console.group("📝 Guardar criterio del cliente");
-  const criterio = document.getElementById("criterio").value.trim();
+  const criterio = document.getElementById("criterio")?.value.trim() || "";
   const pedidoId = localStorage.getItem("pedido_id_actual");
+
   if (!criterio || !pedidoId) { console.warn("⚠️ No hay criterio o pedido activo."); console.groupEnd(); return; }
 
   const { error } = await supabase.from("criterio_cliente").insert([{ pedido_id: pedidoId, criterio }]);
@@ -523,13 +577,15 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
     localStorage.clear(); sessionStorage.clear();
     cantidades = {}; cantidadesEnvases = {};
     filtrarMenu(); calcularTotales();
-    document.getElementById("seguimiento-pedido").style.display = "none";
-    document.getElementById("modal-resumen").style.display = "none";
-    // Limpiar datos del cliente en UI
-    document.getElementById("cliente").value = "";
-    document.getElementById("piso").value = "";
-    document.getElementById("apartamento").value = "";
-    document.getElementById("telefono").value = "";
+    const seg = document.getElementById("seguimiento-pedido");
+    if (seg) seg.style.display = "none";
+    const modal = document.getElementById("modal-resumen");
+    if (modal) modal.style.display = "none";
+    // Limpiar datos del cliente en UI (solo si deseas)
+    // document.getElementById("cliente").value = "";
+    // document.getElementById("piso").value = "";
+    // document.getElementById("apartamento").value = "";
+    // document.getElementById("telefono").value = "";
     document.getElementById("unirseGrupo").checked = false;
     console.log("✅ Sistema listo para nuevo pedido");
   }
@@ -537,31 +593,43 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
 });
 
 // ======================================================
-// 10. Utilitarios de UI
+// 10. Cancelar y utilitarios de UI
 // ======================================================
+function cancelarResumen() {
+  console.group("❌ Cancelar pedido");
+  cantidades = {};
+  cantidadesEnvases = {};
+  filtrarMenu();
+  calcularTotales();
+  const modal = document.getElementById("modal-resumen");
+  if (modal) modal.style.display = "none";
+  console.log("🧹 Pedido cancelado y reiniciado");
+  console.groupEnd();
+}
+window.cancelarResumen = cancelarResumen;
+
 function toggleVentajasGrupo() {
   const bloque = document.getElementById("ventajasGrupo");
+  if (!bloque) return;
   bloque.style.display = bloque.style.display === "none" ? "block" : "none";
 }
 window.toggleVentajasGrupo = toggleVentajasGrupo;
 
 function mostrarDescripcion(descripcion, imagenUrl) {
   console.group("📝 Mostrar descripción del producto");
-  document.getElementById("modal-texto").textContent = descripcion;
-  document.getElementById("modal-imagen").src = imagenUrl || "";
-  document.getElementById("modal-descripcion").style.display = "block";
+  const texto = document.getElementById("modal-texto");
+  const img = document.getElementById("modal-imagen");
+  const modal = document.getElementById("modal-descripcion");
+  if (texto) texto.textContent = descripcion;
+  if (img) img.src = imagenUrl || "";
+  if (modal) modal.style.display = "block";
   console.log("🖼️ Descripción mostrada.");
   console.groupEnd();
 }
 window.mostrarDescripcion = mostrarDescripcion;
 
 document.getElementById("modal-close")?.addEventListener("click", () => {
-  document.getElementById("modal-descripcion").style.display = "none";
+  const modal = document.getElementById("modal-descripcion");
+  if (modal) modal.style.display = "none";
 });
 
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
