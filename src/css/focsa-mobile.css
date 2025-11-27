@@ -1,0 +1,98 @@
+/* FOCSA Mobile Styles */
+
+/* Contenedor principal */
+.menu-container {
+  padding: 8px;
+}
+
+/* Títulos más compactos */
+.titulo-seccion {
+  font-size: 1.2rem;
+  text-align: center;
+  margin: 10px 0;
+}
+
+/* Inputs y selects */
+.form-control,
+input,
+select,
+textarea {
+  width: 100%;
+  max-width: 100%;
+  margin: 6px 0;
+  font-size: 1rem;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* Botones */
+button {
+  width: 100%;
+  margin: 6px 0;
+  padding: 12px;
+  font-size: 1rem;
+  border-radius: 6px;
+}
+
+.btn-secundario {
+  background: #007bff;
+  color: #fff;
+  border: none;
+}
+
+.btn-secundario:hover {
+  background: #0056b3;
+}
+
+/* Productos en columna */
+.producto-lineal {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.producto-derecha {
+  margin-top: 6px;
+}
+
+/* Scrollable menus */
+.scrollable-menu {
+  max-height: 250px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+/* Modales adaptados */
+.modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #fff;
+  width: 95vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+/* Seguimiento en cards */
+.seguimiento-bloque {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
