@@ -539,17 +539,20 @@ document.getElementById("btn-guardar-criterio").addEventListener("click", async 
   }
 
   // Inserción en la tabla criterio_cliente
-  const { error } = await supabase
-    .from("criterio_cliente")
-    .insert([{ pedido_id: pedidoId, criterio }]);
+  // Guardar criterio vía RPC
+const { error } = await supabase.rpc("guardar_criterio_focsa", {
+  p_pedido_id: pedidoId,
+  p_criterio: criterio
+});
 
-  if (error) {
-    console.error("❌ Error al guardar criterio:", error);
-    alert("Ocurrió un error al guardar su opinión. Intente nuevamente.");
-  } else {
-    console.log("✅ Criterio guardado:", criterio);
-    alert("¡Gracias por su opinión!");
-
+if (error) {
+  console.error("❌ Error al guardar criterio:", error);
+  alert("Ocurrió un error al guardar su opinión. Intente nuevamente.");
+} else {
+  console.log("✅ Criterio guardado:", criterio);
+  alert("¡Gracias por su opinión!");
+  // ... resto de tu limpieza y reinicio
+}
     // 🧹 Limpieza total para nuevo pedido
     document.getElementById("bloque-criterio").style.display = "none";
     document.getElementById("criterio").value = "";
