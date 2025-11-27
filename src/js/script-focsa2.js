@@ -342,10 +342,36 @@ function calcularTotales() {
 
 function revisarPedido() {
   console.group("🧾 Vista previa del pedido");
+
+  // 1) Validación de envases: al menos uno requerido siempre
+  const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
+  if (!tieneEnvase) {
+    alert("Debe seleccionar al menos un envase para realizar la entrega.");
+    console.groupEnd();
+    return;
+  }
+
+  // 2) Validación de datos anónimos: si NO hay sesión, exige cliente/piso/apartamento
+  const { data: { user } } = supabase.auth.getUser
+    ? supabase.auth.getUser()
+    : { data: { user: null } };
+
+  if (!user) {
+    const cliente = document.getElementById("pedido-cliente")?.value.trim() || "";
+    const piso = document.getElementById("pedido-piso")?.value.trim() || "";
+    const apartamento = document.getElementById("pedido-apartamento")?.value.trim() || "";
+    if (!cliente || !piso || !apartamento) {
+      alert("Complete nombre, piso y apartamento para continuar.");
+      console.groupEnd();
+      return;
+    }
+  }
+
   const resumen = document.getElementById("contenido-resumen");
   if (!resumen) { console.warn("⚠️ No se encontró contenedor de resumen"); console.groupEnd(); return; }
   resumen.innerHTML = "";
 
+  // Construir resumen de items y total
   const items = [];
   let total = 0;
 
@@ -383,6 +409,13 @@ function revisarPedido() {
 
   const modal = document.getElementById("modal-resumen");
   if (modal) modal.style.display = "block";
+
+  // Deshabilitar "Confirmar y enviar" si algo cambia y rompe la validación
+  const btnConfirmar = modal?.querySelector("button.btn-secundario");
+  if (btnConfirmar) {
+    btnConfirmar.disabled = false; // aquí está habilitado porque ya validamos
+  }
+
   console.groupEnd();
 }
 window.revisarPedido = revisarPedido;
@@ -401,7 +434,7 @@ async function enviarWhatsApp() {
   const telefono = document.getElementById("pedido-telefono")?.value.trim() || "";
   const unirse = !!document.getElementById("unirseGrupo")?.checked;
 
-  // Validación: envase SIEMPRE requerido
+  // Envase requerido
   const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
   if (!tieneEnvase) {
     alert("Debe seleccionar al menos un envase para realizar la entrega.");
@@ -409,13 +442,13 @@ async function enviarWhatsApp() {
     return;
   }
 
-  // Validación de datos del cliente SOLO si NO hay sesión
-  if (!user) {
-    if (!cliente || !piso || !apartamento) {
-      alert("Por favor, complete los datos del cliente (nombre, piso y apartamento).");
-      console.groupEnd();
-      return;
-    }
+  // Datos anónimos requeridos
+  if (!user && (!cliente || !piso || !apartamento)) {
+    alert("Complete nombre, piso y apartamento para continuar.");
+    console.groupEnd();
+    return;
+  }
+
   }
 
   // Construir items y total
