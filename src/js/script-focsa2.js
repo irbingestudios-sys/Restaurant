@@ -589,7 +589,11 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
   const criterio = document.getElementById("criterio")?.value.trim() || "";
   const pedidoId = localStorage.getItem("pedido_id_actual");
 
-  if (!criterio || !pedidoId) { console.warn("⚠️ No hay criterio o pedido activo."); console.groupEnd(); return; }
+  if (!criterio || !pedidoId) {
+    console.warn("⚠️ No hay criterio o pedido activo.");
+    console.groupEnd();
+    return;
+  }
 
   const { error } = await supabase.from("criterio_cliente").insert([{ pedido_id: pedidoId, criterio }]);
   if (error) {
@@ -598,19 +602,34 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
   } else {
     console.log("✅ Criterio guardado:", criterio);
     alert("¡Gracias por su opinión!");
+
+    // Ocultar bloque de criterio
     const bloque = document.getElementById("bloque-criterio");
     if (bloque) bloque.style.display = "none";
+
+    // Limpiar textarea
     const crit = document.getElementById("criterio");
     if (crit) crit.value = "";
-    localStorage.clear(); sessionStorage.clear();
-    cantidades = {}; cantidadesEnvases = {};
-    filtrarMenu(); calcularTotales();
+
+    // Reset total del sistema para nuevo pedido
+    localStorage.clear();
+    sessionStorage.clear();
+    cantidades = {};
+    cantidadesEnvases = {};
+    filtrarMenu();
+    calcularTotales();
+
     const seg = document.getElementById("seguimiento-pedido");
     if (seg) seg.style.display = "none";
+
     const modal = document.getElementById("modal-resumen");
     if (modal) modal.style.display = "none";
+
     const chk = document.getElementById("unirseGrupo");
-    if (chk) chk.checked = false;
+    if (chk) {
+      chk.checked = false;
+    }
+
     console.log("✅ Sistema listo para nuevo pedido");
   }
   console.groupEnd();
@@ -621,13 +640,10 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
 // ======================================================
 function cancelarResumen() {
   console.group("❌ Cancelar pedido");
-  // Reiniciar cantidades
   cantidades = {};
   cantidadesEnvases = {};
-  // Re-renderizar menú y totales
   filtrarMenu();
   calcularTotales();
-  // Cerrar modal de resumen
   const modal = document.getElementById("modal-resumen");
   if (modal) modal.style.display = "none";
   console.log("🧹 Pedido cancelado y reiniciado");
