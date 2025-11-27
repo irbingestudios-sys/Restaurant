@@ -621,10 +621,13 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
 // ======================================================
 function cancelarResumen() {
   console.group("❌ Cancelar pedido");
+  // Reiniciar cantidades
   cantidades = {};
   cantidadesEnvases = {};
+  // Re-renderizar menú y totales
   filtrarMenu();
   calcularTotales();
+  // Cerrar modal de resumen
   const modal = document.getElementById("modal-resumen");
   if (modal) modal.style.display = "none";
   console.log("🧹 Pedido cancelado y reiniciado");
@@ -652,8 +655,11 @@ function mostrarDescripcion(descripcion, imagenUrl) {
 }
 window.mostrarDescripcion = mostrarDescripcion;
 
+// Cerrar modal de descripción
 document.getElementById("modal-close")?.addEventListener("click", () => {
   const modal = document.getElementById("modal-descripcion");
   if (modal) modal.style.display = "none";
 });
+
+// Cerrar modal de resumen con botón ❌
 document.getElementById("modal-close-resumen")?.addEventListener("click", cancelarResumen);
