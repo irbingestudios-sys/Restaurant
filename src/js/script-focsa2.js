@@ -34,11 +34,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (pedidoId) {
-    document.getElementById("seguimiento-pedido").style.display = "block";
+    const segBloque = document.getElementById("seguimiento-pedido");
+    if (segBloque) segBloque.style.display = "block";
   }
   renderizarSeguimientoPedidos();
 
-  // Detectar sesión persistente y autocompletar datos del cliente
+  // Detectar sesión persistente y autocompletar datos del cliente autenticado
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     mostrarClienteUI(user.email);
@@ -48,10 +49,14 @@ document.addEventListener("DOMContentLoaded", async () => {
       .eq("id", user.id)
       .maybeSingle();
     if (!error && clienteData) {
-      document.getElementById("cliente").value = clienteData.usuario || "";
-      document.getElementById("piso").value = clienteData.piso || "";
-      document.getElementById("apartamento").value = clienteData.apartamento || "";
-      document.getElementById("telefono").value = clienteData.telefono || "";
+      const c = document.getElementById("pedido-cliente");
+      const p = document.getElementById("pedido-piso");
+      const a = document.getElementById("pedido-apartamento");
+      const t = document.getElementById("pedido-telefono");
+      if (c) c.value = clienteData.usuario || "";
+      if (p) p.value = clienteData.piso || "";
+      if (a) a.value = clienteData.apartamento || "";
+      if (t) t.value = clienteData.telefono || "";
     }
   } else {
     ocultarClienteUI();
@@ -82,20 +87,26 @@ function ocultarClienteUI() {
 
 // Abrir/cerrar modal cliente (si existen botones)
 document.getElementById("btn-cliente")?.addEventListener("click", () => {
-  document.getElementById("modal-cliente").style.display = "block";
+  const modal = document.getElementById("modal-cliente");
+  if (modal) modal.style.display = "block";
 });
 document.getElementById("modal-close-cliente")?.addEventListener("click", () => {
-  document.getElementById("modal-cliente").style.display = "none";
+  const modal = document.getElementById("modal-cliente");
+  if (modal) modal.style.display = "none";
 });
 
-// Tabs login/registro (si existen tabs)
+// Tabs login/registro
 document.getElementById("tab-login")?.addEventListener("click", () => {
   document.getElementById("login-form").style.display = "block";
   document.getElementById("registro-form").style.display = "none";
+  document.getElementById("tab-login").classList.add("tab-active");
+  document.getElementById("tab-registro").classList.remove("tab-active");
 });
 document.getElementById("tab-registro")?.addEventListener("click", () => {
   document.getElementById("login-form").style.display = "none";
   document.getElementById("registro-form").style.display = "block";
+  document.getElementById("tab-registro").classList.add("tab-active");
+  document.getElementById("tab-login").classList.remove("tab-active");
 });
 
 // Login
@@ -117,10 +128,14 @@ document.getElementById("btn-login")?.addEventListener("click", async () => {
     .eq("id", data.user.id)
     .maybeSingle();
   if (clienteData) {
-    document.getElementById("cliente").value = clienteData.usuario || "";
-    document.getElementById("piso").value = clienteData.piso || "";
-    document.getElementById("apartamento").value = clienteData.apartamento || "";
-    document.getElementById("telefono").value = clienteData.telefono || "";
+    const c = document.getElementById("pedido-cliente");
+    const p = document.getElementById("pedido-piso");
+    const a = document.getElementById("pedido-apartamento");
+    const t = document.getElementById("pedido-telefono");
+    if (c) c.value = clienteData.usuario || "";
+    if (p) p.value = clienteData.piso || "";
+    if (a) a.value = clienteData.apartamento || "";
+    if (t) t.value = clienteData.telefono || "";
   }
 
   document.getElementById("modal-cliente").style.display = "none";
@@ -164,7 +179,7 @@ window.cerrarSesion = async function() {
   toast("✅ Sesión cerrada");
 };
 
-// Histórico de pedidos (cliente autenticado)
+// Histórico (cliente autenticado)
 document.getElementById("btn-historico")?.addEventListener("click", async () => {
   console.group("📜 Histórico");
   const { data: { user } } = await supabase.auth.getUser();
@@ -365,7 +380,8 @@ function revisarPedido() {
     resumen.innerHTML += `<p><strong>Total:</strong> ${total.toFixed(2)} CUP</p>`;
   }
 
-  document.getElementById("modal-resumen").style.display = "block";
+  const modal = document.getElementById("modal-resumen");
+  if (modal) modal.style.display = "block";
   console.groupEnd();
 }
 window.revisarPedido = revisarPedido;
@@ -377,13 +393,13 @@ async function enviarWhatsApp() {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const cliente = document.getElementById("cliente")?.value.trim() || "";
-  const piso = document.getElementById("piso")?.value.trim() || "";
-  const apartamento = document.getElementById("apartamento")?.value.trim() || "";
-  const telefono = document.getElementById("telefono")?.value.trim() || "";
+  const cliente = document.getElementById("pedido-cliente")?.value.trim() || "";
+  const piso = document.getElementById("pedido-piso")?.value.trim() || "";
+  const apartamento = document.getElementById("pedido-apartamento")?.value.trim() || "";
+  const telefono = document.getElementById("pedido-telefono")?.value.trim() || "";
   const unirse = !!document.getElementById("unirseGrupo")?.checked;
 
-  // Validación: envase siempre requerido
+  // Validación: envase SIEMPRE requerido
   const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
   if (!tieneEnvase) {
     alert("Debe seleccionar al menos un envase para realizar la entrega.");
@@ -509,7 +525,8 @@ async function verificarIntegridadPedido(pedidoId) {
     btnEntregar.disabled = estado !== "entregado";
     btnEntregar.onclick = () => {
       if (estado === "entregado") {
-        document.getElementById("bloque-criterio").style.display = "block";
+        const bloque = document.getElementById("bloque-criterio");
+        if (bloque) bloque.style.display = "block";
       }
     };
   }
@@ -577,8 +594,10 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
   } else {
     console.log("✅ Criterio guardado:", criterio);
     alert("¡Gracias por su opinión!");
-    document.getElementById("bloque-criterio").style.display = "none";
-    document.getElementById("criterio").value = "";
+    const bloque = document.getElementById("bloque-criterio");
+    if (bloque) bloque.style.display = "none";
+    const crit = document.getElementById("criterio");
+    if (crit) crit.value = "";
     localStorage.clear(); sessionStorage.clear();
     cantidades = {}; cantidadesEnvases = {};
     filtrarMenu(); calcularTotales();
@@ -586,11 +605,6 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
     if (seg) seg.style.display = "none";
     const modal = document.getElementById("modal-resumen");
     if (modal) modal.style.display = "none";
-    // Limpiar datos del cliente en UI (solo si deseas)
-    // document.getElementById("cliente").value = "";
-    // document.getElementById("piso").value = "";
-    // document.getElementById("apartamento").value = "";
-    // document.getElementById("telefono").value = "";
     document.getElementById("unirseGrupo").checked = false;
     console.log("✅ Sistema listo para nuevo pedido");
   }
@@ -637,4 +651,4 @@ document.getElementById("modal-close")?.addEventListener("click", () => {
   const modal = document.getElementById("modal-descripcion");
   if (modal) modal.style.display = "none";
 });
-
+document.getElementById("modal-close-resumen")?.addEventListener("click", cancelarResumen);
