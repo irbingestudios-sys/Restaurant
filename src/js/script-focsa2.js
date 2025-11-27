@@ -337,6 +337,7 @@ window.enviarPedido = async () => {
 
   const items = [];
   let total = 0;
+
   for (const nombre in cantidades) {
     const cant = cantidades[nombre];
     const item = menu.find(p => p.nombre === nombre);
@@ -346,6 +347,7 @@ window.enviarPedido = async () => {
       total += subtotal;
     }
   }
+
   for (const nombre in cantidadesEnvases) {
     const cant = cantidadesEnvases[nombre];
     const item = envases.find(p => p.nombre === nombre);
@@ -379,7 +381,23 @@ window.enviarPedido = async () => {
   }
 
   if (error) {
-    console.error("❌ Error RPC:",
+    console.error("❌ Error RPC:", error);
+    return;
+  }
+
+  const pedidoId = data?.[0]?.pedido_id;
+  if (!pedidoId) return;
+
+  localStorage.setItem("pedido_id_actual", pedidoId);
+  const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
+  historial.push(pedidoId);
+  localStorage.setItem("historial_pedidos", JSON.stringify(historial));
+
+  renderizarSeguimientoPedidos();
+  mostrarSeguimientoPedido();
+
+  console.log("📥 Pedido registrado con ID:", pedidoId);
+};
 // ======================================================
 // 8. Seguimiento de pedidos
 // ======================================================
