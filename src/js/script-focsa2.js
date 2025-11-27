@@ -8,7 +8,6 @@
 // ======================================================
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// Reemplaza TU_API_KEY_PUBLICA por tu clave anónima pública de Supabase
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
@@ -39,7 +38,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
   renderizarSeguimientoPedidos();
 
-  // Detectar sesión persistente y autocompletar datos del cliente autenticado
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     mostrarClienteUI(user.email);
@@ -48,7 +46,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       .select("usuario, piso, apartamento, telefono")
       .eq("id", user.id)
       .maybeSingle();
-
     if (!error && clienteData) {
       document.getElementById("pedido-cliente").value = clienteData.usuario || "";
       document.getElementById("pedido-piso").value = clienteData.piso || "";
@@ -61,6 +58,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   console.groupEnd();
 });
+
 // ======================================================
 // 3. CLIENTE: login/registro, sesión, histórico
 // ======================================================
@@ -118,21 +116,16 @@ document.getElementById("btn-login")?.addEventListener("click", async () => {
 
   mostrarClienteUI(data.user.email);
 
-  // Autocompletar datos del cliente autenticado
   const { data: clienteData } = await supabase
     .from("clientes_focsa")
     .select("usuario, piso, apartamento, telefono")
     .eq("id", data.user.id)
     .maybeSingle();
   if (clienteData) {
-    const c = document.getElementById("pedido-cliente");
-    const p = document.getElementById("pedido-piso");
-    const a = document.getElementById("pedido-apartamento");
-    const t = document.getElementById("pedido-telefono");
-    if (c) c.value = clienteData.usuario || "";
-    if (p) p.value = clienteData.piso || "";
-    if (a) a.value = clienteData.apartamento || "";
-    if (t) t.value = clienteData.telefono || "";
+    document.getElementById("pedido-cliente").value = clienteData.usuario || "";
+    document.getElementById("pedido-piso").value = clienteData.piso || "";
+    document.getElementById("pedido-apartamento").value = clienteData.apartamento || "";
+    document.getElementById("pedido-telefono").value = clienteData.telefono || "";
   }
 
   document.getElementById("modal-cliente").style.display = "none";
@@ -176,7 +169,7 @@ window.cerrarSesion = async function() {
   toast("✅ Sesión cerrada");
 };
 
-// Histórico (cliente autenticado)
+// Histórico
 document.getElementById("btn-historico")?.addEventListener("click", async () => {
   console.group("📜 Histórico");
   const { data: { user } } = await supabase.auth.getUser();
@@ -197,12 +190,19 @@ function renderHistorico(pedidos) {
   const contHistorico = document.getElementById("historico-pedidos");
   if (!contHistorico) return;
   contHistorico.innerHTML = "<h3>📦 Histórico de Pedidos</h3>";
-  if (!pedidos.length) { contHistorico.innerHTML += "<p>No tiene pedidos registrados.</p>"; return; }
+  if (!pedidos.length) {
+    contHistorico.innerHTML += "<p>No tiene pedidos registrados.</p>";
+    return;
+  }
   pedidos.forEach(p => {
-    contHistorico.innerHTML += `<p>Fecha: ${new Date(p.fecha).toLocaleString()} | Total: ${p.total} CUP | Estado: ${p.estado_actual || "—"}</p>`;
+    contHistorico.innerHTML += `<p>
+      Fecha: ${new Date(p.fecha).toLocaleString()} |
+      Total: ${p.total} CUP |
+      Estado: ${p.estado_actual || "—"}
+    </p>`;
   });
 }
-
+    
 // ======================================================
 // 4. Carga de menú y envases
 // ======================================================
@@ -246,6 +246,7 @@ async function cargarEnvases() {
   renderEnvases(envases);
   console.groupEnd();
 }
+
 // ======================================================
 // 5. Renderizado y filtros
 // ======================================================
@@ -345,7 +346,6 @@ function revisarPedido() {
   if (!resumen) { console.warn("⚠️ No se encontró contenedor de resumen"); console.groupEnd(); return; }
   resumen.innerHTML = "";
 
-  // Construir resumen de items y total
   const items = [];
   let total = 0;
 
@@ -386,6 +386,7 @@ function revisarPedido() {
   console.groupEnd();
 }
 window.revisarPedido = revisarPedido;
+
 // ======================================================
 // 7. Envío de pedido (WhatsApp + RPC anon/auth)
 // ======================================================
@@ -420,6 +421,7 @@ async function enviarWhatsApp() {
   // Construir items y total
   const items = [];
   let total = 0;
+
   for (const nombre in cantidades) {
     const cant = cantidades[nombre];
     const item = menu.find(p => p.nombre === nombre);
@@ -460,10 +462,20 @@ async function enviarWhatsApp() {
     }));
   }
 
-  if (error) { console.error("❌ Error RPC:", error); console.groupEnd(); return; }
+  if (error) {
+    console.error("❌ Error RPC:", error);
+    alert("Ocurrió un error registrando su pedido. Intente nuevamente.");
+    console.groupEnd();
+    return;
+  }
 
-  const pedidoId = data?.[0]?.pedido_id;
-  if (!pedidoId) { console.warn("⚠️ No se devolvió pedido_id"); console.groupEnd(); return; }
+  const pedidoId = Array.isArray(data) ? data[0]?.pedido_id : data?.pedido_id;
+  if (!pedidoId) {
+    console.warn("⚠️ No se devolvió pedido_id");
+    alert("No se pudo confirmar el pedido. Intente nuevamente.");
+    console.groupEnd();
+    return;
+  }
 
   // Guardar en localStorage y actualizar seguimiento
   localStorage.setItem("pedido_id_actual", pedidoId);
@@ -484,11 +496,12 @@ ${grupoTexto}
 ${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}
 Total: ${total.toFixed(2)} CUP`;
 
-  const url = `https://wa.me/+5350977340?text=${encodeURIComponent(mensaje)}`;
+  const url = `https://wa.me/5350977340?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
 
   // Reset UI y cantidades
-  document.getElementById("modal-resumen")?.style.display = "none";
+  const modalResumen = document.getElementById("modal-resumen");
+  if (modalResumen) modalResumen.style.display = "none";
   cantidades = {};
   cantidadesEnvases = {};
   filtrarMenu();
@@ -518,7 +531,11 @@ async function verificarIntegridadPedido(pedidoId) {
     .eq("pedido_id", pedidoId)
     .maybeSingle();
 
-  if (error || !data) { console.warn("⚠️ Error o pedido no encontrado"); console.groupEnd(); return; }
+  if (error || !data) {
+    console.warn("⚠️ Error o pedido no encontrado", error);
+    console.groupEnd();
+    return;
+  }
 
   const estado = data.estado_actual || "⏳ En espera";
   const estadoEl = document.getElementById("estado-actual");
@@ -603,11 +620,9 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
     console.log("✅ Criterio guardado:", criterio);
     alert("¡Gracias por su opinión!");
 
-    // Ocultar bloque de criterio
     const bloque = document.getElementById("bloque-criterio");
     if (bloque) bloque.style.display = "none";
 
-    // Limpiar textarea
     const crit = document.getElementById("criterio");
     if (crit) crit.value = "";
 
@@ -626,9 +641,7 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
     if (modal) modal.style.display = "none";
 
     const chk = document.getElementById("unirseGrupo");
-    if (chk) {
-      chk.checked = false;
-    }
+    if (chk) { chk.checked = false; }
 
     console.log("✅ Sistema listo para nuevo pedido");
   }
@@ -671,11 +684,8 @@ function mostrarDescripcion(descripcion, imagenUrl) {
 }
 window.mostrarDescripcion = mostrarDescripcion;
 
-// Cerrar modal de descripción
 document.getElementById("modal-close")?.addEventListener("click", () => {
   const modal = document.getElementById("modal-descripcion");
   if (modal) modal.style.display = "none";
 });
-
-// Cerrar modal de resumen con botón ❌
 document.getElementById("modal-close-resumen")?.addEventListener("click", cancelarResumen);
