@@ -221,11 +221,133 @@ window.revisarPedido = revisarPedido;
 // ======================================================
 // 7. Envío de pedido (WhatsApp y RPC)
 // ======================================================
-async function enviarWhatsApp() { /* igual que tu versión */ }
+
+async function enviarWhatsApp() {
+  console.group("📲 Enviar pedido por WhatsApp");
+
+  const cliente = document.getElementById("cliente").value.trim();
+  const piso = document.getElementById("piso").value.trim();
+  const apartamento = document.getElementById("apartamento").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const unirse = document.getElementById("unirseGrupo").checked;
+
+  // Validaciones mínimas
+  if (!cliente || !piso || !apartamento) {
+    alert("Por favor, complete los datos del cliente antes de enviar.");
+    console.warn("❌ Datos incompletos para WhatsApp.");
+    console.groupEnd();
+    return;
+  }
+
+  const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
+  if (!tieneEnvase) {
+    alert("Debe seleccionar al menos un envase para realizar la entrega.");
+    console.warn("❌ Pedido sin envases.");
+    console.groupEnd();
+    return;
+  }
+
+  // Construir items y total
+  const items = [];
+  let total = 0;
+
+  for (const nombre in cantidades) {
+    const cant = cantidades[nombre];
+    const item = menu.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      const subtotal = cant * item.precio;
+      items.push({ nombre: item.nombre, cantidad: cant, precio: item.precio, subtotal });
+      total += subtotal;
+    }
+  }
+
+  for (const nombre in cantidadesEnvases) {
+    const cant = cantidadesEnvases[nombre];
+    const item = envases.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      const subtotal = cant * item.precio;
+      items.push({ nombre: item.nombre, cantidad: cant, precio: item.precio, subtotal });
+      total += subtotal;
+    }
+  }
+
+  // Detectar sesión
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let data, error;
+  if (user) {
+    // Cliente autenticado → fidelización
+    ({ data, error } = await supabase.rpc("registrar_pedido_focsa_auth", {
+      p_cliente_id: user.id,
+      p_total: total,
+      p_items: items,
+      p_canal: "whatsapp"
+    }));
+  } else {
+    // Cliente anónimo → compra puntual
+    ({ data, error } = await supabase.rpc("registrar_pedido_focsa_anon", {
+      p_cliente: cliente,
+      p_piso: piso,
+      p_apartamento: apartamento,
+      p_telefono: telefono || null,
+      p_unirse_grupo: unirse,
+      p_items: items,
+      p_canal: "whatsapp"
+    }));
+  }
+
+  if (error) {
+    console.error("❌ Error RPC:", error);
+    console.groupEnd();
+    return;
+  }
+
+  const pedidoId = data?.[0]?.pedido_id;
+  if (!pedidoId) {
+    console.warn("⚠️ No se devolvió pedido_id");
+    console.groupEnd();
+    return;
+  }
+
+  localStorage.setItem("pedido_id_actual", pedidoId);
+  const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
+  historial.push(pedidoId);
+  localStorage.setItem("historial_pedidos", JSON.stringify(historial));
+
+  renderizarSeguimientoPedidos();
+
+  console.log("📥 Pedido registrado con ID:", pedidoId);
+
+  // Mensaje WhatsApp
+  const grupoTexto = unirse ? "✅ Desea unirse al grupo" : "❌ No desea unirse al grupo";
+  const mensaje = `🧾 Pedido FOCSA
+Cliente: ${cliente}
+Piso: ${piso}
+Apartamento: ${apartamento}
+Teléfono: ${telefono || "—"}
+${grupoTexto}
+${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}
+Total: ${total.toFixed(2)} CUP`;
+
+  const url = `https://wa.me/+5350977340?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, "_blank");
+
+  document.getElementById("modal-resumen").style.display = "none";
+  cantidades = {};
+  cantidadesEnvases = {};
+  filtrarMenu();
+  calcularTotales();
+  mostrarSeguimientoPedido();
+
+  console.groupEnd();
+}
+
 window.enviarWhatsApp = enviarWhatsApp;
 
-window.enviarPedido = async () => { /* igual que tu versión */ };
-
+window.enviarPedido = async () => {
+  // Puedes copiar la misma lógica que enviarWhatsApp,
+  // pero cambiando p_canal: "rpc" y sin abrir WhatsApp.
+};
 // ======================================================
 // 8. Seguimiento de pedidos
 // ======================================================
