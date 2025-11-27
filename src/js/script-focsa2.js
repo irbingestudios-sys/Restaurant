@@ -651,3 +651,5 @@ document.getElementById("modal-close")?.addEventListener("click", () => {
   if (modal) modal.style.display = "none";
 });
 document.getElementById("modal-close-resumen")?.addEventListener("click", cancelarResumen);
+  });
+
