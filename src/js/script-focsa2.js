@@ -21,7 +21,7 @@ let envases = [];
 let cantidades = {};
 let cantidadesEnvases = {};
 
-// ======================================================
+/ ======================================================
 // 2. Inicialización del módulo
 // ======================================================
 document.addEventListener("DOMContentLoaded", async () => {
@@ -43,20 +43,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     mostrarClienteUI(user.email);
-    const { data: clienteData, error } = await supabase
+    const { data: clienteData } = await supabase
       .from("clientes_focsa")
       .select("usuario, piso, apartamento, telefono")
       .eq("id", user.id)
       .maybeSingle();
-    if (!error && clienteData) {
-      const c = document.getElementById("pedido-cliente");
-      const p = document.getElementById("pedido-piso");
-      const a = document.getElementById("pedido-apartamento");
-      const t = document.getElementById("pedido-telefono");
-      if (c) c.value = clienteData.usuario || "";
-      if (p) p.value = clienteData.piso || "";
-      if (a) a.value = clienteData.apartamento || "";
-      if (t) t.value = clienteData.telefono || "";
+    if (clienteData) {
+      document.getElementById("pedido-cliente").value = clienteData.usuario || "";
+      document.getElementById("pedido-piso").value = clienteData.piso || "";
+      document.getElementById("pedido-apartamento").value = clienteData.apartamento || "";
+      document.getElementById("pedido-telefono").value = clienteData.telefono || "";
     }
   } else {
     ocultarClienteUI();
@@ -64,6 +60,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   console.groupEnd();
 });
+
 // ======================================================
 // 3. CLIENTE: login/registro, sesión, histórico
 // ======================================================
@@ -393,6 +390,7 @@ async function enviarWhatsApp() {
 
   const { data: { user } } = await supabase.auth.getUser();
 
+  // ⚠️ Usar los IDs correctos del HTML
   const cliente = document.getElementById("pedido-cliente")?.value.trim() || "";
   const piso = document.getElementById("pedido-piso")?.value.trim() || "";
   const apartamento = document.getElementById("pedido-apartamento")?.value.trim() || "";
@@ -403,16 +401,17 @@ async function enviarWhatsApp() {
   const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
   if (!tieneEnvase) {
     alert("Debe seleccionar al menos un envase para realizar la entrega.");
-    console.groupEnd(); return;
+    console.groupEnd();
+    return;
   }
 
   // Validación de datos del cliente SOLO si NO hay sesión
   if (!user) {
     if (!cliente || !piso || !apartamento) {
-      alert("Por favor, complete los datos del cliente (cliente, piso y apartamento).");
-      console.groupEnd(); return;
+      alert("Por favor, complete los datos del cliente (nombre, piso y apartamento).");
+      console.groupEnd();
+      return;
     }
-  }
 
   // Construir items y total
   const items = [];
