@@ -303,7 +303,7 @@ async function enviarWhatsApp() {
     }
   }
 
-  const { data, error } = await supabase.rpc("registrar_pedido_focsa_anon", {
+  const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
     p_cliente: cliente,
     p_piso: piso,
     p_apartamento: apartamento,
