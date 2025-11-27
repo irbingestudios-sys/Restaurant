@@ -551,9 +551,8 @@ if (error) {
 } else {
   console.log("✅ Criterio guardado:", criterio);
   alert("¡Gracias por su opinión!");
-  // ... resto de tu limpieza y reinicio
-}
-    // 🧹 Limpieza total para nuevo pedido
+
+  // 🧹 Limpieza total para nuevo pedido
     document.getElementById("bloque-criterio").style.display = "none";
     document.getElementById("criterio").value = "";
 
