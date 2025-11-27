@@ -8,7 +8,7 @@
 // ======================================================
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-// TODO: Reemplaza TU_API_KEY_PUBLICA por tu clave anónima pública de Supabase
+// Reemplaza TU_API_KEY_PUBLICA por tu clave anónima pública de Supabase
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
@@ -43,12 +43,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   const { data: { user } } = await supabase.auth.getUser();
   if (user) {
     mostrarClienteUI(user.email);
-    const { data: clienteData } = await supabase
+    const { data: clienteData, error } = await supabase
       .from("clientes_focsa")
       .select("usuario, piso, apartamento, telefono")
       .eq("id", user.id)
       .maybeSingle();
-    if (clienteData) {
+
+    if (!error && clienteData) {
       document.getElementById("pedido-cliente").value = clienteData.usuario || "";
       document.getElementById("pedido-piso").value = clienteData.piso || "";
       document.getElementById("pedido-apartamento").value = clienteData.apartamento || "";
@@ -60,7 +61,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   console.groupEnd();
 });
-
 // ======================================================
 // 3. CLIENTE: login/registro, sesión, histórico
 // ======================================================
@@ -82,7 +82,7 @@ function ocultarClienteUI() {
   if (btnHistorico) btnHistorico.style.display = "none";
 }
 
-// Abrir/cerrar modal cliente (si existen botones)
+// Abrir/cerrar modal cliente
 document.getElementById("btn-cliente")?.addEventListener("click", () => {
   const modal = document.getElementById("modal-cliente");
   if (modal) modal.style.display = "block";
@@ -118,7 +118,7 @@ document.getElementById("btn-login")?.addEventListener("click", async () => {
 
   mostrarClienteUI(data.user.email);
 
-  // Autocompletar datos del cliente
+  // Autocompletar datos del cliente autenticado
   const { data: clienteData } = await supabase
     .from("clientes_focsa")
     .select("usuario, piso, apartamento, telefono")
@@ -256,20 +256,24 @@ function renderGrupo(lista, contenedorId, destinoCantidades) {
   contenedor.innerHTML = "";
 
   lista.forEach(item => {
+    const safeNombre = String(item.nombre);
+    const safePrecio = Number(item.precio);
+
     contenedor.innerHTML += `
       <div class="producto-lineal">
-        <div class="producto-izquierda"><strong>${item.nombre}</strong></div>
+        <div class="producto-izquierda"><strong>${safeNombre}</strong></div>
         <div class="producto-derecha">
-          <span>${item.precio} CUP</span>
-          <input type="number" min="0" value="${destinoCantidades[item.nombre] || 0}"
-          data-name="${item.nombre}" data-price="${item.precio}" />
+          <span>${safePrecio} CUP</span>
+          <input type="number" min="0" value="${destinoCantidades[safeNombre] || 0}"
+          data-name="${safeNombre}" data-price="${safePrecio}" />
         </div>
       </div>`;
   });
 
   contenedor.querySelectorAll("input[type='number']").forEach(input => {
     input.addEventListener("input", () => {
-      destinoCantidades[input.dataset.name] = parseInt(input.value) || 0;
+      const val = parseInt(input.value, 10);
+      destinoCantidades[input.dataset.name] = Number.isNaN(val) ? 0 : val;
       calcularTotales();
     });
   });
@@ -390,7 +394,6 @@ async function enviarWhatsApp() {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // ⚠️ Usar los IDs correctos del HTML
   const cliente = document.getElementById("pedido-cliente")?.value.trim() || "";
   const piso = document.getElementById("pedido-piso")?.value.trim() || "";
   const apartamento = document.getElementById("pedido-apartamento")?.value.trim() || "";
@@ -412,6 +415,7 @@ async function enviarWhatsApp() {
       console.groupEnd();
       return;
     }
+  }
 
   // Construir items y total
   const items = [];
@@ -483,8 +487,8 @@ Total: ${total.toFixed(2)} CUP`;
   const url = `https://wa.me/+5350977340?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
 
-  // Reset
-  document.getElementById("modal-resumen").style.display = "none";
+  // Reset UI y cantidades
+  document.getElementById("modal-resumen")?.style.display = "none";
   cantidades = {};
   cantidadesEnvases = {};
   filtrarMenu();
@@ -502,6 +506,7 @@ window.enviarWhatsApp = enviarWhatsApp;
 function iniciarSeguimiento() {
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (!pedidoId) return;
+  // Polling simple cada 10s
   setInterval(() => verificarIntegridadPedido(pedidoId), 10000);
 }
 
@@ -604,7 +609,8 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
     if (seg) seg.style.display = "none";
     const modal = document.getElementById("modal-resumen");
     if (modal) modal.style.display = "none";
-    document.getElementById("unirseGrupo").checked = false;
+    const chk = document.getElementById("unirseGrupo");
+    if (chk) chk.checked = false;
     console.log("✅ Sistema listo para nuevo pedido");
   }
   console.groupEnd();
@@ -651,5 +657,3 @@ document.getElementById("modal-close")?.addEventListener("click", () => {
   if (modal) modal.style.display = "none";
 });
 document.getElementById("modal-close-resumen")?.addEventListener("click", cancelarResumen);
-  });
-
