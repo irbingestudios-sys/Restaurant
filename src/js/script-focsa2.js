@@ -21,7 +21,7 @@ let envases = [];
 let cantidades = {};
 let cantidadesEnvases = {};
 
-/ ======================================================
+// ======================================================
 // 2. Inicialización del módulo
 // ======================================================
 document.addEventListener("DOMContentLoaded", async () => {
