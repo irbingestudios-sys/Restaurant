@@ -5,18 +5,18 @@
 // │ y fidelización integrado                     │
 // └───────────────────────────────────────────────┘
 
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
 // ======================================================
 // 1. Inicialización Supabase
 // ======================================================
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
 );
+
 window.supabase = supabase;
 
-// Variables globales
 let menu = [];
 let envases = [];
 let cantidades = {};
@@ -167,9 +167,25 @@ function renderHistorico(pedidos) {
 async function cargarMenuEspecial() {
   const { data, error } = await supabase.rpc("obtener_menu_focsa");
   if (error) return console.error("❌ Error al cargar menú:", error);
+
   menu = data || [];
   renderMenuEspecial(menu);
+
+  // 🔥 Bloque restaurado para llenar el filtro
+  const filtro = document.getElementById("filtro");
+  filtro.innerHTML = '<option value="todos">Todas</option>';
+
+  const categoriasUnicas = [...new Set(menu.map(item => item.categoria))];
+  if (!categoriasUnicas.includes("Envases")) categoriasUnicas.push("Envases");
+
+  categoriasUnicas.forEach(cat => {
+    const opcion = document.createElement("option");
+    opcion.value = cat;
+    opcion.textContent = cat;
+    filtro.appendChild(opcion);
+  });
 }
+
 async function cargarEnvases() {
   const { data, error } = await supabase
     .from("menu_item")
@@ -178,11 +194,11 @@ async function cargarEnvases() {
     .eq("disponible", true)
     .gt("stock", 0)
     .order("precio", { ascending: true });
+
   if (error) return console.error("❌ Error al cargar envases:", error);
   envases = data || [];
   renderEnvases(envases);
 }
-
 // ======================================================
 // 5. Renderizado y filtros
 // ======================================================
@@ -221,36 +237,25 @@ window.revisarPedido = revisarPedido;
 // ======================================================
 // 7. Envío de pedido (WhatsApp y RPC)
 // ======================================================
-
 async function enviarWhatsApp() {
-  console.group("📲 Enviar pedido por WhatsApp");
-
   const cliente = document.getElementById("cliente").value.trim();
   const piso = document.getElementById("piso").value.trim();
   const apartamento = document.getElementById("apartamento").value.trim();
   const telefono = document.getElementById("telefono").value.trim();
   const unirse = document.getElementById("unirseGrupo").checked;
 
-  // Validaciones mínimas
   if (!cliente || !piso || !apartamento) {
     alert("Por favor, complete los datos del cliente antes de enviar.");
-    console.warn("❌ Datos incompletos para WhatsApp.");
-    console.groupEnd();
     return;
   }
-
   const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
   if (!tieneEnvase) {
     alert("Debe seleccionar al menos un envase para realizar la entrega.");
-    console.warn("❌ Pedido sin envases.");
-    console.groupEnd();
     return;
   }
 
-  // Construir items y total
   const items = [];
   let total = 0;
-
   for (const nombre in cantidades) {
     const cant = cantidades[nombre];
     const item = menu.find(p => p.nombre === nombre);
@@ -260,7 +265,6 @@ async function enviarWhatsApp() {
       total += subtotal;
     }
   }
-
   for (const nombre in cantidadesEnvases) {
     const cant = cantidadesEnvases[nombre];
     const item = envases.find(p => p.nombre === nombre);
@@ -271,12 +275,10 @@ async function enviarWhatsApp() {
     }
   }
 
-  // Detectar sesión
   const { data: { user } } = await supabase.auth.getUser();
-
   let data, error;
+
   if (user) {
-    // Cliente autenticado → fidelización
     ({ data, error } = await supabase.rpc("registrar_pedido_focsa_auth", {
       p_cliente_id: user.id,
       p_total: total,
@@ -284,7 +286,6 @@ async function enviarWhatsApp() {
       p_canal: "whatsapp"
     }));
   } else {
-    // Cliente anónimo → compra puntual
     ({ data, error } = await supabase.rpc("registrar_pedido_focsa_anon", {
       p_cliente: cliente,
       p_piso: piso,
@@ -298,16 +299,11 @@ async function enviarWhatsApp() {
 
   if (error) {
     console.error("❌ Error RPC:", error);
-    console.groupEnd();
     return;
   }
 
   const pedidoId = data?.[0]?.pedido_id;
-  if (!pedidoId) {
-    console.warn("⚠️ No se devolvió pedido_id");
-    console.groupEnd();
-    return;
-  }
+  if (!pedidoId) return;
 
   localStorage.setItem("pedido_id_actual", pedidoId);
   const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
@@ -316,9 +312,6 @@ async function enviarWhatsApp() {
 
   renderizarSeguimientoPedidos();
 
-  console.log("📥 Pedido registrado con ID:", pedidoId);
-
-  // Mensaje WhatsApp
   const grupoTexto = unirse ? "✅ Desea unirse al grupo" : "❌ No desea unirse al grupo";
   const mensaje = `🧾 Pedido FOCSA
 Cliente: ${cliente}
@@ -331,23 +324,62 @@ Total: ${total.toFixed(2)} CUP`;
 
   const url = `https://wa.me/+5350977340?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
-
-  document.getElementById("modal-resumen").style.display = "none";
-  cantidades = {};
-  cantidadesEnvases = {};
-  filtrarMenu();
-  calcularTotales();
-  mostrarSeguimientoPedido();
-
-  console.groupEnd();
 }
 
 window.enviarWhatsApp = enviarWhatsApp;
 
 window.enviarPedido = async () => {
-  // Puedes copiar la misma lógica que enviarWhatsApp,
-  // pero cambiando p_canal: "rpc" y sin abrir WhatsApp.
-};
+  const cliente = document.getElementById("cliente").value.trim();
+  const piso = document.getElementById("piso").value.trim();
+  const apartamento = document.getElementById("apartamento").value.trim();
+  const telefono = document.getElementById("telefono").value.trim();
+  const unirse = document.getElementById("unirseGrupo").checked;
+
+  const items = [];
+  let total = 0;
+  for (const nombre in cantidades) {
+    const cant = cantidades[nombre];
+    const item = menu.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      const subtotal = cant * item.precio;
+      items.push({ nombre: item.nombre, cantidad: cant, precio: item.precio, subtotal });
+      total += subtotal;
+    }
+  }
+  for (const nombre in cantidadesEnvases) {
+    const cant = cantidadesEnvases[nombre];
+    const item = envases.find(p => p.nombre === nombre);
+    if (item && cant > 0) {
+      const subtotal = cant * item.precio;
+      items.push({ nombre: item.nombre, cantidad: cant, precio: item.precio, subtotal });
+      total += subtotal;
+    }
+  }
+
+  const { data: { user } } = await supabase.auth.getUser();
+  let data, error;
+
+  if (user) {
+    ({ data, error } = await supabase.rpc("registrar_pedido_focsa_auth", {
+      p_cliente_id: user.id,
+      p_total: total,
+      p_items: items,
+      p_canal: "rpc"
+    }));
+  } else {
+    ({ data, error } = await supabase.rpc("registrar_pedido_focsa_anon", {
+      p_cliente: cliente,
+      p_piso: piso,
+      p_apartamento: apartamento,
+      p_telefono: telefono || null,
+      p_unirse_grupo: unirse,
+      p_items: items,
+      p_canal: "rpc"
+    }));
+  }
+
+  if (error) {
+    console.error("❌ Error RPC:",
 // ======================================================
 // 8. Seguimiento de pedidos
 // ======================================================
