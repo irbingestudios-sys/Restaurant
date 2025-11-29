@@ -1,0 +1,85 @@
+/* ┌────────────────────────────────────────────────────────────┐
+   │ Módulo: Usuarios y Roles                                   │
+   │ Archivo: usuarios.css                                      │
+   │ Descripción: Estilos específicos para el módulo de usuarios│
+   │ Autor: Irbing Brizuela                                     │
+   │ Fecha: 2025-11-28                                          │
+   └──────────────────────────────────────────────────────────── */
+
+/* Contenedor principal */
+.usuarios-container {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 640px;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+/* Secciones */
+.usuarios-container section {
+  margin-top: 2rem;
+  text-align: left;
+}
+
+/* Títulos */
+.usuarios-container h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: var(--color-primario);
+}
+
+/* Formularios */
+.usuarios-container form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Selects */
+.usuarios-container select {
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+/* Listas de inventario */
+#lista-permisos, #lista-roles {
+  margin-top: 1rem;
+  padding-left: 1.2rem;
+}
+
+#lista-permisos li,
+#lista-roles li {
+  margin-bottom: 0.5rem;
+  color: var(--color-primario);
+}
+
+/* Logs */
+.log {
+  font-family: Consolas, monospace;
+  background: #f9f9f9;
+  border: 1px dashed #ccc;
+  padding: 1rem;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 1rem;
+}
+
+.log .ok { color: #2ecc71; }
+.log .warn { color: var(--color-acento); }
+.log .err { color: var(--color-error); }
+
+/* Responsividad */
+@media (max-width: 480px) {
+  .usuarios-container {
+    padding: 1.5rem;
+  }
+  .usuarios-container h2 {
+    font-size: 1.1rem;
+  }
+}
