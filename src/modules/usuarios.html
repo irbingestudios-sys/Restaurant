@@ -83,6 +83,23 @@
       <ul id="lista-roles"></ul>
     </section>
 
+    <!-- Listado de usuarios -->
+    <section id="lista-usuarios">
+      <h2>👥 Usuarios registrados</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Activo</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="usuarios-body"></tbody>
+      </table>
+    </section>
+
     <!-- Logs -->
     <section id="logs">
       <h2>📝 Logs</h2>
@@ -91,10 +108,55 @@
     </section>
   </main>
 
-  <!-- Librería Supabase primero -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <!-- Modal editar usuario -->
+  <div id="modal-editar" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Editar usuario</h3>
+      <form>
+        <label for="edit-nombre">Nombre</label>
+        <input type="text" id="edit-nombre" />
 
-  <!-- Script del módulo después -->
+        <label for="edit-correo">Correo</label>
+        <input type="email" id="edit-correo" />
+
+        <label for="edit-rol">Rol</label>
+        <select id="edit-rol">
+          <option value="super_admin">super_admin</option>
+          <option value="admin">admin</option>
+          <option value="gerente">gerente</option>
+          <option value="dependiente">dependiente</option>
+          <option value="cliente">cliente</option>
+          <option value="cocina">cocina</option>
+          <option value="repartidor">repartidor</option>
+        </select>
+
+        <label for="edit-activo">Activo</label>
+        <select id="edit-activo">
+          <option value="true">Sí</option>
+          <option value="false">No</option>
+        </select>
+
+        <button id="btnGuardarCambios">Guardar cambios</button>
+        <button id="btnCerrarModal">Cancelar</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal confirmación eliminación -->
+  <div id="modal-confirmar" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Confirmar eliminación</h3>
+      <p>¿Estás seguro de que deseas eliminar este usuario?</p>
+      <div class="modal-actions">
+        <button id="btnConfirmarEliminar">🗑️ Sí, eliminar</button>
+        <button id="btnCancelarEliminar" class="btn-secundario">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+  <!-- Script del módulo -->
   <script type="module" src="../js/usuarios.js"></script>
 </body>
 </html>
