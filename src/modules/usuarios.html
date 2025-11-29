@@ -1,60 +1,97 @@
-<main class="admin-container">
-  <img src="../assets/logo.png" alt="Logo del sistema" class="logo" />
-  <h1>👤 Módulo de Usuarios y Roles</h1>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Módulo de Usuarios y Roles</title>
+  <link rel="icon" href="../../favicon.ico" />
 
-  <!-- Crear usuario (solo super_admin) -->
-  <section id="crear-usuario">
-    <h2>➕ Crear usuario</h2>
-    <form>
-      <label for="nombre">Nombre</label>
-      <input type="text" id="nombre" placeholder="Nombre completo" />
+  <!-- Estilos comunes -->
+  <link rel="stylesheet" href="../css/styles-base.css" />
 
-      <label for="correo">Correo</label>
-      <input type="email" id="correo" placeholder="correo@dominio.com" />
+  <!-- Estilos específicos del módulo -->
+  <link rel="stylesheet" href="../css/usuarios.css" />
+</head>
+<body>
+  <main class="usuarios-container">
+    <img src="../assets/logo.png" alt="Logo del sistema" class="logo" />
+    <h1>👤 Módulo de Usuarios y Roles</h1>
 
-      <label for="rol">Rol</label>
-      <select id="rol">
-        <option value="super_admin">super_admin</option>
-        <option value="admin">admin</option>
-        <option value="gerente">gerente</option>
-        <option value="dependiente">dependiente</option>
-        <option value="cliente">cliente</option>
-        <option value="cocina">cocina</option>
-        <option value="repartidor">repartidor</option>
-      </select>
+    <!-- Crear usuario -->
+    <section id="crear-usuario">
+      <h2>➕ Crear usuario</h2>
+      <form>
+        <label for="nombre">Nombre</label>
+        <input type="text" id="nombre" placeholder="Nombre completo" />
 
-      <button id="btnCrearUsuario">Crear usuario</button>
-    </form>
-    <p id="mensaje-crear" class="success" style="display:none;">Usuario creado correctamente</p>
-  </section>
+        <label for="correo">Correo</label>
+        <input type="email" id="correo" placeholder="correo@dominio.com" />
 
-  <!-- Asignar permisos -->
-  <section id="asignar-permisos">
-    <h2>🔑 Asignar permisos a rol</h2>
-    <form>
-      <label for="rol-permiso">Rol</label>
-      <select id="rol-permiso"></select>
+        <label for="rol">Rol</label>
+        <select id="rol">
+          <option value="super_admin">super_admin</option>
+          <option value="admin">admin</option>
+          <option value="gerente">gerente</option>
+          <option value="dependiente">dependiente</option>
+          <option value="cliente">cliente</option>
+          <option value="cocina">cocina</option>
+          <option value="repartidor">repartidor</option>
+        </select>
 
-      <label for="permiso">Permiso</label>
-      <select id="permiso"></select>
+        <button id="btnCrearUsuario">Crear usuario</button>
+      </form>
+      <p id="mensaje-crear" class="success" style="display:none;">Usuario creado correctamente ✅</p>
+    </section>
 
-      <button id="btnAsignarPermiso">Asignar permiso</button>
-    </form>
-    <p id="mensaje-permiso" class="success" style="display:none;">Permiso asignado correctamente</p>
-  </section>
+    <!-- Asignar permisos -->
+    <section id="asignar-permisos">
+      <h2>🔑 Asignar permisos a rol</h2>
+      <form>
+        <label for="rol-permiso">Rol</label>
+        <select id="rol-permiso"></select>
 
-  <!-- Inventario -->
-  <section id="inventario">
-    <h2>📋 Inventario</h2>
-    <button id="btnReloadInventory">Recargar</button>
-    <ul id="lista-permisos"></ul>
-    <ul id="lista-roles"></ul>
-  </section>
+        <label for="permiso">Permiso</label>
+        <select id="permiso"></select>
 
-  <!-- Logs -->
-  <section id="logs">
-    <h2>📝 Logs</h2>
-    <button id="btnClearLogs">Limpiar</button>
-    <div id="log" class="log"></div>
-  </section>
-</main>
+        <button id="btnAsignarPermiso">Asignar permiso</button>
+      </form>
+      <p id="mensaje-permiso" class="success" style="display:none;">Permiso asignado correctamente ✅</p>
+    </section>
+
+    <!-- Probar permiso -->
+    <section id="probar-permiso">
+      <h2>🧪 Probar permiso</h2>
+      <form>
+        <label for="tpUsuarioId">UUID usuario</label>
+        <input type="text" id="tpUsuarioId" placeholder="uuid del usuario" />
+
+        <label for="tpPermiso">Permiso</label>
+        <input type="text" id="tpPermiso" placeholder="ej: ver_pedidos" />
+
+        <button id="btnProbarPermiso">Probar</button>
+      </form>
+      <p id="tpResultado">Resultado pendiente</p>
+    </section>
+
+    <!-- Inventario -->
+    <section id="inventario">
+      <h2>📋 Inventario</h2>
+      <button id="btnReloadInventory">Recargar</button>
+      <h3>Permisos</h3>
+      <ul id="lista-permisos"></ul>
+      <h3>Roles → Permisos</h3>
+      <ul id="lista-roles"></ul>
+    </section>
+
+    <!-- Logs -->
+    <section id="logs">
+      <h2>📝 Logs</h2>
+      <button id="btnClearLogs">Limpiar</button>
+      <div id="log" class="log"></div>
+    </section>
+  </main>
+
+  <!-- Script del módulo -->
+  <script type="module" src="../js/usuarios.js"></script>
+</body>
+</html>
