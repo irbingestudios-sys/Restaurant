@@ -83,3 +83,79 @@
     font-size: 1.1rem;
   }
 }
+/* Estilos específicos para Usuarios y Roles */
+
+.usuarios-container {
+  background-color: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  width: 100%;
+  max-width: 800px;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+.usuarios-container section {
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.usuarios-container h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: var(--color-primario);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+table th, table td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.log {
+  font-family: Consolas, monospace;
+  background: #f9f9f9;
+  border: 1px dashed #ccc;
+  padding: 1rem;
+  border-radius: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 1rem;
+}
+
+.log .ok { color: #2ecc71; }
+.log .warn { color: var(--color-acento); }
+.log .err { color: var(--color-error); }
+
+/* Modales */
+.modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  max-width: 400px;
+  text-align: center;
+}
+
+.modal-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: space-around;
+}
