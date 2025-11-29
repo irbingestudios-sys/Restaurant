@@ -1,0 +1,101 @@
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const supabase = createClient("https://TU-PROYECTO.supabase.co", "TU-ANON-KEY");
+window.supabase = supabase;
+
+let menu = [];
+let envases = [];
+let cantidades = {};
+let cantidadesEnvases = {};
+
+document.addEventListener("DOMContentLoaded", async () => {
+  console.group("🟢 FOCSA — Inicialización");
+  console.log("🚀 Script FOCSA inicializado");
+
+  await cargarMenuEspecial();
+  await cargarEnvases();
+  inicializarFiltros(menu, envases);
+
+  calcularTotales();
+  console.groupEnd();
+});
+
+// === Carga de menú ===
+async function cargarMenuEspecial() {
+  console.group("📥 Carga de menú");
+  const { data, error } = await supabase.rpc("obtener_menu_focsa");
+  if (error) {
+    console.error("❌ Error al cargar menú:", error);
+    console.groupEnd();
+    return;
+  }
+  menu = data || [];
+  console.log("✅ Menú cargado:", menu.length, "items");
+  renderMenuEspecial(menu);
+  console.groupEnd();
+}
+
+// === Carga de envases ===
+async function cargarEnvases() {
+  console.group("📥 Carga de envases");
+  const { data, error } = await supabase
+    .from("menu_item")
+    .select("*")
+    .eq("categoria", "Envases")
+    .eq("disponible", true)
+    .gt("stock", 0)
+    .order("precio", { ascending: true });
+
+  if (error) {
+    console.error("❌ Error al cargar envases:", error);
+    console.groupEnd();
+    return;
+  }
+  envases = data || [];
+  console.log("🧴 Envases cargados:", envases.length);
+  renderEnvases(envases);
+  console.groupEnd();
+}
+
+// === Inicialización de filtros horizontales ===
+function inicializarFiltros(menu, envases) {
+  console.group("🔧 Inicialización de filtros horizontales");
+  const barraFiltros = document.getElementById("barra-filtros");
+  barraFiltros.innerHTML = "";
+
+  const categoriasUnicas = [...new Set(menu.map(item => item.categoria))];
+  if (!categoriasUnicas.includes("Envases")) categoriasUnicas.push("Envases");
+
+  ["todos", ...categoriasUnicas].forEach(cat => {
+    const chip = document.createElement("button");
+    chip.className = "filtro-chip";
+    chip.textContent = cat;
+    chip.dataset.cat = cat;
+    chip.onclick = () => {
+      document.querySelectorAll(".filtro-chip").forEach(c => c.classList.remove("activo"));
+      chip.classList.add("activo");
+      filtrarMenu(cat);
+    };
+    barraFiltros.appendChild(chip);
+  });
+
+  console.log("✅ Filtros generados:", categoriasUnicas);
+  console.groupEnd();
+}
+
+// === Renderizado en tarjetas ===
+function renderGrupoTarjetas(lista, contenedorId, destinoCantidades) {
+  console.group(`🖼️ Renderizado tarjetas en ${contenedorId}`);
+  const contenedor = document.getElementById(contenedorId);
+  contenedor.innerHTML = "";
+
+  lista.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "producto-card";
+    card.innerHTML = `
+      <h3>${item.nombre}</h3>
+      <p>${item.descripcion || ""}</p>
+      <div class="precio-agregar">
+        <span>${item.precio} CUP</span>
+        <input type="number" min="0" value="${destinoCantidades[item.nombre] || 0}"
+          data-name
