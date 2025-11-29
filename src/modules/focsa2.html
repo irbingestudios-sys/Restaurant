@@ -4,39 +4,34 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FOCSA | La Casona de 17</title>
-  <link rel="icon" href="https://irbingestudios-sys.github.io/Restaurant/favicon.ico" />
-  <link rel="stylesheet" href="https://irbingestudios-sys.github.io/Restaurant/src/css/styles-base.css">
-  <link rel="stylesheet" href="https://irbingestudios-sys.github.io/Restaurant/src/css/styles-focsa.css" />
+  <link rel="icon" href="favicon.ico" />
+  <link rel="stylesheet" href="styles-base.css">
+  <link rel="stylesheet" href="styles-focsa.css" />
 </head>
 <body>
   <div class="menu-container">
     <header>
-      <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/logo.png" alt="Logo La Casona de 17" class="logo-login" />
+      <img src="logo.png" alt="Logo La Casona de 17" class="logo-login" />
       <h1 class="titulo-seccion">MENÚ ESPECIAL FOCSA</h1>
       <p>Clientes del Edificio FOCSA</p>
-
-      <!-- Botón CLIENTE -->
-      <button id="btn-cliente" class="btn-secundario">👤 Cliente</button>
     </header>
 
-    <!-- Filtro por categoría -->
+    <!-- Barra de filtros horizontal -->
     <section>
-      <label for="filtro"><strong>Filtrar por categoría:</strong></label>
-      <select id="filtro" onchange="filtrarMenu()">
-        <option value="todos">Todas</option>
-      </select>
+      <h2 class="titulo-seccion">Filtrar por categoría</h2>
+      <div class="filtros-scroll" id="barra-filtros"></div>
     </section>
 
     <!-- Menú especial -->
     <section>
       <h2 class="titulo-seccion">Su Menú de Hoy</h2>
-      <div id="menu-especial" class="scrollable-menu"></div>
+      <div id="menu-especial" class="productos-grid"></div>
     </section>
 
     <!-- Envases -->
     <section>
       <h2 class="titulo-seccion">Envases</h2>
-      <div id="envases-contenedor" class="scrollable-menu"></div>
+      <div id="envases-contenedor" class="productos-grid"></div>
     </section>
 
     <!-- Totales -->
@@ -44,67 +39,23 @@
       <h2 class="titulo-seccion">Resumen del Pedido</h2>
       <p>Total: <span id="total-cup">0</span> CUP</p>
       <p>Cantidad de ítems: <span id="total-items">0</span></p>
-      <button onclick="revisarPedido()" class="btn-secundario">📤 Enviar Pedido</button>
+      <button onclick="revisarPedido()" class="btn-secundario">📤 Revisar Pedido</button>
     </section>
 
-    <!-- Seguimiento del pedido -->
-    <section id="seguimiento-pedido" style="display:none;">
-      <h2 class="titulo-seccion">📦 Seguimiento del Pedido</h2>
-      <div class="estado-lineal">
-        <strong>Estado actual:</strong> <span id="estado-actual">🕓 Pendiente</span>
-      </div>
-      <div id="seguimiento-multiple" class="scrollable-menu" style="margin-top:20px;"></div>
-      <button id="btn-entregado" class="btn-secundario">✅ Marcar como entregado</button>
-      <button onclick="renderizarSeguimientoPedidos()" class="btn-secundario">📦 Ver todos mis pedidos</button>
-
-      <div id="bloque-criterio" style="display:none; margin-top:20px;">
-        <h3 class="titulo-seccion">📝 Opinión del Cliente</h3>
-        <textarea id="criterio" rows="3" placeholder="¿Cómo estuvo su pedido?" required></textarea>
-        <button id="btn-guardar-criterio" class="btn-secundario">Guardar criterio</button>
-      </div>
-    </section>
-
-    <!-- Datos del cliente (pedido anónimo) -->
+    <!-- Datos del cliente -->
     <section>
       <h2 class="titulo-seccion">Datos del Cliente</h2>
-      <input type="text" id="pedido-cliente" placeholder="Nombre del cliente" required />
-      <input type="text" id="pedido-piso" placeholder="Piso (ej. 14)" required />
-      <input type="text" id="pedido-apartamento" placeholder="Apartamento (ej. 1405)" required />
-      <input type="text" id="pedido-telefono" placeholder="Teléfono (opcional)" />
-
+      <input type="text" id="cliente" placeholder="Nombre del cliente" required />
+      <input type="text" id="piso" placeholder="Piso (ej. 14)" required />
+      <input type="text" id="apartamento" placeholder="Apartamento (ej. 1405)" required />
+      <input type="text" id="telefono" placeholder="Teléfono (opcional)" />
       <div class="grupo-checkbox">
         <label for="unirseGrupo">
           <input type="checkbox" id="unirseGrupo" />
           ¿Desea unirse al grupo de La Casona?
         </label>
-        <button class="btn-icono" onclick="toggleVentajasGrupo()">
-          <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/info-icon.svg" alt="Ventajas" />
-        </button>
-      </div>
-
-      <div id="ventajasGrupo" class="acordeon" style="display:none;">
-        <ul>
-          <li>Promociones exclusivas</li>
-          <li>Acceso anticipado a nuevos productos</li>
-          <li>Sorteos mensuales</li>
-          <li>Atención prioritaria</li>
-        </ul>
       </div>
     </section>
-
-    <!-- Histórico de pedidos -->
-    <button id="btn-historico" style="display:none;">📦 Histórico de Pedidos</button>
-    <div id="historico-pedidos"></div>
-
-    <!-- Modal de descripción -->
-    <div id="modal-descripcion" class="modal" style="display:none;">
-      <div class="modal-content">
-        <span id="modal-close">&times;</span>
-        <h3 class="titulo-seccion">Descripción del producto</h3>
-        <p id="modal-texto"></p>
-        <img id="modal-imagen" src="" alt="Imagen del producto" style="max-width:100%; margin-top:10px;" />
-      </div>
-    </div>
 
     <!-- Modal: Vista previa del pedido -->
     <div id="modal-resumen" class="modal" style="display:none;">
@@ -118,65 +69,9 @@
         </div>
       </div>
     </div>
-
-    <!-- Modal de acceso cliente -->
-    <div id="modal-cliente" class="modal" style="display:none;">
-      <div class="modal-content">
-        <span id="modal-close-cliente">&times;</span>
-        <h2>Acceso Cliente</h2>
-
-        <div class="tabs">
-          <button id="tab-login" class="tab-active">Entrar</button>
-          <button id="tab-registro">Nuevo Cliente</button>
-        </div>
-
-        <!-- Login -->
-        <div id="login-form">
-          <input type="email" id="login-email" placeholder="Correo">
-          <input type="password" id="login-password" placeholder="Contraseña">
-          <button id="btn-login">Aceptar</button>
-        </div>
-
-        <!-- Registro -->
-        <div id="registro-form" style="display:none;">
-          <input type="email" id="reg-email" placeholder="Correo">
-          <input type="text" id="reg-usuario" placeholder="Nombre de usuario">
-          <input type="password" id="reg-password" placeholder="Contraseña">
-          <input type="text" id="reg-piso" placeholder="Piso">
-          <input type="text" id="reg-apartamento" placeholder="Apartamento">
-          <input type="text" id="reg-empresa" placeholder="Empresa (opcional)">
-          <button id="btn-crear-cliente">Crear Cliente</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Footer -->
-    <footer class="footer-redes">
-      <a href="https://facebook.com" target="_blank">
-        <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/facebook.svg" alt="Facebook" />
-      </a>
-      <a href="https://instagram.com" target="_blank">
-        <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/instagram.svg" alt="Instagram" />
-      </a>
-      <a href="https://lacasona17.com" target="_blank">
-        <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/web.svg" alt="Sitio Web" />
-      </a>
-    </footer>
-
-    <!-- Script principal -->
-    <script type="module" src="https://irbingestudios-sys.github.io/Restaurant/src/js/script-focsa2.js"></script>
-
-    <!-- Contenedor de confirmación del pedido -->
-    <div id="confirmacion" style="display:none;">
-      <div id="resumen"></div>
-    </div>
   </div>
 
-  <!-- Info cliente arriba a la derecha -->
-  <div id="cliente-info" style="display:none; position:absolute; top:10px; right:10px;">
-    <span id="cliente-nombre"></span>
-    <button id="btn-editar-cliente">⚙️</button>
-    <button onclick="cerrarSesion()">🚪 Cerrar sesión</button>
-  </div>
+  <!-- Script principal -->
+  <script type="module" src="script-focsa.js"></script>
 </body>
 </html>
