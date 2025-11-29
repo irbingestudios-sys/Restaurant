@@ -1,0 +1,60 @@
+<main class="admin-container">
+  <img src="../assets/logo.png" alt="Logo del sistema" class="logo" />
+  <h1>👤 Módulo de Usuarios y Roles</h1>
+
+  <!-- Crear usuario (solo super_admin) -->
+  <section id="crear-usuario">
+    <h2>➕ Crear usuario</h2>
+    <form>
+      <label for="nombre">Nombre</label>
+      <input type="text" id="nombre" placeholder="Nombre completo" />
+
+      <label for="correo">Correo</label>
+      <input type="email" id="correo" placeholder="correo@dominio.com" />
+
+      <label for="rol">Rol</label>
+      <select id="rol">
+        <option value="super_admin">super_admin</option>
+        <option value="admin">admin</option>
+        <option value="gerente">gerente</option>
+        <option value="dependiente">dependiente</option>
+        <option value="cliente">cliente</option>
+        <option value="cocina">cocina</option>
+        <option value="repartidor">repartidor</option>
+      </select>
+
+      <button id="btnCrearUsuario">Crear usuario</button>
+    </form>
+    <p id="mensaje-crear" class="success" style="display:none;">Usuario creado correctamente</p>
+  </section>
+
+  <!-- Asignar permisos -->
+  <section id="asignar-permisos">
+    <h2>🔑 Asignar permisos a rol</h2>
+    <form>
+      <label for="rol-permiso">Rol</label>
+      <select id="rol-permiso"></select>
+
+      <label for="permiso">Permiso</label>
+      <select id="permiso"></select>
+
+      <button id="btnAsignarPermiso">Asignar permiso</button>
+    </form>
+    <p id="mensaje-permiso" class="success" style="display:none;">Permiso asignado correctamente</p>
+  </section>
+
+  <!-- Inventario -->
+  <section id="inventario">
+    <h2>📋 Inventario</h2>
+    <button id="btnReloadInventory">Recargar</button>
+    <ul id="lista-permisos"></ul>
+    <ul id="lista-roles"></ul>
+  </section>
+
+  <!-- Logs -->
+  <section id="logs">
+    <h2>📝 Logs</h2>
+    <button id="btnClearLogs">Limpiar</button>
+    <div id="log" class="log"></div>
+  </section>
+</main>
