@@ -3,230 +3,57 @@
 // │ Script: script-focsa2.js (versión completa)    │
 // │ Ajustado según cambios solicitados            │
 // └───────────────────────────────────────────────┘
-// ======================================================
-// 1. Inicialización Supabase y variables
-// ======================================================
+
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
+/* Configuración Supabase: usa tus credenciales reales del proyecto */
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
 );
-
 window.supabase = supabase;
 
+/* Estado */
 let menu = [];
 let envases = [];
 let cantidades = {};
 let cantidadesEnvases = {};
 
-// ======================================================
-// 2. Inicialización del módulo
-// ======================================================
+/* Inicialización */
 document.addEventListener("DOMContentLoaded", async () => {
   console.group("🟢 FOCSA — Inicialización");
   console.log("🚀 Script FOCSA inicializado");
 
-  cargarMenuEspecial();
-  cargarEnvases();
-  iniciarSeguimiento();
+  await cargarMenuEspecial();
+  await cargarEnvases();
+  inicializarFiltros();
 
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (pedidoId) {
-    const segBloque = document.getElementById("seguimiento-pedido");
-    if (segBloque) segBloque.style.display = "block";
+    const seg = document.getElementById("seguimiento-pedido");
+    if (seg) seg.style.display = "block";
   }
+
   renderizarSeguimientoPedidos();
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user) {
-    mostrarClienteUI(user.email);
-    const { data: clienteData, error } = await supabase
-      .from("clientes_focsa")
-      .select("usuario, piso, apartamento, telefono")
-      .eq("id", user.id)
-      .maybeSingle();
-    if (!error && clienteData) {
-      document.getElementById("pedido-cliente").value = clienteData.usuario || "";
-      document.getElementById("pedido-piso").value = clienteData.piso || "";
-      document.getElementById("pedido-apartamento").value = clienteData.apartamento || "";
-      document.getElementById("pedido-telefono").value = clienteData.telefono || "";
-    }
-  } else {
-    ocultarClienteUI();
-  }
+  calcularTotales();
 
   console.groupEnd();
 });
 
-// ======================================================
-// 3. CLIENTE: login/registro, sesión, histórico
-// ======================================================
-function toast(msg) { alert(msg); }
-
-function mostrarClienteUI(email) {
-  const infoCliente = document.getElementById("cliente-info");
-  const nombreClienteUI = document.getElementById("cliente-nombre");
-  const btnHistorico = document.getElementById("btn-historico");
-  if (infoCliente) infoCliente.style.display = "block";
-  if (nombreClienteUI) nombreClienteUI.textContent = email;
-  if (btnHistorico) btnHistorico.style.display = "inline-block";
-}
-
-function ocultarClienteUI() {
-  const infoCliente = document.getElementById("cliente-info");
-  const btnHistorico = document.getElementById("btn-historico");
-  if (infoCliente) infoCliente.style.display = "none";
-  if (btnHistorico) btnHistorico.style.display = "none";
-}
-
-// Abrir/cerrar modal cliente
-document.getElementById("btn-cliente")?.addEventListener("click", () => {
-  const modal = document.getElementById("modal-cliente");
-  if (modal) modal.style.display = "block";
-});
-document.getElementById("modal-close-cliente")?.addEventListener("click", () => {
-  const modal = document.getElementById("modal-cliente");
-  if (modal) modal.style.display = "none";
-});
-
-// Tabs login/registro
-document.getElementById("tab-login")?.addEventListener("click", () => {
-  document.getElementById("login-form").style.display = "block";
-  document.getElementById("registro-form").style.display = "none";
-  document.getElementById("tab-login").classList.add("tab-active");
-  document.getElementById("tab-registro").classList.remove("tab-active");
-});
-document.getElementById("tab-registro")?.addEventListener("click", () => {
-  document.getElementById("login-form").style.display = "none";
-  document.getElementById("registro-form").style.display = "block";
-  document.getElementById("tab-registro").classList.add("tab-active");
-  document.getElementById("tab-login").classList.remove("tab-active");
-});
-
-// Login
-document.getElementById("btn-login")?.addEventListener("click", async () => {
-  console.group("👤 Login");
-  const email = document.getElementById("login-email").value.trim();
-  const password = document.getElementById("login-password").value;
-  if (!email || !password) { toast("Completa correo y contraseña"); console.groupEnd(); return; }
-
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) { toast("❌ Error de login: " + error.message); console.groupEnd(); return; }
-
-  mostrarClienteUI(data.user.email);
-
-  const { data: clienteData } = await supabase
-    .from("clientes_focsa")
-    .select("usuario, piso, apartamento, telefono")
-    .eq("id", data.user.id)
-    .maybeSingle();
-  if (clienteData) {
-    document.getElementById("pedido-cliente").value = clienteData.usuario || "";
-    document.getElementById("pedido-piso").value = clienteData.piso || "";
-    document.getElementById("pedido-apartamento").value = clienteData.apartamento || "";
-    document.getElementById("pedido-telefono").value = clienteData.telefono || "";
-  }
-
-  document.getElementById("modal-cliente").style.display = "none";
-  console.log("✅ Sesión iniciada");
-  console.groupEnd();
-});
-
-// Registro
-document.getElementById("btn-crear-cliente")?.addEventListener("click", async () => {
-  console.group("🆕 Registro");
-  const email = document.getElementById("reg-email").value.trim();
-  const password = document.getElementById("reg-password").value;
-  const usuario = document.getElementById("reg-usuario").value.trim();
-  const piso = document.getElementById("reg-piso").value.trim();
-  const apartamento = document.getElementById("reg-apartamento").value.trim();
-  const empresa = document.getElementById("reg-empresa").value.trim() || null;
-
-  if (!email || !password || !usuario || !piso || !apartamento) {
-    toast("Completa los campos requeridos"); console.groupEnd(); return;
-  }
-
-  const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) { toast("❌ Error de registro: " + error.message); console.groupEnd(); return; }
-
-  const userId = data.user.id;
-  const { error: insertErr } = await supabase.from("clientes_focsa").insert({
-    id: userId, email, usuario, piso, apartamento, empresa, password_hash: "auth-managed"
-  });
-  if (insertErr) { toast("❌ Error guardando datos: " + insertErr.message); console.groupEnd(); return; }
-
-  toast("✅ Cliente creado correctamente");
-  mostrarClienteUI(email);
-  document.getElementById("modal-cliente").style.display = "none";
-  console.groupEnd();
-});
-
-// Cerrar sesión
-window.cerrarSesion = async function() {
-  await supabase.auth.signOut();
-  ocultarClienteUI();
-  toast("✅ Sesión cerrada");
-};
-
-// Histórico
-document.getElementById("btn-historico")?.addEventListener("click", async () => {
-  console.group("📜 Histórico");
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) { toast("⚠️ Debes iniciar sesión"); console.groupEnd(); return; }
-
-  const { data, error } = await supabase
-    .from("pedidos")
-    .select("id, fecha, total, estado_actual")
-    .eq("cliente_id", user.id)
-    .order("fecha", { ascending: false });
-
-  if (error) { toast("Error cargando histórico: " + error.message); console.groupEnd(); return; }
-  renderHistorico(data || []);
-  console.groupEnd();
-});
-
-function renderHistorico(pedidos) {
-  const contHistorico = document.getElementById("historico-pedidos");
-  if (!contHistorico) return;
-  contHistorico.innerHTML = "<h3>📦 Histórico de Pedidos</h3>";
-  if (!pedidos.length) {
-    contHistorico.innerHTML += "<p>No tiene pedidos registrados.</p>";
-    return;
-  }
-  pedidos.forEach(p => {
-    contHistorico.innerHTML += `<p>
-      Fecha: ${new Date(p.fecha).toLocaleString()} |
-      Total: ${p.total} CUP |
-      Estado: ${p.estado_actual || "—"}
-    </p>`;
-  });
-}
-    
-// ======================================================
-// 4. Carga de menú y envases
-// ======================================================
+/* =========================
+   Carga de menú y envases
+   ========================= */
 async function cargarMenuEspecial() {
   console.group("📥 Carga de menú");
   const { data, error } = await supabase.rpc("obtener_menu_focsa");
-  if (error) { console.error("❌ Error al cargar menú:", error); console.groupEnd(); return; }
-
-  menu = data || [];
-  renderMenuEspecial(menu);
-
-  // Llenar filtro
-  const filtro = document.getElementById("filtro");
-  if (filtro) {
-    filtro.innerHTML = '<option value="todos">Todas</option>';
-    const categoriasUnicas = [...new Set(menu.map(item => item.categoria))];
-    if (!categoriasUnicas.includes("Envases")) categoriasUnicas.push("Envases");
-    categoriasUnicas.forEach(cat => {
-      const opcion = document.createElement("option");
-      opcion.value = cat;
-      opcion.textContent = cat;
-      filtro.appendChild(opcion);
-    });
+  if (error) {
+    console.error("❌ Error al cargar menú:", error);
+    console.groupEnd();
+    return;
   }
+  menu = data || [];
+  console.log("✅ Menú cargado:", menu.length, "items");
+  renderMenuEspecial(menu);
   console.groupEnd();
 }
 
@@ -240,75 +67,130 @@ async function cargarEnvases() {
     .gt("stock", 0)
     .order("precio", { ascending: true });
 
-  if (error) { console.error("❌ Error al cargar envases:", error); console.groupEnd(); return; }
-
+  if (error) {
+    console.error("❌ Error al cargar envases:", error);
+    console.groupEnd();
+    return;
+  }
   envases = data || [];
+  console.log("🧴 Envases cargados:", envases.length);
   renderEnvases(envases);
   console.groupEnd();
 }
 
-// ======================================================
-// 5. Renderizado y filtros
-// ======================================================
-function renderGrupo(lista, contenedorId, destinoCantidades) {
-  console.group(`🖼️ Renderizado → ${contenedorId}`);
+/* =========================
+   Filtros horizontales
+   ========================= */
+function inicializarFiltros() {
+  console.group("🔧 Inicialización de filtros horizontales");
+  const barraFiltros = document.getElementById("barra-filtros");
+  if (!barraFiltros) {
+    console.warn("⚠️ No se encontró el contenedor de filtros");
+    console.groupEnd();
+    return;
+  }
+  barraFiltros.innerHTML = "";
+
+  const categoriasUnicas = [...new Set(menu.map(item => item.categoria))];
+  if (!categoriasUnicas.includes("Envases")) categoriasUnicas.push("Envases");
+
+  ["todos", ...categoriasUnicas].forEach(cat => {
+    const chip = document.createElement("button");
+    chip.className = "filtro-chip";
+    chip.textContent = cat;
+    chip.dataset.cat = cat;
+    chip.onclick = () => {
+      document.querySelectorAll(".filtro-chip").forEach(c => c.classList.remove("activo"));
+      chip.classList.add("activo");
+      filtrarMenu(cat);
+    };
+    barraFiltros.appendChild(chip);
+  });
+
+  // activar por defecto "todos"
+  const first = barraFiltros.querySelector(".filtro-chip");
+  if (first) {
+    first.classList.add("activo");
+    filtrarMenu("todos");
+  }
+
+  console.log("✅ Filtros generados:", categoriasUnicas);
+  console.groupEnd();
+}
+
+/* =========================
+   Renderizado en tarjetas
+   ========================= */
+function renderGrupoTarjetas(lista, contenedorId, destinoCantidades) {
+  console.group(`🖼️ Renderizado tarjetas en ${contenedorId}`);
   const contenedor = document.getElementById(contenedorId);
-  if (!contenedor) { console.warn("⚠️ Contenedor no encontrado:", contenedorId); console.groupEnd(); return; }
+  if (!contenedor) {
+    console.warn(`⚠️ No se encontró contenedor: ${contenedorId}`);
+    console.groupEnd();
+    return;
+  }
   contenedor.innerHTML = "";
 
   lista.forEach(item => {
-    const safeNombre = String(item.nombre);
-    const safePrecio = Number(item.precio);
-
-    contenedor.innerHTML += `
-      <div class="producto-lineal">
-        <div class="producto-izquierda"><strong>${safeNombre}</strong></div>
-        <div class="producto-derecha">
-          <span>${safePrecio} CUP</span>
-          <input type="number" min="0" value="${destinoCantidades[safeNombre] || 0}"
-          data-name="${safeNombre}" data-price="${safePrecio}" />
-        </div>
-      </div>`;
+    const card = document.createElement("div");
+    card.className = "producto-card";
+    card.innerHTML = `
+      <h3>${item.nombre}</h3>
+      <p>${item.descripcion || ""}</p>
+      <div class="precio-agregar">
+        <span>${item.precio} CUP</span>
+        <input type="number" min="0" value="${destinoCantidades[item.nombre] || 0}"
+          data-name="${item.nombre}" data-price="${item.precio}" />
+      </div>
+    `;
+    contenedor.appendChild(card);
   });
 
   contenedor.querySelectorAll("input[type='number']").forEach(input => {
     input.addEventListener("input", () => {
-      const val = parseInt(input.value, 10);
-      destinoCantidades[input.dataset.name] = Number.isNaN(val) ? 0 : val;
+      destinoCantidades[input.dataset.name] = parseInt(input.value) || 0;
       calcularTotales();
     });
   });
+
+  console.log("✅ Tarjetas renderizadas:", lista.length);
   console.groupEnd();
 }
 
-function renderMenuEspecial(lista) { renderGrupo(lista, "menu-especial", cantidades); }
-function renderEnvases(lista) { renderGrupo(lista, "envases-contenedor", cantidadesEnvases); }
+function renderMenuEspecial(lista) {
+  renderGrupoTarjetas(lista, "menu-especial", cantidades);
+}
+function renderEnvases(lista) {
+  renderGrupoTarjetas(lista, "envases-contenedor", cantidadesEnvases);
+}
 
-function filtrarMenu() {
+/* =========================
+   Filtro
+   ========================= */
+function filtrarMenu(categoriaSeleccionada = "todos") {
   console.group("🔍 Filtro de categoría");
-  const filtro = document.getElementById("filtro");
-  const categoriaSeleccionada = filtro ? filtro.value : "todos";
-  console.log("📌 Categoría:", categoriaSeleccionada);
+  console.log("📌 Categoría seleccionada:", categoriaSeleccionada);
 
   if (categoriaSeleccionada === "todos") {
     renderMenuEspecial(menu);
     renderEnvases(envases);
   } else if (categoriaSeleccionada === "Envases") {
-    renderGrupo(envases.filter(item => item.categoria === "Envases"), "envases-contenedor", cantidadesEnvases);
-    const contMenu = document.getElementById("menu-especial");
-    if (contMenu) contMenu.innerHTML = "";
+    renderGrupoTarjetas(envases.filter(i => i.categoria === "Envases"), "envases-contenedor", cantidadesEnvases);
+    const ms = document.getElementById("menu-especial");
+    if (ms) ms.innerHTML = "";
   } else {
-    renderGrupo(menu.filter(item => item.categoria === categoriaSeleccionada), "menu-especial", cantidades);
-    const contEnv = document.getElementById("envases-contenedor");
-    if (contEnv) contEnv.innerHTML = "";
+    renderGrupoTarjetas(menu.filter(i => i.categoria === categoriaSeleccionada), "menu-especial", cantidades);
+    const ec = document.getElementById("envases-contenedor");
+    if (ec) ec.innerHTML = "";
   }
+
   console.groupEnd();
 }
 window.filtrarMenu = filtrarMenu;
 
-// ======================================================
-// 6. Totales y vista previa del pedido
-// ======================================================
+/* =========================
+   Totales
+   ========================= */
 function calcularTotales() {
   console.group("🧮 Cálculo de totales");
   let total = 0, cantidadTotal = 0;
@@ -336,42 +218,55 @@ function calcularTotales() {
   if (totalEl) totalEl.textContent = total.toFixed(2);
   if (itemsEl) itemsEl.textContent = cantidadTotal;
 
-  console.log("🧮 Totales:", { total, cantidad: cantidadTotal });
+  console.log("🧮 Totales actualizados:", { total, cantidadTotal });
   console.groupEnd();
 }
 
+/* =========================
+   Resumen y validaciones
+   ========================= */
 function revisarPedido() {
   console.group("🧾 Vista previa del pedido");
+  const cliente = document.getElementById("cliente")?.value.trim();
+  const piso = document.getElementById("piso")?.value.trim();
+  const apartamento = document.getElementById("apartamento")?.value.trim();
+  const telefono = document.getElementById("telefono")?.value.trim();
+  const unirse = document.getElementById("unirseGrupo")?.checked;
 
-  // 1) Validación de envases: al menos uno requerido siempre
-  const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
-  if (!tieneEnvase) {
-    alert("Debe seleccionar al menos un envase para realizar la entrega.");
+  // Validación de datos obligatorios
+  if (!cliente || !piso || !apartamento) {
+    alert("Por favor, complete los datos del cliente (Nombre, Piso, Apartamento).");
+    console.warn("❌ Datos incompletos para revisión.");
     console.groupEnd();
     return;
   }
 
-  // 2) Validación de datos anónimos: si NO hay sesión, exige cliente/piso/apartamento
-  const { data: { user } } = supabase.auth.getUser
-    ? supabase.auth.getUser()
-    : { data: { user: null } };
-
-  if (!user) {
-    const cliente = document.getElementById("pedido-cliente")?.value.trim() || "";
-    const piso = document.getElementById("pedido-piso")?.value.trim() || "";
-    const apartamento = document.getElementById("pedido-apartamento")?.value.trim() || "";
-    if (!cliente || !piso || !apartamento) {
-      alert("Complete nombre, piso y apartamento para continuar.");
-      console.groupEnd();
-      return;
-    }
+  // Validación de envases
+  const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
+  if (!tieneEnvase) {
+    alert("Debe seleccionar al menos un envase para realizar la entrega.");
+    console.warn("❌ Pedido sin envases.");
+    console.groupEnd();
+    return;
   }
 
   const resumen = document.getElementById("contenido-resumen");
-  if (!resumen) { console.warn("⚠️ No se encontró contenedor de resumen"); console.groupEnd(); return; }
-  resumen.innerHTML = "";
+  if (!resumen) {
+    console.warn("⚠️ No se encontró contenedor de resumen.");
+    console.groupEnd();
+    return;
+  }
+  resumen.innerHTML = `
+    <div class="cliente-datos">
+      <p><strong>Cliente:</strong> ${cliente}</p>
+      <p><strong>Piso:</strong> ${piso}</p>
+      <p><strong>Apartamento:</strong> ${apartamento}</p>
+      <p><strong>Teléfono:</strong> ${telefono || "—"}</p>
+      <p><strong>Grupo La Casona:</strong> ${unirse ? "✅ Sí desea unirse" : "❌ No desea unirse"}</p>
+    </div>
+    <hr />
+  `;
 
-  // Construir resumen de items y total
   const items = [];
   let total = 0;
 
@@ -384,6 +279,7 @@ function revisarPedido() {
       total += subtotal;
     }
   }
+
   for (const nombre in cantidadesEnvases) {
     const cant = cantidadesEnvases[nombre];
     const item = envases.find(p => p.nombre === nombre);
@@ -394,14 +290,17 @@ function revisarPedido() {
     }
   }
 
-  if (!items.length) {
-    resumen.innerHTML = "<p>No ha seleccionado ningún producto.</p>";
+  if (items.length === 0) {
+    resumen.innerHTML += "<p>No ha seleccionado ningún producto.</p>";
   } else {
-    items.forEach(i => {
+    items.forEach(item => {
       resumen.innerHTML += `
         <div class="producto-lineal">
-          <div class="producto-izquierda"><strong>${i.nombre}</strong></div>
-          <div class="producto-derecha"><span>x${i.cantidad}</span><span>= ${i.subtotal} CUP</span></div>
+          <div class="producto-izquierda"><strong>${item.nombre}</strong></div>
+          <div class="producto-derecha">
+            <span>x${item.cantidad}</span>
+            <span>= ${item.subtotal} CUP</span>
+          </div>
         </div>`;
     });
     resumen.innerHTML += `<p><strong>Total:</strong> ${total.toFixed(2)} CUP</p>`;
@@ -410,48 +309,37 @@ function revisarPedido() {
   const modal = document.getElementById("modal-resumen");
   if (modal) modal.style.display = "block";
 
-  // Deshabilitar "Confirmar y enviar" si algo cambia y rompe la validación
-  const btnConfirmar = modal?.querySelector("button.btn-secundario");
-  if (btnConfirmar) {
-    btnConfirmar.disabled = false; // aquí está habilitado porque ya validamos
-  }
-
   console.groupEnd();
 }
 window.revisarPedido = revisarPedido;
 
-// ======================================================
-// 7. Envío de pedido (WhatsApp + RPC anon/auth)
-// ======================================================
+/* =========================
+   Enviar por WhatsApp
+   ========================= */
 async function enviarWhatsApp() {
   console.group("📲 Enviar pedido por WhatsApp");
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const cliente = document.getElementById("cliente")?.value.trim();
+  const piso = document.getElementById("piso")?.value.trim();
+  const apartamento = document.getElementById("apartamento")?.value.trim();
+  const telefono = document.getElementById("telefono")?.value.trim();
+  const unirse = document.getElementById("unirseGrupo")?.checked;
 
-  const cliente = document.getElementById("pedido-cliente")?.value.trim() || "";
-  const piso = document.getElementById("pedido-piso")?.value.trim() || "";
-  const apartamento = document.getElementById("pedido-apartamento")?.value.trim() || "";
-  const telefono = document.getElementById("pedido-telefono")?.value.trim() || "";
-  const unirse = !!document.getElementById("unirseGrupo")?.checked;
-
-  // Envase requerido
+  // Validaciones
+  if (!cliente || !piso || !apartamento) {
+    alert("Por favor, complete los datos del cliente (Nombre, Piso, Apartamento).");
+    console.warn("❌ Datos incompletos para WhatsApp.");
+    console.groupEnd();
+    return;
+  }
   const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
   if (!tieneEnvase) {
     alert("Debe seleccionar al menos un envase para realizar la entrega.");
+    console.warn("❌ Pedido sin envases.");
     console.groupEnd();
     return;
   }
 
-  // Datos anónimos requeridos
-  if (!user && (!cliente || !piso || !apartamento)) {
-    alert("Complete nombre, piso y apartamento para continuar.");
-    console.groupEnd();
-    return;
-  }
-
-  }
-
-  // Construir items y total
   const items = [];
   let total = 0;
 
@@ -474,90 +362,105 @@ async function enviarWhatsApp() {
     }
   }
 
-  // RPC según sesión
-  let data, error;
-  if (user) {
-    ({ data, error } = await supabase.rpc("registrar_pedido_focsa_auth", {
-      p_cliente_id: user.id,
-      p_total: total,
-      p_items: items,
-      p_canal: "whatsapp"
-    }));
-  } else {
-    ({ data, error } = await supabase.rpc("registrar_pedido_focsa_anon", {
-      p_cliente: cliente,
-      p_piso: piso,
-      p_apartamento: apartamento,
-      p_telefono: telefono || null,
-      p_unirse_grupo: unirse,
-      p_items: items,
-      p_canal: "whatsapp"
-    }));
-  }
+  // Registrar pedido vía RPC con canal whatsapp
+  const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
+    p_cliente: cliente,
+    p_piso: piso,
+    p_apartamento: apartamento,
+    p_telefono: telefono || null,
+    p_direccion: null,
+    p_unirse_grupo: unirse,
+    p_items: items,
+    p_canal: "whatsapp",
+  });
 
   if (error) {
     console.error("❌ Error RPC:", error);
-    alert("Ocurrió un error registrando su pedido. Intente nuevamente.");
     console.groupEnd();
     return;
   }
 
-  const pedidoId = Array.isArray(data) ? data[0]?.pedido_id : data?.pedido_id;
+  const pedidoId = data?.[0]?.pedido_id;
   if (!pedidoId) {
     console.warn("⚠️ No se devolvió pedido_id");
-    alert("No se pudo confirmar el pedido. Intente nuevamente.");
     console.groupEnd();
     return;
   }
 
-  // Guardar en localStorage y actualizar seguimiento
   localStorage.setItem("pedido_id_actual", pedidoId);
   const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
   historial.push(pedidoId);
   localStorage.setItem("historial_pedidos", JSON.stringify(historial));
   renderizarSeguimientoPedidos();
 
-  // Mensaje WhatsApp
-  const grupoTexto = unirse ? "✅ Desea unirse al grupo" : "❌ No desea unirse al grupo";
-  const cabeceraCliente = !user
-    ? `Cliente: ${cliente}\nPiso: ${piso}\nApartamento: ${apartamento}\nTeléfono: ${telefono || "—"}`
-    : `Cliente autenticado: ${document.getElementById("cliente-nombre")?.textContent || "—"}`;
+  console.log("📥 Pedido registrado con ID:", pedidoId);
 
+  const grupoTexto = unirse ? "✅ Desea unirse al grupo" : "❌ No desea unirse al grupo";
   const mensaje = `🧾 Pedido FOCSA
-${cabeceraCliente}
+Cliente: ${cliente}
+Piso: ${piso}
+Apartamento: ${apartamento}
+Teléfono: ${telefono || "—"}
 ${grupoTexto}
+
 ${items.map(i => `• ${i.nombre} x${i.cantidad} = ${i.subtotal} CUP`).join("\n")}
 Total: ${total.toFixed(2)} CUP`;
 
-  const url = `https://wa.me/5350977340?text=${encodeURIComponent(mensaje)}`;
+  const url = `https://wa.me/+5350977340?text=${encodeURIComponent(mensaje)}`;
   window.open(url, "_blank");
+  console.log("📤 WhatsApp abierto con mensaje");
 
-  // Reset UI y cantidades
-  const modalResumen = document.getElementById("modal-resumen");
-  if (modalResumen) modalResumen.style.display = "none";
+  // Limpiar flujo y cerrar modal
+  const modal = document.getElementById("modal-resumen");
+  if (modal) modal.style.display = "none";
+
   cantidades = {};
   cantidadesEnvases = {};
-  filtrarMenu();
+  filtrarMenu("todos");
   calcularTotales();
   mostrarSeguimientoPedido();
 
-  console.log("📥 Pedido registrado:", pedidoId);
   console.groupEnd();
 }
 window.enviarWhatsApp = enviarWhatsApp;
 
-// ======================================================
-// 8. Seguimiento de pedidos
-// ======================================================
+/* =========================
+   Cancelar resumen
+   ========================= */
+function cancelarResumen() {
+  console.group("❌ Cancelar pedido");
+  cantidades = {};
+  cantidadesEnvases = {};
+  filtrarMenu("todos");
+  calcularTotales();
+  const modal = document.getElementById("modal-resumen");
+  if (modal) modal.style.display = "none";
+  console.log("🧹 Pedido cancelado y reiniciado");
+  console.groupEnd();
+}
+window.cancelarResumen = cancelarResumen;
+
+document.getElementById("modal-close-resumen")?.addEventListener("click", cancelarResumen);
+
+/* =========================
+   Seguimiento de pedidos
+   ========================= */
+function mostrarSeguimientoPedido() {
+  const seg = document.getElementById("seguimiento-pedido");
+  if (seg) seg.style.display = "block";
+  iniciarSeguimiento();
+}
+window.mostrarSeguimientoPedido = mostrarSeguimientoPedido;
+
 function iniciarSeguimiento() {
   const pedidoId = localStorage.getItem("pedido_id_actual");
   if (!pedidoId) return;
-  // Polling simple cada 10s
+  // cada 10s
   setInterval(() => verificarIntegridadPedido(pedidoId), 10000);
 }
 
 async function verificarIntegridadPedido(pedidoId) {
-  console.group("🔎 Seguimiento del pedido (integridad)");
+  console.group("🔎 Seguimiento del pedido");
   const { data, error } = await supabase
     .from("vw_integridad_pedido")
     .select("*")
@@ -565,7 +468,7 @@ async function verificarIntegridadPedido(pedidoId) {
     .maybeSingle();
 
   if (error || !data) {
-    console.warn("⚠️ Error o pedido no encontrado", error);
+    console.warn("⚠️ Error o pedido no encontrado");
     console.groupEnd();
     return;
   }
@@ -584,6 +487,7 @@ async function verificarIntegridadPedido(pedidoId) {
       }
     };
   }
+
   console.groupEnd();
 }
 
@@ -591,7 +495,10 @@ async function renderizarSeguimientoPedidos() {
   console.group("📦 Seguimiento múltiple de pedidos");
   const historial = JSON.parse(localStorage.getItem("historial_pedidos") || "[]");
   const contenedor = document.getElementById("seguimiento-multiple");
-  if (!contenedor) { console.groupEnd(); return; }
+  if (!contenedor) {
+    console.groupEnd();
+    return;
+  }
   contenedor.innerHTML = "";
 
   for (const pedidoId of historial.slice(-5).reverse()) {
@@ -609,34 +516,30 @@ async function renderizarSeguimientoPedidos() {
         <h4>📦 Pedido: ${String(pedidoId).slice(0, 8)}...</h4>
         <p><strong>Estado:</strong> ${estado}</p>
         <ul>`;
-
     let totalPedido = 0;
+
     for (const item of data.items || []) {
       html += `<li>${item.nombre} x${item.cantidad} = ${item.subtotal} CUP</li>`;
       totalPedido += item.subtotal;
     }
+
     html += `</ul>
       <p><strong>Total del pedido:</strong> ${totalPedido.toFixed(2)} CUP</p>
       </div>`;
+
     contenedor.innerHTML += html;
   }
+
   console.groupEnd();
 }
 window.renderizarSeguimientoPedidos = renderizarSeguimientoPedidos;
 
-function mostrarSeguimientoPedido() {
-  const bloque = document.getElementById("seguimiento-pedido");
-  if (bloque) bloque.style.display = "block";
-  iniciarSeguimiento();
-}
-window.mostrarSeguimientoPedido = mostrarSeguimientoPedido;
-
-// ======================================================
-// 9. Guardar criterio del cliente
-// ======================================================
+/* =========================
+   Guardar criterio del cliente
+   ========================= */
 document.getElementById("btn-guardar-criterio")?.addEventListener("click", async () => {
   console.group("📝 Guardar criterio del cliente");
-  const criterio = document.getElementById("criterio")?.value.trim() || "";
+  const criterio = document.getElementById("criterio")?.value.trim();
   const pedidoId = localStorage.getItem("pedido_id_actual");
 
   if (!criterio || !pedidoId) {
@@ -645,7 +548,11 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
     return;
   }
 
-  const { error } = await supabase.from("criterio_cliente").insert([{ pedido_id: pedidoId, criterio }]);
+  const { error } = await supabase.rpc("guardar_criterio_focsa", {
+    p_pedido_id: pedidoId,
+    p_criterio: criterio,
+  });
+
   if (error) {
     console.error("❌ Error al guardar criterio:", error);
     alert("Ocurrió un error al guardar su opinión. Intente nuevamente.");
@@ -653,50 +560,42 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
     console.log("✅ Criterio guardado:", criterio);
     alert("¡Gracias por su opinión!");
 
+    // Limpieza total para nuevo pedido
     const bloque = document.getElementById("bloque-criterio");
     if (bloque) bloque.style.display = "none";
-
     const crit = document.getElementById("criterio");
     if (crit) crit.value = "";
 
-    // Reset total del sistema para nuevo pedido
     localStorage.clear();
     sessionStorage.clear();
+
     cantidades = {};
     cantidadesEnvases = {};
-    filtrarMenu();
+
+    filtrarMenu("todos");
     calcularTotales();
 
     const seg = document.getElementById("seguimiento-pedido");
     if (seg) seg.style.display = "none";
-
     const modal = document.getElementById("modal-resumen");
     if (modal) modal.style.display = "none";
 
-    const chk = document.getElementById("unirseGrupo");
-    if (chk) { chk.checked = false; }
+    // Limpiar campos del cliente
+    ["cliente", "piso", "apartamento", "telefono"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+    const unir = document.getElementById("unirseGrupo");
+    if (unir) unir.checked = false;
 
-    console.log("✅ Sistema listo para nuevo pedido");
+    console.log("✅ Sistema listo para nuevo pedido tras guardar criterio");
   }
   console.groupEnd();
 });
 
-// ======================================================
-// 10. Cancelar y utilitarios de UI
-// ======================================================
-function cancelarResumen() {
-  console.group("❌ Cancelar pedido");
-  cantidades = {};
-  cantidadesEnvases = {};
-  filtrarMenu();
-  calcularTotales();
-  const modal = document.getElementById("modal-resumen");
-  if (modal) modal.style.display = "none";
-  console.log("🧹 Pedido cancelado y reiniciado");
-  console.groupEnd();
-}
-window.cancelarResumen = cancelarResumen;
-
+/* =========================
+   Utilidades UI y modales
+   ========================= */
 function toggleVentajasGrupo() {
   const bloque = document.getElementById("ventajasGrupo");
   if (!bloque) return;
@@ -709,9 +608,11 @@ function mostrarDescripcion(descripcion, imagenUrl) {
   const texto = document.getElementById("modal-texto");
   const img = document.getElementById("modal-imagen");
   const modal = document.getElementById("modal-descripcion");
+
   if (texto) texto.textContent = descripcion;
   if (img) img.src = imagenUrl || "";
   if (modal) modal.style.display = "block";
+
   console.log("🖼️ Descripción mostrada.");
   console.groupEnd();
 }
@@ -721,4 +622,11 @@ document.getElementById("modal-close")?.addEventListener("click", () => {
   const modal = document.getElementById("modal-descripcion");
   if (modal) modal.style.display = "none";
 });
-document.getElementById("modal-close-resumen")?.addEventListener("click", cancelarResumen);
+
+/* Helper para escapar HTML */
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
