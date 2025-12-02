@@ -1,8 +1,8 @@
 /* ┌──────────────────────────────────────────────────────────────┐
-   │ Módulo FOCSA — Estilos unificados                            │
-   │ Archivo: styles-focsa2.css                                   │
-   │ Incluye: base + mobile + módulo FOCSA                        │
-   └────────────────────────────────────────────────────────────── */
+│ Módulo FOCSA — Estilos unificados                              │
+│ Archivo: styles-focsa2.css                                     │
+│ Incluye: base + mobile + módulo FOCSA                          │
+└────────────────────────────────────────────────────────────── */
 
 /* === Reset === */
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -90,6 +90,11 @@ button:hover { background: var(--color-acento); }
   background: #f7f9fb; padding: 8px; border-radius: 8px;
 }
 .producto-card .acciones-card { display: flex; gap: 8px; }
+
+.producto-card .btn-personalizar[disabled] {
+  background: #bbb;
+  cursor: not-allowed;
+}
 
 /* === Carrito flotante === */
 .carrito {
