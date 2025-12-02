@@ -54,7 +54,7 @@
       <h2 class="titulo-seccion">Resumen del Pedido</h2>
       <p>Total: <span id="total-cup">0</span> CUP</p>
       <p>Cantidad de ítems: <span id="total-items">0</span></p>
-      <button onclick="revisarPedido()" class="btn-secundario">📤 Revisar Pedido</button>
+      <button id="btn-revisar-pedido-top" class="btn-secundario">📤 Revisar Pedido</button>
     </section>
 
     <!-- Seguimiento -->
@@ -62,11 +62,13 @@
       <h2 class="titulo-seccion">Seguimiento del pedido</h2>
       <p id="estado-actual">🧾 Estado: ⏳ En espera</p>
       <button id="btn-entregado" class="btn-secundario" disabled>Marcar como entregado</button>
+
       <div id="bloque-criterio" style="display:none;">
         <h3 class="titulo-seccion">Tu opinión</h3>
         <textarea id="criterio" placeholder="Cuéntanos tu experiencia"></textarea>
         <button id="btn-guardar-criterio" class="btn-secundario">Guardar opinión</button>
       </div>
+
       <h3 class="titulo-seccion">Tus últimos pedidos</h3>
       <div id="seguimiento-multiple"></div>
     </section>
