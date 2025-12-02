@@ -1,101 +1,140 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+/* ┌──────────────────────────────────────────────────────────────┐
+   │ Módulo FOCSA — Estilos unificados                            │
+   │ Archivo: styles-focsa2.css                                   │
+   │ Incluye: base + mobile + módulo FOCSA                        │
+   └────────────────────────────────────────────────────────────── */
 
-const supabase = createClient("https://TU-PROYECTO.supabase.co", "TU-ANON-KEY");
-window.supabase = supabase;
+/* === Reset === */
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-let menu = [];
-let envases = [];
-let cantidades = {};
-let cantidadesEnvases = {};
-
-document.addEventListener("DOMContentLoaded", async () => {
-  console.group("🟢 FOCSA — Inicialización");
-  console.log("🚀 Script FOCSA inicializado");
-
-  await cargarMenuEspecial();
-  await cargarEnvases();
-  inicializarFiltros(menu, envases);
-
-  calcularTotales();
-  console.groupEnd();
-});
-
-// === Carga de menú ===
-async function cargarMenuEspecial() {
-  console.group("📥 Carga de menú");
-  const { data, error } = await supabase.rpc("obtener_menu_focsa");
-  if (error) {
-    console.error("❌ Error al cargar menú:", error);
-    console.groupEnd();
-    return;
-  }
-  menu = data || [];
-  console.log("✅ Menú cargado:", menu.length, "items");
-  renderMenuEspecial(menu);
-  console.groupEnd();
+/* === Variables === */
+:root {
+  --color-primario: #2c3e50;
+  --color-secundario: #3498db;
+  --color-acento: #e67e22;
+  --color-fondo: #f4f6f8;
+  --color-error: #e74c3c;
+  --color-ok: #2ecc71;
+  --fuente-base: 'Segoe UI', 'Roboto', system-ui, sans-serif;
+  --shadow: 0 4px 12px rgba(0,0,0,0.1);
+  --radius: 12px;
 }
 
-// === Carga de envases ===
-async function cargarEnvases() {
-  console.group("📥 Carga de envases");
-  const { data, error } = await supabase
-    .from("menu_item")
-    .select("*")
-    .eq("categoria", "Envases")
-    .eq("disponible", true)
-    .gt("stock", 0)
-    .order("precio", { ascending: true });
-
-  if (error) {
-    console.error("❌ Error al cargar envases:", error);
-    console.groupEnd();
-    return;
-  }
-  envases = data || [];
-  console.log("🧴 Envases cargados:", envases.length);
-  renderEnvases(envases);
-  console.groupEnd();
+/* === Body & contenedor === */
+body {
+  font-family: var(--fuente-base);
+  background-color: var(--color-fondo);
+  color: var(--color-primario);
+  line-height: 1.6;
+  display: flex; justify-content: center; align-items: flex-start;
+  min-height: 100vh; padding: 16px;
 }
 
-// === Inicialización de filtros horizontales ===
-function inicializarFiltros(menu, envases) {
-  console.group("🔧 Inicialización de filtros horizontales");
-  const barraFiltros = document.getElementById("barra-filtros");
-  barraFiltros.innerHTML = "";
-
-  const categoriasUnicas = [...new Set(menu.map(item => item.categoria))];
-  if (!categoriasUnicas.includes("Envases")) categoriasUnicas.push("Envases");
-
-  ["todos", ...categoriasUnicas].forEach(cat => {
-    const chip = document.createElement("button");
-    chip.className = "filtro-chip";
-    chip.textContent = cat;
-    chip.dataset.cat = cat;
-    chip.onclick = () => {
-      document.querySelectorAll(".filtro-chip").forEach(c => c.classList.remove("activo"));
-      chip.classList.add("activo");
-      filtrarMenu(cat);
-    };
-    barraFiltros.appendChild(chip);
-  });
-
-  console.log("✅ Filtros generados:", categoriasUnicas);
-  console.groupEnd();
+.menu-container {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
 }
 
-// === Renderizado en tarjetas ===
-function renderGrupoTarjetas(lista, contenedorId, destinoCantidades) {
-  console.group(`🖼️ Renderizado tarjetas en ${contenedorId}`);
-  const contenedor = document.getElementById(contenedorId);
-  contenedor.innerHTML = "";
+/* === Header === */
+.logo { width: 84px; margin: 0 auto 12px; display: block; }
+.titulo-seccion { font-size: 1.3rem; margin: 10px 0; text-align: center; }
 
-  lista.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "producto-card";
-    card.innerHTML = `
-      <h3>${item.nombre}</h3>
-      <p>${item.descripcion || ""}</p>
-      <div class="precio-agregar">
-        <span>${item.precio} CUP</span>
-        <input type="number" min="0" value="${destinoCantidades[item.nombre] || 0}"
-          data-name
+/* === Inputs / controls === */
+input, select, textarea {
+  width: 100%;
+  margin: 6px 0;
+  font-size: 1rem;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--color-secundario); outline: none; }
+textarea { min-height: 80px; }
+
+/* === Botones === */
+button {
+  width: 100%; margin: 6px 0; padding: 12px; font-size: 1rem;
+  border-radius: 8px; border: none; cursor: pointer;
+  background: var(--color-secundario); color: #fff; transition: background-color .2s;
+}
+button:hover { background: var(--color-acento); }
+.btn-secundario { background: #007bff; }
+.btn-secundario:hover { background: #0056b3; }
+.grupo-checkbox { text-align: left; margin-top: 4px; }
+
+/* === Filtros === */
+.filtros-scroll { display: flex; gap: 8px; overflow-x: auto; padding: 8px 0; }
+.filtro-chip {
+  background: #eee; border: none; padding: 8px 12px; border-radius: 20px;
+  font-weight: 600; white-space: nowrap; cursor: pointer;
+}
+.filtro-chip.activo { background: var(--color-acento); color: #fff; }
+
+/* === Grid de productos === */
+.productos-grid {
+  display: grid; grid-template-columns: 1fr; gap: 12px; padding: 8px 0;
+}
+.producto-card {
+  background: #fff; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  padding: 12px; display: flex; flex-direction: column; gap: 8px; text-align: left;
+}
+.producto-card h3 { font-size: 1.1rem; }
+.producto-card p { font-size: .95rem; color: #4a4a4a; }
+.producto-card .precio-agregar {
+  display: flex; justify-content: space-between; align-items: center;
+  background: #f7f9fb; padding: 8px; border-radius: 8px;
+}
+.producto-card .acciones-card { display: flex; gap: 8px; }
+
+/* === Carrito flotante === */
+.carrito {
+  position: fixed; bottom: 0; right: 0; background: #fff;
+  border-top-left-radius: 12px; box-shadow: 0 -2px 6px rgba(0,0,0,0.12);
+  padding: 1rem; width: 100%; max-width: 420px;
+}
+.carrito h3 { margin-top: 0; }
+.carrito-item { border-bottom: 1px solid #eee; padding: 8px 0; }
+.carrito-item strong { display: block; }
+.carrito-total { font-weight: 700; margin-top: 8px; }
+
+/* === Modales === */
+.modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  display: none; justify-content: center; align-items: center; z-index: 1000;
+}
+.modal-content {
+  background: #fff; width: 95vw; max-width: 640px; max-height: 90vh;
+  overflow-y: auto; border-radius: 12px; padding: 20px; box-shadow: var(--shadow);
+}
+.modal-content .acciones { display: flex; gap: 8px; }
+
+/* === Modal agregos === */
+.producto-imagen-modal {
+  width: 100%; border-radius: 8px; object-fit: cover; max-height: 220px; margin-bottom: 8px;
+}
+#lista-agregos { margin: 10px 0; }
+.agrego-opcion {
+  display: flex; justify-content: space-between; align-items: center;
+  background: #f4f6f8; padding: 10px; border-radius: 8px; margin-bottom: 8px;
+}
+.agrego-opcion label { flex: 1; }
+.precio-total { font-weight: 700; margin: 8px 0; }
+
+/* === Seguimiento === */
+.seguimiento-bloque {
+  border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-bottom: 12px; background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* === Responsive === */
+@media (min-width: 560px) {
+  .productos-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 840px) {
+  .productos-grid { grid-template-columns: repeat(3, 1fr); }
+}
