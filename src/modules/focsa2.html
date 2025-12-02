@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FOCSA | La Casona de 17</title>
   <link rel="icon" href="https://irbingestudios-sys.github.io/Restaurant/favicon.ico" />
-  <link rel="stylesheet" href="https://irbingestudios-sys.github.io/Restaurant/src/css/styles-base.css">
+  <!-- ÚNICO CSS consolidado -->
   <link rel="stylesheet" href="https://irbingestudios-sys.github.io/Restaurant/src/css/styles-focsa2.css" />
 </head>
 <body>
   <div class="menu-container">
     <header>
-      <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/logo.png" alt="Logo La Casona de 17" class="logo-login" />
+      <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/logo.png" alt="Logo La Casona de 17" class="logo" />
       <h1 class="titulo-seccion">MENÚ ESPECIAL FOCSA</h1>
       <p>Clientes del Edificio FOCSA</p>
     </header>
@@ -34,17 +34,9 @@
       <div id="envases-contenedor" class="productos-grid"></div>
     </section>
 
-    <!-- Totales -->
-    <section id="totales">
-      <h2 class="titulo-seccion">Resumen del Pedido</h2>
-      <p>Total: <span id="total-cup">0</span> CUP</p>
-      <p>Cantidad de ítems: <span id="total-items">0</span></p>
-      <button onclick="revisarPedido()" class="btn-secundario">📤 Revisar Pedido</button>
-    </section>
-
     <!-- Datos del cliente -->
     <section>
-      <h2 class="titulo-seccion">Datos del Cliente</h2>
+      <h2 class="titulo-seccion">Datos del cliente</h2>
       <input type="text" id="cliente" placeholder="Nombre del cliente" required />
       <input type="text" id="piso" placeholder="Piso (ej. 14)" required />
       <input type="text" id="apartamento" placeholder="Apartamento (ej. 1405)" required />
@@ -57,16 +49,63 @@
       </div>
     </section>
 
-    <!-- Modal: Vista previa del pedido -->
-    <div id="modal-resumen" class="modal" style="display:none;">
-      <div class="modal-content">
-        <span id="modal-close-resumen">&times;</span>
-        <h3 class="titulo-seccion">🧾 Vista previa del pedido</h3>
-        <div id="contenido-resumen"></div>
-        <div style="margin-top:20px;">
-          <button onclick="enviarWhatsApp()" class="btn-secundario">✅ Confirmar y enviar</button>
-          <button onclick="cancelarResumen()" class="btn-secundario">❌ Cancelar</button>
-        </div>
+    <!-- Totales -->
+    <section id="totales">
+      <h2 class="titulo-seccion">Resumen del Pedido</h2>
+      <p>Total: <span id="total-cup">0</span> CUP</p>
+      <p>Cantidad de ítems: <span id="total-items">0</span></p>
+      <button onclick="revisarPedido()" class="btn-secundario">📤 Revisar Pedido</button>
+    </section>
+
+    <!-- Seguimiento -->
+    <section id="seguimiento-pedido" style="display:none;">
+      <h2 class="titulo-seccion">Seguimiento del pedido</h2>
+      <p id="estado-actual">🧾 Estado: ⏳ En espera</p>
+      <button id="btn-entregado" class="btn-secundario" disabled>Marcar como entregado</button>
+      <div id="bloque-criterio" style="display:none;">
+        <h3 class="titulo-seccion">Tu opinión</h3>
+        <textarea id="criterio" placeholder="Cuéntanos tu experiencia"></textarea>
+        <button id="btn-guardar-criterio" class="btn-secundario">Guardar opinión</button>
+      </div>
+      <h3 class="titulo-seccion">Tus últimos pedidos</h3>
+      <div id="seguimiento-multiple"></div>
+    </section>
+  </div>
+
+  <!-- Carrito flotante -->
+  <div id="carrito" class="carrito">
+    <h3>🛒 Carrito</h3>
+    <div id="carrito-items"></div>
+    <div class="carrito-total">Total: <span id="carrito-total">0</span> CUP</div>
+    <button id="btn-revisar-pedido" class="btn-secundario">📤 Revisar Pedido</button>
+  </div>
+
+  <!-- Modal de agregos -->
+  <div id="modal-agregos" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span id="modal-close-agregos">&times;</span>
+      <h3 id="producto-nombre" class="titulo-seccion"></h3>
+      <img id="producto-imagen" src="" alt="" class="producto-imagen-modal" />
+      <p id="producto-descripcion"></p>
+      <p>Precio base: <span id="producto-precio"></span> CUP</p>
+      <div id="lista-agregos"></div>
+      <div class="precio-total">Total: <span id="precio-total"></span> CUP</div>
+      <div class="acciones">
+        <button id="btn-agregar-carrito" class="btn-secundario">➕ Añadir al carrito</button>
+        <button id="btn-cancelar-agregos" class="btn-secundario">❌ Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de resumen -->
+  <div id="modal-resumen" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span id="modal-close-resumen">&times;</span>
+      <h3 class="titulo-seccion">🧾 Resumen del Pedido</h3>
+      <div id="contenido-resumen"></div>
+      <div class="acciones">
+        <button id="btn-confirmar-pedido" class="btn-secundario">✅ Confirmar y enviar</button>
+        <button id="btn-cancelar-pedido" class="btn-secundario">❌ Cancelar</button>
       </div>
     </div>
   </div>
