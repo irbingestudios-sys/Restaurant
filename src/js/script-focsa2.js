@@ -3,6 +3,7 @@
 // │ Script: script-focsa2.js (versión unificada)  │
 // │ Incluye: agregos + carrito + resumen + RPC    │
 // └───────────────────────────────────────────────┘
+
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
 /* Configuración Supabase (usa tus credenciales reales) */
@@ -15,9 +16,9 @@ window.supabase = supabase;
 /* Estado global */
 let menu = [];
 let envases = [];
-let cantidades = {};           // conteo por nombre (modo rápido)
-let cantidadesEnvases = {};    // conteo por nombre
-let carrito = [];              // [{ id, nombre, cantidad, precio, agregos[], subtotal }]
+let cantidades = {};          // conteo por nombre (modo rápido)
+let cantidadesEnvases = {};   // conteo por nombre
+let carrito = [];             // [{ id, nombre, cantidad, precio, agregos[], subtotal }]
 let productoSeleccionado = null;
 let agregosSeleccionados = [];
 
@@ -39,17 +40,23 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   renderizarSeguimientoPedidos();
+
+  // Enlace botón de totales
+  document.getElementById("btn-revisar-pedido-top")?.addEventListener("click", abrirModalResumen);
+
   console.groupEnd();
 });
 
 /* =========================
    Carga de menú y envases
-   ========================= */
+========================= */
+
 async function cargarMenuEspecial() {
   console.group("📥 Carga de menú");
+  // RPC devuelve items del día. Se espera campos: id (uuid), nombre, precio, categoria, descripcion, tiene_agregos (boolean)
   const { data, error } = await supabase.rpc("obtener_menu_focsa");
   if (error) { console.error("❌ Error al cargar menú:", error); console.groupEnd(); return; }
-  menu = data || [];
+  menu = Array.isArray(data) ? data : [];
   console.log("✅ Menú cargado:", menu.length, "items");
   renderMenuEspecial(menu);
   console.groupEnd();
@@ -64,7 +71,7 @@ async function cargarEnvases() {
     .gt("stock", 0)
     .order("precio", { ascending: true });
   if (error) { console.error("❌ Error al cargar envases:", error); console.groupEnd(); return; }
-  envases = data || [];
+  envases = Array.isArray(data) ? data : [];
   console.log("🧴 Envases cargados:", envases.length);
   renderEnvases(envases);
   console.groupEnd();
@@ -72,14 +79,15 @@ async function cargarEnvases() {
 
 /* =========================
    Filtros horizontales
-   ========================= */
+========================= */
+
 function inicializarFiltros() {
   console.group("🔧 Inicialización de filtros horizontales");
   const barraFiltros = document.getElementById("barra-filtros");
   if (!barraFiltros) { console.warn("⚠️ No se encontró el contenedor de filtros"); console.groupEnd(); return; }
 
   barraFiltros.innerHTML = "";
-  const categoriasUnicas = [...new Set(menu.map(item => item.categoria))];
+  const categoriasUnicas = [...new Set(menu.map(item => item.categoria).filter(Boolean))];
   if (!categoriasUnicas.includes("Envases")) categoriasUnicas.push("Envases");
 
   ["todos", ...categoriasUnicas].forEach(cat => {
@@ -104,29 +112,41 @@ function inicializarFiltros() {
 
 /* =========================
    Renderizado de tarjetas
-   ========================= */
+========================= */
+
 function renderGrupoTarjetas(lista, contenedorId, destinoCantidades) {
   console.group(`🖼️ Renderizado tarjetas en ${contenedorId}`);
   const contenedor = document.getElementById(contenedorId);
   if (!contenedor) { console.warn(`⚠️ No se encontró contenedor: ${contenedorId}`); console.groupEnd(); return; }
 
   contenedor.innerHTML = "";
+
   lista.forEach(item => {
     const card = document.createElement("div");
     card.className = "producto-card";
+
+    // Solo mostrar “Personalizar” si el backend marca tiene_agregos = true
+    const mostrarPersonalizar = !!item.tiene_agregos;
+
     card.innerHTML = `
       <h3>${escapeHtml(item.nombre)}</h3>
       <p>${escapeHtml(item.descripcion || "")}</p>
+
       <div class="precio-agregar">
         <span>${Number(item.precio).toFixed(2)} CUP</span>
         <input type="number" min="0" value="${destinoCantidades[item.nombre] || 0}"
                data-name="${escapeHtml(item.nombre)}" data-id="${item.id}" data-price="${item.precio}" />
       </div>
+
       <div class="acciones-card">
-        <button class="btn-secundario" data-personalizar="${item.id}">Personalizar</button>
+        ${mostrarPersonalizar
+          ? `<button class="btn-secundario btn-personalizar" data-personalizar="${item.id}">Personalizar</button>`
+          : `<button class="btn-secundario btn-personalizar" disabled title="Agregos no disponibles">Personalizar</button>`
+        }
         <button class="btn-secundario" data-anadir="${item.id}">Añadir rápido</button>
       </div>
     `;
+
     contenedor.appendChild(card);
   });
 
@@ -138,23 +158,34 @@ function renderGrupoTarjetas(lista, contenedorId, destinoCantidades) {
     });
   });
 
-  // Botón Personalizar (abre modal de agregos si tiene, si no añade directo)
+  // Botón Personalizar: abrir modal solo si tiene_agregos
   contenedor.querySelectorAll("button[data-personalizar]").forEach(btn => {
-    btn.addEventListener("click", () => abrirModalAgregos(parseInt(btn.dataset.personalizar)));
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.personalizar; // UUID en string
+      const item = [...menu, ...envases].find(i => String(i.id) === String(id));
+      if (!item) { console.warn("⚠️ Item no encontrado para personalizar:", id); return; }
+
+      if (!item.tiene_agregos) {
+        alert("Este producto no tiene agregos disponibles.");
+        return;
+      }
+      abrirModalAgregos(id);
+    });
   });
 
   // Botón Añadir rápido (sin agregos)
   contenedor.querySelectorAll("button[data-anadir]").forEach(btn => {
     btn.addEventListener("click", () => {
-      const id = parseInt(btn.dataset.anadir);
-      const item = [...menu, ...envases].find(i => i.id === id);
+      const id = btn.dataset.anadir;
+      const item = [...menu, ...envases].find(i => String(i.id) === String(id));
       if (!item) return;
+
       agregarAlCarrito({
         id: item.id,
         nombre: item.nombre,
         cantidad: 1,
         precio: Number(item.precio),
-        agregos: [],
+        agregos: [], // sin agregos
       });
     });
   });
@@ -168,7 +199,8 @@ function renderEnvases(lista) { renderGrupoTarjetas(lista, "envases-contenedor",
 
 /* =========================
    Filtro
-   ========================= */
+========================= */
+
 function filtrarMenu(categoriaSeleccionada = "todos") {
   console.group("🔍 Filtro de categoría");
   console.log("📌 Categoría seleccionada:", categoriaSeleccionada);
@@ -192,7 +224,8 @@ window.filtrarMenu = filtrarMenu;
 
 /* =========================
    Totales
-   ========================= */
+========================= */
+
 function calcularTotales() {
   console.group("🧮 Cálculo de totales");
   let total = 0, cantidadTotal = 0;
@@ -202,6 +235,7 @@ function calcularTotales() {
     const item = menu.find(p => p.nombre === nombre);
     if (item && cant > 0) { total += cant * item.precio; cantidadTotal += cant; }
   }
+
   for (const nombre in cantidadesEnvases) {
     const cant = cantidadesEnvases[nombre];
     const item = envases.find(p => p.nombre === nombre);
@@ -219,12 +253,12 @@ function calcularTotales() {
 
 /* =========================
    Agregos: modal + lógica
-   ========================= */
+========================= */
+
 async function abrirModalAgregos(itemId) {
   console.group("🧩 Modal de agregos — abrir");
-  productoSeleccionado = [...menu, ...envases].find(i => i.id === itemId);
+  productoSeleccionado = [...menu, ...envases].find(i => String(i.id) === String(itemId));
   agregosSeleccionados = [];
-
   if (!productoSeleccionado) { console.warn("⚠️ Producto no encontrado:", itemId); console.groupEnd(); return; }
 
   // Set UI producto
@@ -233,7 +267,7 @@ async function abrirModalAgregos(itemId) {
   document.getElementById("producto-descripcion").textContent = productoSeleccionado.descripcion || "";
   document.getElementById("producto-precio").textContent = Number(productoSeleccionado.precio).toFixed(2);
 
-  // Cargar agregos del producto
+  // Cargar agregos del producto por relación
   const { data: rels, error } = await supabase
     .from("menu_item_agrego")
     .select("*, menu_agrego(*)")
@@ -244,24 +278,25 @@ async function abrirModalAgregos(itemId) {
   lista.innerHTML = "";
 
   if (error) { console.error("❌ Error al obtener agregos:", error); }
-  const agregos = rels || [];
 
+  const agregos = Array.isArray(rels) ? rels : [];
   if (agregos.length === 0) {
     lista.innerHTML = `<p>Este producto no tiene agregos configurados. Puede añadirlo directo al carrito.</p>`;
   } else {
     agregos.forEach(rel => {
-      const item = rel.menu_agrego;
+      const ag = rel.menu_agrego;
       const div = document.createElement("div");
       div.className = "agrego-opcion";
       const requerido = rel.requerido ? " (requerido)" : "";
       div.innerHTML = `
         <label>
           <input type="checkbox"
-                 data-nombre="${escapeHtml(item.nombre)}"
-                 data-precio="${Number(item.precio)}"
-                 data-cat="${escapeHtml(item.categoria_agrego || "extra")}"
-                 data-requerido="${rel.requerido ? 1 : 0}" />
-          ${escapeHtml(item.emoji || "")} ${escapeHtml(item.nombre)} (+${Number(item.precio).toFixed(2)} CUP)${requerido}
+            data-id="${ag.id}"
+            data-nombre="${escapeHtml(ag.nombre)}"
+            data-precio="${Number(ag.precio)}"
+            data-cat="${escapeHtml(ag.categoria_agrego || "extra")}"
+            data-requerido="${rel.requerido ? 1 : 0}" />
+          ${escapeHtml(ag.emoji || "")} ${escapeHtml(ag.nombre)} (+${Number(ag.precio).toFixed(2)} CUP)${requerido}
         </label>
       `;
       lista.appendChild(div);
@@ -271,12 +306,13 @@ async function abrirModalAgregos(itemId) {
   // Listeners de selección
   lista.querySelectorAll("input[type='checkbox']").forEach(chk => {
     chk.addEventListener("change", () => {
+      const id = chk.dataset.id;
       const nombre = chk.dataset.nombre;
       const precio = parseFloat(chk.dataset.precio);
       if (chk.checked) {
-        agregosSeleccionados.push({ nombre, precio });
+        agregosSeleccionados.push({ id, nombre, precio });
       } else {
-        agregosSeleccionados = agregosSeleccionados.filter(a => a.nombre !== nombre);
+        agregosSeleccionados = agregosSeleccionados.filter(a => a.id !== id);
       }
       actualizarPrecioTotal();
     });
@@ -289,7 +325,7 @@ async function abrirModalAgregos(itemId) {
 
 function actualizarPrecioTotal() {
   let total = Number(productoSeleccionado?.precio || 0);
-  agregosSeleccionados.forEach(a => total += a.precio);
+  agregosSeleccionados.forEach(a => total += Number(a.precio));
   const el = document.getElementById("precio-total");
   if (el) el.textContent = total.toFixed(2);
 }
@@ -297,6 +333,7 @@ function actualizarPrecioTotal() {
 /* Añadir al carrito desde agregos */
 document.getElementById("btn-agregar-carrito")?.addEventListener("click", () => {
   console.group("➕ Añadir al carrito desde modal");
+
   // Validar requeridos si aplica
   const requeridos = Array.from(document.querySelectorAll("#lista-agregos input[data-requerido='1']"));
   const algunoRequerido = requeridos.length > 0;
@@ -308,13 +345,14 @@ document.getElementById("btn-agregar-carrito")?.addEventListener("click", () => 
     return;
   }
 
-  const subtotal = Number(productoSeleccionado.precio) + agregosSeleccionados.reduce((s, a) => s + a.precio, 0);
+  const subtotal = Number(productoSeleccionado.precio) + agregosSeleccionados.reduce((s, a) => s + Number(a.precio), 0);
+
   agregarAlCarrito({
     id: productoSeleccionado.id,
     nombre: productoSeleccionado.nombre,
     cantidad: 1,
     precio: Number(productoSeleccionado.precio),
-    agregos: [...agregosSeleccionados],
+    agregos: [...agregosSeleccionados], // incluye id, nombre, precio
   }, subtotal);
 
   cerrarModalAgregos();
@@ -323,7 +361,6 @@ document.getElementById("btn-agregar-carrito")?.addEventListener("click", () => 
 
 document.getElementById("btn-cancelar-agregos")?.addEventListener("click", cerrarModalAgregos);
 document.getElementById("modal-close-agregos")?.addEventListener("click", cerrarModalAgregos);
-
 function cerrarModalAgregos() {
   const modal = document.getElementById("modal-agregos");
   if (modal) modal.style.display = "none";
@@ -331,7 +368,8 @@ function cerrarModalAgregos() {
 
 /* =========================
    Carrito
-   ========================= */
+========================= */
+
 function agregarAlCarrito(prod, subtotalOverride) {
   const subtotal = typeof subtotalOverride === "number"
     ? subtotalOverride
@@ -342,18 +380,20 @@ function agregarAlCarrito(prod, subtotalOverride) {
     nombre: prod.nombre,
     cantidad: prod.cantidad || 1,
     precio: Number(prod.precio),
-    agregos: prod.agregos || [],
+    agregos: prod.agregos || [], // [{id, nombre, precio}]
     subtotal: subtotal,
   });
+
   renderCarrito();
 }
 
 function renderCarrito() {
   const cont = document.getElementById("carrito-items");
   if (!cont) return;
-  cont.innerHTML = "";
 
+  cont.innerHTML = "";
   let total = 0;
+
   carrito.forEach((prod, index) => {
     const div = document.createElement("div");
     div.className = "carrito-item";
@@ -370,6 +410,7 @@ function renderCarrito() {
       Subtotal: ${Number(prod.subtotal).toFixed(2)} CUP
       <button class="btn-secundario" data-eliminar="${index}">❌ Eliminar</button>
     `;
+
     cont.appendChild(div);
     total += prod.subtotal * prod.cantidad;
   });
@@ -382,22 +423,25 @@ function renderCarrito() {
     btn.addEventListener("click", () => {
       carrito.splice(parseInt(btn.dataset.eliminar), 1);
       renderCarrito();
+      calcularTotales();
     });
   });
 }
 
-/* Abrir modal de resumen desde carrito */
+/* Abrir modal de resumen desde carrito o totales */
 document.getElementById("btn-revisar-pedido")?.addEventListener("click", abrirModalResumen);
 
 /* =========================
    Resumen y envío
-   ========================= */
+========================= */
+
 function abrirModalResumen() {
   console.group("🧾 Resumen — abrir modal");
   const cont = document.getElementById("contenido-resumen");
   if (!cont) { console.warn("⚠️ No contenedor de resumen"); console.groupEnd(); return; }
 
   cont.innerHTML = "";
+
   // Datos cliente
   const cliente = document.getElementById("cliente")?.value.trim();
   const piso = document.getElementById("piso")?.value.trim();
@@ -411,6 +455,7 @@ function abrirModalResumen() {
     console.groupEnd();
     return;
   }
+
   const tieneEnvase = Object.values(cantidadesEnvases).some(c => c > 0);
   if (!tieneEnvase && envases.length > 0) {
     alert("Debe seleccionar al menos un envase para realizar la entrega.");
@@ -461,6 +506,7 @@ document.getElementById("modal-close-resumen")?.addEventListener("click", cerrar
 
 async function enviarPedido() {
   console.group("📲 Enviar pedido");
+
   const cliente = document.getElementById("cliente")?.value.trim();
   const piso = document.getElementById("piso")?.value.trim();
   const apartamento = document.getElementById("apartamento")?.value.trim();
@@ -486,13 +532,13 @@ async function enviarPedido() {
     cantidad: prod.cantidad,
     precio: prod.precio,
     subtotal: Number(prod.subtotal * prod.cantidad),
-    agregos: (prod.agregos || []).map(a => ({ nombre: a.nombre, precio: a.precio }))
+    agregos: (prod.agregos || []).map(a => ({ id: a.id, nombre: a.nombre, precio: a.precio }))
   }));
 
   const total = items.reduce((s, i) => s + i.subtotal, 0);
   const grupoTexto = unirse ? "✅ Desea unirse al grupo" : "❌ No desea unirse al grupo";
   const cuerpoItems = items.map(i => {
-    const ag = i.agregos?.length ? "\n   " + i.agregos.map(a => `• ${a.nombre} (+${Number(a.precio).toFixed(2)} CUP)`).join("\n   ") : "";
+    const ag = i.agregos?.length ? "\n " + i.agregos.map(a => `• ${a.nombre} (+${Number(a.precio).toFixed(2)} CUP)`).join("\n ") : "";
     return `- ${i.nombre} x${i.cantidad} = ${Number(i.subtotal).toFixed(2)} CUP${ag}`;
   }).join("\n");
 
@@ -502,7 +548,9 @@ Piso: ${piso}
 Apartamento: ${apartamento}
 Teléfono: ${telefono || "—"}
 ${grupoTexto}
+
 ${cuerpoItems}
+
 Total: ${total.toFixed(2)} CUP`;
 
   // Abrir WhatsApp
@@ -510,8 +558,8 @@ Total: ${total.toFixed(2)} CUP`;
   window.open(url, "_blank");
   console.log("📤 WhatsApp abierto con mensaje");
 
-  // Guardar en Supabase
-  const { data, error } = await supabase.rpc("registrar_pedido_focsa", {
+  // Guardar en Supabase (usar la nueva función desglosada)
+  const { data, error } = await supabase.rpc("registrar_pedido_focsa2", {
     p_cliente: cliente,
     p_piso: piso,
     p_apartamento: apartamento,
@@ -523,7 +571,7 @@ Total: ${total.toFixed(2)} CUP`;
   });
 
   if (error) {
-    console.error("❌ Error RPC:", error);
+    console.error("❌ Error RPC (registrar_pedido_focsa2):", error);
     alert("Hubo un problema al registrar el pedido.");
   } else {
     const pedidoId = data?.[0]?.pedido_id;
@@ -548,6 +596,7 @@ Total: ${total.toFixed(2)} CUP`;
     calcularTotales();
     mostrarSeguimientoPedido();
   }
+
   console.groupEnd();
 }
 
@@ -558,7 +607,8 @@ function cerrarModalResumen() {
 
 /* =========================
    Seguimiento de pedidos
-   ========================= */
+========================= */
+
 function mostrarSeguimientoPedido() {
   const seg = document.getElementById("seguimiento-pedido");
   if (seg) seg.style.display = "block";
@@ -631,13 +681,15 @@ async function renderizarSeguimientoPedidos() {
       </div>`;
     contenedor.innerHTML += html;
   }
+
   console.groupEnd();
 }
 window.renderizarSeguimientoPedidos = renderizarSeguimientoPedidos;
 
 /* =========================
    Guardar criterio del cliente
-   ========================= */
+========================= */
+
 document.getElementById("btn-guardar-criterio")?.addEventListener("click", async () => {
   console.group("📝 Guardar criterio del cliente");
   const criterio = document.getElementById("criterio")?.value.trim();
@@ -648,6 +700,7 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
     p_pedido_id: pedidoId,
     p_criterio: criterio,
   });
+
   if (error) {
     console.error("❌ Error al guardar criterio:", error);
     alert("Ocurrió un error al guardar su opinión. Intente nuevamente.");
@@ -657,14 +710,18 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
     // Limpieza total
     document.getElementById("bloque-criterio").style.display = "none";
     const crit = document.getElementById("criterio"); if (crit) crit.value = "";
+
     localStorage.clear(); sessionStorage.clear();
     cantidades = {}; cantidadesEnvases = {};
     carrito = []; renderCarrito();
     filtrarMenu("todos"); calcularTotales();
+
     const seg = document.getElementById("seguimiento-pedido"); if (seg) seg.style.display = "none";
     const modal = document.getElementById("modal-resumen"); if (modal) modal.style.display = "none";
+
     ["cliente", "piso", "apartamento", "telefono"].forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
     const unir = document.getElementById("unirseGrupo"); if (unir) unir.checked = false;
+
     console.log("✅ Sistema listo para nuevo pedido tras guardar criterio");
   }
   console.groupEnd();
@@ -672,7 +729,7 @@ document.getElementById("btn-guardar-criterio")?.addEventListener("click", async
 
 /* =========================
    Utilidades
-   ========================= */
+========================= */
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;")
