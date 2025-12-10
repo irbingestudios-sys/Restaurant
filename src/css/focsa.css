@@ -266,3 +266,60 @@ button:hover {
     justify-content: flex-start;
   }
 }
+/* Fila de producto con columnas claras */
+.producto-lineal {
+  display: grid;
+  grid-template-columns: 1fr auto auto; /* nombre | precio | cantidad */
+  align-items: center; /* centra verticalmente todo */
+  gap: 12px;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+/* Nombre del producto */
+.producto-izquierda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+/* Precio */
+.producto-derecha span {
+  font-weight: 600;
+  min-width: 80px;
+  text-align: right;
+  line-height: 1.2;
+}
+
+/* Input de cantidad */
+.producto-derecha input[type="number"] {
+  width: 70px;              /* ancho compacto */
+  padding: 4px 6px;         /* padding reducido */
+  height: 28px;             /* mismo alto que el texto */
+  font-size: 0.95rem;       /* tamaño similar al precio */
+  text-align: center;
+  border-radius: 6px;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: textfield;
+}
+
+/* Quitar flechas de incremento en Chrome */
+.producto-derecha input[type="number"]::-webkit-outer-spin-button,
+.producto-derecha input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* En móvil, apilar */
+@media (max-width: 480px) {
+  .producto-lineal {
+    grid-template-columns: 1fr; /* todo en una columna */
+  }
+  .producto-derecha {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+  }
+}
