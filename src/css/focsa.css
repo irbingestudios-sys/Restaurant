@@ -330,3 +330,56 @@ button:hover {
   min-width: 80px;
   text-align: right;
 }
+@media (max-width: 480px) {
+  .producto-lineal {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .producto-izquierda {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+  }
+
+  .producto-izquierda strong {
+    flex: 1;
+    font-size: 1rem;
+    line-height: 1.2;
+  }
+
+  .btn-icono {
+    flex-shrink: 0;
+    width: 24px;
+    height: 24px;
+  }
+
+  .producto-derecha {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .producto-derecha span {
+    font-weight: 600;
+    color: var(--color-acento);
+    font-size: 0.95rem;
+  }
+
+  .producto-derecha input[type="number"] {
+    width: 72px;
+    height: 28px;
+    padding: 4px 6px;
+    font-size: 0.95rem;
+    text-align: center;
+    border-radius: 6px;
+  }
+}
