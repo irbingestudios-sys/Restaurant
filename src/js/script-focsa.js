@@ -99,9 +99,13 @@ agrupado[categoria].forEach(item => {
   <div class="producto-lineal">
     <div class="producto-izquierda">
       <strong>${item.nombre}</strong>
-      ${item.descripcion ? `<button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url || ""}')">
-        <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/info-icon.svg" alt="Descripción" />
-      </button>` : ""}
+      ${item.descripcion ? `
+        <button class="btn-icono" 
+                data-descripcion="${item.descripcion}" 
+                data-imagen="${item.imagen_url || ""}" 
+                onclick="mostrarDescripcion(this.dataset.descripcion, this.dataset.imagen)">
+          <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/info-icon.svg" alt="Descripción" />
+        </button>` : ""}
     </div>
     <div class="producto-derecha">
       <span>${item.precio} CUP</span>
@@ -591,7 +595,7 @@ window.toggleVentajasGrupo = toggleVentajasGrupo;
 
 function mostrarDescripcion(descripcion, imagenUrl) {
   console.group("📝 Mostrar descripción del producto");
-  document.getElementById("modal-texto").innerHTML = descripcion; // ✅ ahora permite formato HTML
+  document.getElementById("modal-texto").innerHTML = descripcion; // ✅ permite HTML
   document.getElementById("modal-imagen").src = imagenUrl || "";
   document.getElementById("modal-descripcion").style.display = "block";
   console.log("🖼️ Descripción mostrada.");
