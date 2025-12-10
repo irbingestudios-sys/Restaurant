@@ -94,22 +94,22 @@ function renderGrupo(lista, contenedorId, destinoCantidades) {
     const grupo = document.createElement("div");
     grupo.className = "categoria-grupo";
     grupo.innerHTML += `<h3 class="titulo-seccion">${categoria}</h3>`;
-    agrupado[categoria].forEach(item => {
-      grupo.innerHTML += `
-        <div class="producto-lineal">
-          <div class="producto-izquierda">
-            <strong>${item.nombre}</strong>
-            ${item.descripcion ? `<button class="btn-icono" onclick="mostrarDescripcion('${escapeHtml(item.descripcion)}', '${item.imagen_url || ""}')">
-              <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/info-icon.svg" alt="Descripción" />
-            </button>` : ""}
-          </div>
-          <div class="producto-derecha">
-            <span>${item.precio} CUP</span>
-            <input type="number" min="0" value="${destinoCantidades[item.nombre] || 0}" 
-                   data-name="${item.nombre}" data-price="${item.precio}" />
-          </div>
-        </div>`;
-    });
+agrupado[categoria].forEach(item => {
+  grupo.innerHTML += `
+  <div class="producto-lineal">
+    <div class="producto-izquierda">
+      <strong>${item.nombre}</strong>
+      ${item.descripcion ? `<button class="btn-icono" onclick="mostrarDescripcion('${item.descripcion}', '${item.imagen_url || ""}')">
+        <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/info-icon.svg" alt="Descripción" />
+      </button>` : ""}
+    </div>
+    <div class="producto-derecha">
+      <span>${item.precio} CUP</span>
+      <input type="number" min="0" value="${destinoCantidades[item.nombre] || 0}"
+        data-name="${item.nombre}" data-price="${item.precio}" />
+    </div>
+  </div>`;
+});
     contenedor.appendChild(grupo);
   }
 
@@ -591,12 +591,13 @@ window.toggleVentajasGrupo = toggleVentajasGrupo;
 
 function mostrarDescripcion(descripcion, imagenUrl) {
   console.group("📝 Mostrar descripción del producto");
-  document.getElementById("modal-texto").textContent = descripcion;
+  document.getElementById("modal-texto").innerHTML = descripcion; // ✅ ahora permite formato HTML
   document.getElementById("modal-imagen").src = imagenUrl || "";
   document.getElementById("modal-descripcion").style.display = "block";
   console.log("🖼️ Descripción mostrada.");
   console.groupEnd();
 }
+
 window.mostrarDescripcion = mostrarDescripcion;
 
 document.getElementById("modal-close").addEventListener("click", () => {
