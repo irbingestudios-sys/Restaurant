@@ -186,3 +186,24 @@ button:hover {
   input, button, textarea { font-size: 0.9rem; }
   .scrollable-menu { max-height: 300px; }
 }
+/* Botón informativo compacto y circular */
+.btn-icono {
+  background-color: #f0f0f0;   /* fondo suave */
+  border: none;
+  border-radius: 50%;          /* forma circular */
+  width: 20px;
+  height: 20px;
+  margin-left: 6px;            /* separación mínima del texto */
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  padding: 0;
+}
+
+.btn-icono img {
+  width: 12px;   /* ícono pequeño dentro del círculo */
+  height: 12px;
+  object-fit: contain;
+}
