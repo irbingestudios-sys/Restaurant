@@ -226,3 +226,43 @@ button:hover {
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   position: relative;
 }
+/* Bloque de producto más claro */
+.producto-lineal {
+  display: grid;
+  grid-template-columns: 1fr auto auto; /* nombre | precio | cantidad */
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.producto-izquierda {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.producto-derecha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.producto-derecha span {
+  min-width: 80px; /* precio fijo */
+  text-align: right;
+}
+
+.producto-derecha input[type="number"] {
+  width: 70px; /* campo compacto */
+  text-align: center;
+}
+@media (max-width: 480px) {
+  .producto-lineal {
+    grid-template-columns: 1fr; /* todo en una columna */
+  }
+  .producto-derecha {
+    justify-content: flex-start;
+  }
+}
