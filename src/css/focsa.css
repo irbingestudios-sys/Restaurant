@@ -323,3 +323,10 @@ button:hover {
     justify-content: flex-start;
   }
 }
+/* Precio destacado */
+.producto-derecha span {
+  font-weight: 700;
+  color: var(--color-acento); /* usa el color acento definido en :root */
+  min-width: 80px;
+  text-align: right;
+}
