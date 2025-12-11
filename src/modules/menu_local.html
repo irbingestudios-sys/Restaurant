@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Menú Local | La Casona de 17</title>
+  <link rel="icon" href="https://irbingestudios-sys.github.io/Restaurant/favicon.ico" />
+  <link rel="stylesheet" href="https://irbingestudios-sys.github.io/Restaurant/src/css/menu_local.css">
+</head>
+<body>
+  <div class="menu-container">
+    <header>
+      <img src="https://irbingestudios-sys.github.io/Restaurant/src/assets/logo.png" alt="Logo La Casona de 17" class="logo-login" />
+      <h1 class="titulo-seccion">MENÚ DIGITAL LOCAL</h1>
+      <p>Clientes en mesa (QR)</p>
+    </header>
+
+    <!-- Filtros por categoría -->
+    <section id="filtros" aria-label="Filtros del menú">
+      <label for="filtro-categoria" class="label-filtro">Categoría:</label>
+      <select id="filtro-categoria">
+        <option value="">Todas</option>
+        <option value="panes">Panes</option>
+        <option value="Pizzas y Pastas">Pizzas y Pastas</option>
+        <option value="bebida">Bebidas</option>
+        <option value="Postres">Postres</option>
+      </select>
+    </section>
+
+    <!-- Áreas dinámicas -->
+    <section class="areas-container" aria-label="Áreas activas"></section>
+
+    <!-- Modal genérico de menú por área -->
+    <div id="modal-menu" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modal-titulo">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-titulo"></h3>
+          <button class="btn-cerrar" onclick="cerrarModal()" aria-label="Cerrar">✖</button>
+        </div>
+        <div id="modal-productos" class="modal-body"></div>
+      </div>
+    </div>
+
+    <!-- Modal de descripción del producto -->
+    <div id="modal-descripcion" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modal-descripcion-titulo">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modal-descripcion-titulo">Descripción</h3>
+          <button class="btn-cerrar" onclick="cerrarModalDescripcion()" aria-label="Cerrar">✖</button>
+        </div>
+        <div id="modal-descripcion-body" class="modal-body"></div>
+      </div>
+    </div>
+
+    <!-- Panel de administración (roles autorizados) -->
+    <section id="panel-areas" style="display:none;" aria-label="Control de áreas">
+      <h3>⚙️ Control de Áreas</h3>
+      <div id="lista-areas" class="panel-grid"></div>
+    </section>
+
+    <!-- Captación de cliente -->
+    <section id="whatsapp-invitacion" aria-label="Captación de clientes para WhatsApp">
+      <h3>📲 Únete al grupo de WhatsApp de La Casona</h3>
+      <div class="form-grid">
+        <input type="text" id="cliente-nombre" placeholder="Tu nombre" />
+        <input type="tel" id="cliente-telefono" placeholder="+53..." />
+        <button class="btn-primario" onclick="unirseWhatsApp()">Unirme al grupo</button>
+      </div>
+    </section>
+
+    <!-- Criterio de servicio -->
+    <section id="criterio-servicio" aria-label="Emitir criterio del servicio">
+      <h3>📝 Emitir criterio del servicio</h3>
+      <div class="form-grid">
+        <input type="text" id="criterio-nombre" placeholder="Tu nombre" />
+        <input type="text" id="criterio-contacto" placeholder="Teléfono o correo" />
+        <textarea id="criterio-texto" placeholder="Escribe tu opinión..." rows="4"></textarea>
+        <button class="btn-secundario" onclick="guardarCriterio()">Enviar criterio</button>
+      </div>
+    </section>
+
+    <footer>
+      <p>© La Casona de 17 - Menú Local</p>
+    </footer>
+  </div>
+
+  <!-- Script principal -->
+  <script type="module" src="https://irbingestudios-sys.github.io/Restaurant/src/js/menu_local.js"></script>
+</body>
+</html>
