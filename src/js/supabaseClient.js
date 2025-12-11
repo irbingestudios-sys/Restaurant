@@ -6,13 +6,19 @@
 // │ Fecha: 2025-11-05                                           │
 // └────────────────────────────────────────────────────────────┘
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+// src/js/supabaseClient.js
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/+esm";
 
-export const supabase = createClient(
-  'https://qeqltwrkubtyrmgvgaai.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw'
-);
+const SUPABASE_URL = "https://qeqltwrkubtyrmgvgaai.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // tu anon key
 
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    persistSession: true,          // ✅ guarda la sesión en localStorage
+    autoRefreshToken: true,        // ✅ refresca tokens automáticamente
+    detectSessionInUrl: true       // ✅ permite login vía redirect/callback
+  }
+});
 // ─── Referencias técnicas ─────────────────────────────────────
 // Proyecto Supabase: qeqltwrkubtyrmgvgaai
 // Clave: anon (uso público, sin privilegios elevados)
