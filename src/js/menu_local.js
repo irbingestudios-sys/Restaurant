@@ -1,21 +1,19 @@
-
-/* Supabase (igual que FOCSA, anon) */
-const supabase = createClient(
+/* ========== Supabase Inicialización ========== */
+console.log("[menu_local] Inicializando Supabase...");
+const supabase = supabase.createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 );
 
-/* Estado */
+/* ========== Estado Global ========== */
 let areaActual = "";
 let categoriaActual = "";
 
-/* Utilidades de log */
+/* ========== Utilidades ========== */
 const log = {
-  info: (m, d) => console.log(`[menu_local] ${m}`, d ?? ""),
+  info: (m, d) => console.log(`[menu_local][INFO] ${m}`, d ?? ""),
   err: (m, e) => console.error(`[menu_local][ERROR] ${m}`, e),
 };
-
-/* Helper para mostrar/ocultar modales */
 function setModal(id, visible) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -23,11 +21,11 @@ function setModal(id, visible) {
   el.setAttribute("aria-hidden", visible ? "false" : "true");
 }
 
-/* Render de áreas activas */
+/* ========== Áreas Cliente ========== */
 async function mostrarAreasCliente() {
+  log.info("Cargando áreas activas...");
   const { data, error } = await supabase.from("areas_estado").select("*").eq("activo", true);
-  if (error) return log.err("Cargar áreas activas", error);
-  log.info("Áreas activas", data);
+  if (error) return log.err("Error al cargar áreas activas", error);
 
   const cont = document.querySelector(".areas-container");
   cont.innerHTML = (data || [])
@@ -39,10 +37,11 @@ async function mostrarAreasCliente() {
   }
 }
 
-/* Abrir menú de un área (solo disponibles y con stock) */
+/* ========== Menú por Área ========== */
 async function abrirMenu(area) {
   areaActual = area;
   categoriaActual = document.getElementById("filtro-categoria")?.value || "";
+  log.info("Abrir menú área", { area, categoriaActual });
 
   let query = supabase.from("menu_item")
     .select("*")
@@ -54,7 +53,7 @@ async function abrirMenu(area) {
   if (categoriaActual) query = query.eq("categoria", categoriaActual);
 
   const { data: productos, error } = await query;
-  if (error) return log.err(`Productos área ${area}`, error);
+  if (error) return log.err("Error al cargar productos", error);
 
   const body = document.getElementById("modal-productos");
   document.getElementById("modal-titulo").textContent = `Menú de ${area}`;
@@ -79,8 +78,9 @@ async function abrirMenu(area) {
 }
 function cerrarModal() { setModal("modal-menu", false); }
 
-/* Descripción de producto */
+/* ========== Descripción Producto ========== */
 function mostrarDescripcion(descripcion, imagenUrl, nombre = "Producto") {
+  log.info("Mostrar descripción producto", { nombre });
   const body = document.getElementById("modal-descripcion-body");
   const titulo = document.getElementById("modal-descripcion-titulo");
   titulo.textContent = nombre || "Descripción";
@@ -93,7 +93,7 @@ function mostrarDescripcion(descripcion, imagenUrl, nombre = "Producto") {
 }
 function cerrarModalDescripcion() { setModal("modal-descripcion", false); }
 
-/* Login administración */
+/* ========== Administración: Login y Panel Áreas ========== */
 function abrirLogin() { setModal("modal-login", true); }
 function cerrarLogin() { setModal("modal-login", false); }
 function cerrarAreas() { setModal("modal-areas", false); }
@@ -101,6 +101,8 @@ function cerrarAreas() { setModal("modal-areas", false); }
 function loginAdmin() {
   const user = document.getElementById("admin-user").value.trim();
   const pass = document.getElementById("admin-pass").value.trim();
+  log.info("Intento login admin", { user });
+
   if ((user === "admin" && pass === "1234") || (user === "gerente" && pass === "1234")) {
     cerrarLogin();
     cargarPanelAreas();
@@ -110,10 +112,10 @@ function loginAdmin() {
   }
 }
 
-/* Panel de áreas */
 async function cargarPanelAreas() {
+  log.info("Cargando panel de áreas...");
   const { data: areas, error } = await supabase.from("areas_estado").select("*");
-  if (error) return log.err("Cargar panel áreas", error);
+  if (error) return log.err("Error al cargar panel áreas", error);
 
   const cont = document.getElementById("lista-areas");
   cont.innerHTML = (areas || []).map(a => `
@@ -128,66 +130,85 @@ async function cargarPanelAreas() {
 }
 
 async function toggleArea(nombre, estado) {
+  log.info("Toggle área", { nombre, estado });
   const { error } = await supabase.from("areas_estado").update({ activo: estado }).eq("nombre", nombre);
-  if (error) return log.err("Actualizar área", error);
+  if (error) return log.err("Error al actualizar área", error);
+
   await mostrarAreasCliente();
   if (areaActual === nombre && !estado) { cerrarModal(); areaActual = ""; }
 }
 
-/* Captación WhatsApp */
+/* ========== Captación WhatsApp ========== */
 async function unirseWhatsApp() {
   const nombre = document.getElementById("cliente-nombre").value.trim();
   const telefono = document.getElementById("cliente-telefono").value.trim();
   if (!nombre || !telefono) return alert("Completa nombre y teléfono.");
+  log.info("Cliente WhatsApp", { nombre, telefono });
+
   const { error } = await supabase.from("clientes_whatsapp").insert([{ nombre, telefono }]);
-  if (error) return log.err("Insertar cliente WhatsApp", error);
+  if (error) return log.err("Error al insertar cliente WhatsApp", error);
+
   alert("¡Gracias! Te contactaremos por WhatsApp.");
   document.getElementById("cliente-nombre").value = "";
   document.getElementById("cliente-telefono").value = "";
 }
 
-/* Criterio de servicio */
+/* ========== Criterio de Servicio ========== */
 async function guardarCriterio() {
   const nombre = document.getElementById("criterio-nombre").value.trim();
   const contacto = document.getElementById("criterio-contacto").value.trim();
   const criterio = document.getElementById("criterio-texto").value.trim();
   if (!nombre || !contacto || !criterio) return alert("Completa todos los campos.");
+  log.info("Guardar criterio servicio", { nombre, contacto, criterio });
+
   const { error } = await supabase.from("criterios_servicio").insert([{ nombre, contacto, criterio }]);
-  if (error) return log.err("Insertar criterio servicio", error);
+  if (error) return log.err("Error al insertar criterio servicio", error);
+
   alert("¡Gracias por tu opinión!");
   document.getElementById("criterio-nombre").value = "";
   document.getElementById("criterio-contacto").value = "";
   document.getElementById("criterio-texto").value = "";
 }
-
-/* Filtro categoría */
+/* ========== Filtro Categoría ========== */
 function onCategoriaChange() {
   categoriaActual = document.getElementById("filtro-categoria")?.value || "";
+  log.info("Cambio categoría", { categoriaActual });
   if (areaActual) abrirMenu(areaActual);
 }
 
-/* Escapar HTML */
+/* ========== Seguridad: Escapar HTML ========== */
 function escapeHtml(str) {
-  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
-/* Bootstrap */
+/* ========== Bootstrap ========== */
 document.addEventListener("DOMContentLoaded", async () => {
+  log.info("DOM cargado, inicializando...");
   mostrarAreasCliente();
   const selectCat = document.getElementById("filtro-categoria");
   if (selectCat) selectCat.addEventListener("change", onCategoriaChange);
 });
 
-/* Exponer funciones globales */
+/* ========== Exponer funciones globales ========== */
 window.abrirMenu = abrirMenu;
 window.cerrarModal = cerrarModal;
+
 window.mostrarDescripcion = mostrarDescripcion;
 window.cerrarModalDescripcion = cerrarModalDescripcion;
+
 window.abrirLogin = abrirLogin;
 window.cerrarLogin = cerrarLogin;
 window.loginAdmin = loginAdmin;
+
 window.cerrarAreas = cerrarAreas;
 window.toggleArea = toggleArea;
+
 window.unirseWhatsApp = unirseWhatsApp;
 window.guardarCriterio = guardarCriterio;
+
+console.log("[menu_local] Script inicializado y funciones expuestas al window ✔️");
