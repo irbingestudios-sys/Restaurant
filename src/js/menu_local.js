@@ -43,13 +43,13 @@ async function abrirMenu(area) {
   categoriaActual = document.getElementById("filtro-categoria")?.value || "";
   log.info("Abrir menú área", { area, categoriaActual });
 
-  // Ajuste: tolerar stock como texto o numeric
+  // Consulta con filtro numérico correcto
   let query = db.from("menu_item")
     .select("*")
     .contains("areas", [area])
     .contains("destinos", ["local"])
     .eq("disponible", true)
-    .neq("stock", "0"); // en vez de .gt("stock", 0)
+    .gt("stock", 0); // volvemos al filtro numérico
 
   if (categoriaActual) query = query.eq("categoria", categoriaActual);
 
