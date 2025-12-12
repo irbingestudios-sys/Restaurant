@@ -15,9 +15,14 @@
       <p>Clientes en mesa (QR)</p>
     </header>
 
+    <!-- Acceso administración -->
+    <div class="admin-bar">
+      <button id="btn-admin" class="btn-admin" onclick="abrirLogin()">Acceso administración</button>
+    </div>
+
     <!-- Filtros por categoría -->
-    <section id="filtros">
-      <label for="filtro-categoria">Categoría:</label>
+    <section id="filtros" aria-label="Filtros del menú">
+      <label for="filtro-categoria" class="label-filtro">Categoría:</label>
       <select id="filtro-categoria">
         <option value="">Todas</option>
         <option value="panes">Panes</option>
@@ -27,56 +32,82 @@
       </select>
     </section>
 
-    <!-- Áreas dinámicas -->
-    <section class="areas-container"></section>
+    <!-- Áreas activas dinámicas -->
+    <section class="areas-container" aria-label="Áreas activas"></section>
 
     <!-- Modal menú por área -->
-    <div id="modal-menu" class="modal">
+    <div id="modal-menu" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modal-titulo">
       <div class="modal-content">
-        <h3 id="modal-titulo"></h3>
-        <div id="modal-productos"></div>
-        <button onclick="cerrarModal()">Cerrar</button>
+        <div class="modal-header">
+          <h3 id="modal-titulo">Menú</h3>
+          <button class="btn-cerrar" onclick="cerrarModal()" aria-label="Cerrar">✖</button>
+        </div>
+        <div id="modal-productos" class="modal-body"></div>
       </div>
     </div>
 
-    <!-- Botón acceso administración -->
-    <button id="btn-admin" onclick="abrirLogin()">Acceso administración</button>
-
-    <!-- Modal login -->
-    <div id="modal-login" class="modal">
+    <!-- Modal descripción producto -->
+    <div id="modal-descripcion" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modal-descripcion-titulo">
       <div class="modal-content">
-        <h3>🔑 Acceso administración</h3>
-        <input type="text" id="admin-user" placeholder="Usuario" />
-        <input type="password" id="admin-pass" placeholder="Contraseña" />
-        <button onclick="loginAdmin()">Entrar</button>
-        <button onclick="cerrarLogin()">Cancelar</button>
+        <div class="modal-header">
+          <h3 id="modal-descripcion-titulo">Descripción</h3>
+          <button class="btn-cerrar" onclick="cerrarModalDescripcion()" aria-label="Cerrar">✖</button>
+        </div>
+        <div id="modal-descripcion-body" class="modal-body"></div>
+      </div>
+    </div>
+
+    <!-- Modal login administración -->
+    <div id="modal-login" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modal-login-titulo">
+      <div class="modal-content modal-narrow">
+        <div class="modal-header">
+          <h3 id="modal-login-titulo">🔑 Acceso administración</h3>
+          <button class="btn-cerrar" onclick="cerrarLogin()" aria-label="Cerrar">✖</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-grid-narrow">
+            <input type="text" id="admin-user" placeholder="Usuario" />
+            <input type="password" id="admin-pass" placeholder="Contraseña" />
+            <button class="btn-primario" onclick="loginAdmin()">Entrar</button>
+          </div>
+          <p class="nota-login">Acceso para roles autorizados (super_admin, admin, gerente).</p>
+        </div>
       </div>
     </div>
 
     <!-- Modal control de áreas -->
-    <div id="modal-areas" class="modal">
+    <div id="modal-areas" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modal-areas-titulo">
       <div class="modal-content">
-        <h3>⚙️ Control de Áreas</h3>
-        <div id="lista-areas"></div>
-        <button onclick="cerrarAreas()">Cerrar</button>
+        <div class="modal-header">
+          <h3 id="modal-areas-titulo">⚙️ Control de Áreas</h3>
+          <button class="btn-cerrar" onclick="cerrarAreas()" aria-label="Cerrar">✖</button>
+        </div>
+        <div class="modal-body">
+          <div id="lista-areas" class="panel-grid"></div>
+          <p class="nota-admin">Los cambios se reflejan en tiempo real en el menú del cliente.</p>
+        </div>
       </div>
     </div>
 
     <!-- Captación de cliente -->
-    <section id="whatsapp-invitacion">
+    <section id="whatsapp-invitacion" aria-label="Captación de clientes para WhatsApp">
       <h3>📲 Únete al grupo de WhatsApp</h3>
-      <input type="text" id="cliente-nombre" placeholder="Tu nombre" />
-      <input type="tel" id="cliente-telefono" placeholder="+53..." />
-      <button onclick="unirseWhatsApp()">Unirme al grupo</button>
+      <div class="form-grid">
+        <input type="text" id="cliente-nombre" placeholder="Tu nombre" />
+        <input type="tel" id="cliente-telefono" placeholder="+53..." />
+        <button class="btn-primario" onclick="unirseWhatsApp()">Unirme al grupo</button>
+      </div>
     </section>
 
     <!-- Criterio de servicio -->
-    <section id="criterio-servicio">
-      <h3>📝 Emitir criterio del servicio</h3>
-      <input type="text" id="criterio-nombre" placeholder="Tu nombre" />
-      <input type="text" id="criterio-contacto" placeholder="Teléfono o correo" />
-      <textarea id="criterio-texto" placeholder="Escribe tu opinión..."></textarea>
-      <button onclick="guardarCriterio()">Enviar criterio</button>
+    <section id="criterio-servicio" aria-label="Emitir criterio del servicio">
+      <h3>📝 Tu opinión nos importa</h3>
+      <div class="form-grid">
+        <input type="text" id="criterio-nombre" placeholder="Tu nombre" />
+        <input type="text" id="criterio-contacto" placeholder="Teléfono o correo" />
+        <textarea id="criterio-texto" placeholder="Escribe tu opinión..." rows="4"></textarea>
+        <button class="btn-secundario" onclick="guardarCriterio()">Enviar criterio</button>
+      </div>
     </section>
 
     <footer>
