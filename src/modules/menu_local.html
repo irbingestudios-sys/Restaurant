@@ -6,6 +6,24 @@
   <title>Menú Local | La Casona de 17</title>
   <link rel="icon" href="https://irbingestudios-sys.github.io/Restaurant/favicon.ico" />
   <link rel="stylesheet" href="https://irbingestudios-sys.github.io/Restaurant/src/css/menu_local.css">
+  <style>
+    /* Scroll vertical en el listado de productos */
+    #modal-productos {
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 8px;
+    }
+    #modal-productos::-webkit-scrollbar {
+      width: 8px;
+    }
+    #modal-productos::-webkit-scrollbar-thumb {
+      background-color: #888;
+      border-radius: 4px;
+    }
+    #modal-productos::-webkit-scrollbar-thumb:hover {
+      background-color: #555;
+    }
+  </style>
 </head>
 <body>
   <div class="menu-container">
@@ -20,18 +38,6 @@
       <button id="btn-admin" class="btn-admin" onclick="abrirLogin()">Acceso administración</button>
     </div>
 
-    <!-- Filtros por categoría -->
-    <section id="filtros" aria-label="Filtros del menú">
-      <label for="filtro-categoria" class="label-filtro">Categoría:</label>
-      <select id="filtro-categoria">
-        <option value="">Todas</option>
-        <option value="panes">Panes</option>
-        <option value="Pizzas y Pastas">Pizzas y Pastas</option>
-        <option value="bebida">Bebidas</option>
-        <option value="Postres">Postres</option>
-      </select>
-    </section>
-
     <!-- Áreas activas dinámicas -->
     <section class="areas-container" aria-label="Áreas activas"></section>
 
@@ -40,6 +46,14 @@
       <div class="modal-content">
         <div class="modal-header">
           <h3 id="modal-titulo">Menú</h3>
+          <!-- Filtro de categoría dentro del modal -->
+          <select id="modal-filtro-categoria" onchange="abrirMenu(areaActual)">
+            <option value="">Todas</option>
+            <option value="panes">Panes</option>
+            <option value="Pizzas y Pastas">Pizzas y Pastas</option>
+            <option value="bebida">Bebidas</option>
+            <option value="Postres">Postres</option>
+          </select>
           <button class="btn-cerrar" onclick="cerrarModal()" aria-label="Cerrar">✖</button>
         </div>
         <div id="modal-productos" class="modal-body"></div>
