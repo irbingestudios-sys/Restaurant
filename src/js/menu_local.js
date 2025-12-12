@@ -43,13 +43,13 @@ async function abrirMenu(area) {
   categoriaActual = document.getElementById("filtro-categoria")?.value || "";
   log.info("Abrir menú área", { area, categoriaActual });
 
-  // Consulta con filtro numérico correcto
+  // Ajuste: usar overlaps (ov) para arrays
   let query = db.from("menu_item")
     .select("*")
-    .contains("areas", [area])
-    .contains("destinos", ["local"])
     .eq("disponible", true)
-    .gt("stock", 0); // volvemos al filtro numérico
+    .filter("areas", "ov", `{${area}}`)     // el array contiene el área
+    .filter("destinos", "ov", "{local}")    // el array contiene 'local'
+    .gt("stock", 0);
 
   if (categoriaActual) query = query.eq("categoria", categoriaActual);
 
