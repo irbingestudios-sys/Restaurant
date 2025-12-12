@@ -7,7 +7,7 @@ const db = supabase.createClient(
 
 /* ========== Estado Global ========== */
 let areaActual = "";
-let categoriaActual = "";
+let categoriaActual = ""; // se toma del select dentro del modal
 
 /* ========== Utilidades ========== */
 const log = {
@@ -37,22 +37,19 @@ async function mostrarAreasCliente() {
   }
 }
 
-/* ========== Menú por Área ========== */
+/* ========== Menú por Área (RPC + filtro categoría en modal) ========== */
 async function abrirMenu(area) {
   areaActual = area;
-  categoriaActual = document.getElementById("filtro-categoria")?.value || "";
+  // Toma la categoría desde el select del modal (si existe)
+  categoriaActual = document.getElementById("modal-filtro-categoria")?.value || "";
   log.info("Abrir menú área", { area, categoriaActual });
 
-  let query = db.from("menu_item")
-    .select("*")
-    .eq("disponible", true)
-    .overlaps("areas", [area])       // ✅ usar overlaps con array JS
-    .overlaps("destinos", ["local"]) // ✅ usar overlaps con array JS
-    .gt("stock", 0);
+  const { data: productos, error } = await db.rpc("menu_items_filtrados", {
+    area: area,
+    destino: "local",
+    categoria: categoriaActual || null
+  });
 
-  if (categoriaActual) query = query.eq("categoria", categoriaActual);
-
-  const { data: productos, error } = await query;
   if (error) return log.err("Error al cargar productos", error);
 
   console.log("[menu_local][DEBUG] Productos recibidos:", productos);
@@ -172,12 +169,6 @@ async function guardarCriterio() {
   document.getElementById("criterio-contacto").value = "";
   document.getElementById("criterio-texto").value = "";
 }
-/* ========== Filtro Categoría ========== */
-function onCategoriaChange() {
-  categoriaActual = document.getElementById("filtro-categoria")?.value || "";
-  log.info("Cambio categoría", { categoriaActual });
-  if (areaActual) abrirMenu(areaActual);
-}
 
 /* ========== Seguridad: Escapar HTML ========== */
 function escapeHtml(str) {
@@ -193,8 +184,7 @@ function escapeHtml(str) {
 document.addEventListener("DOMContentLoaded", async () => {
   log.info("DOM cargado, inicializando...");
   mostrarAreasCliente();
-  const selectCat = document.getElementById("filtro-categoria");
-  if (selectCat) selectCat.addEventListener("change", onCategoriaChange);
+  // Se elimina el listener del filtro global (ya no existe fuera del modal)
 });
 
 /* ========== Exponer funciones globales ========== */
