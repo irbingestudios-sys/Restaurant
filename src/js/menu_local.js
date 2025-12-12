@@ -43,12 +43,11 @@ async function abrirMenu(area) {
   categoriaActual = document.getElementById("filtro-categoria")?.value || "";
   log.info("Abrir menú área", { area, categoriaActual });
 
-  // Ajuste: usar overlaps (ov) para arrays
   let query = db.from("menu_item")
     .select("*")
     .eq("disponible", true)
-    .filter("areas", "ov", `{${area}}`)     // el array contiene el área
-    .filter("destinos", "ov", "{local}")    // el array contiene 'local'
+    .overlaps("areas", [area])       // ✅ usar overlaps con array JS
+    .overlaps("destinos", ["local"]) // ✅ usar overlaps con array JS
     .gt("stock", 0);
 
   if (categoriaActual) query = query.eq("categoria", categoriaActual);
