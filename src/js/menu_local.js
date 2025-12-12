@@ -1,5 +1,5 @@
+// Importación correcta de Supabase como módulo ESM
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/esm/index.js";
-
 
 /* Supabase (igual que FOCSA, anon) */
 const supabase = createClient(
@@ -17,7 +17,7 @@ const log = {
   err: (m, e) => console.error(`[menu_local][ERROR] ${m}`, e),
 };
 
-/* Modal visibility helper */
+/* Helper para mostrar/ocultar modales */
 function setModal(id, visible) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -25,40 +25,28 @@ function setModal(id, visible) {
   el.setAttribute("aria-hidden", visible ? "false" : "true");
 }
 
-/* Render áreas activas para cliente */
+/* Render de áreas activas */
 async function mostrarAreasCliente() {
-  const { data, error } = await supabase
-    .from("areas_estado")
-    .select("*")
-    .eq("activo", true);
-
+  const { data, error } = await supabase.from("areas_estado").select("*").eq("activo", true);
   if (error) return log.err("Cargar áreas activas", error);
   log.info("Áreas activas", data);
 
   const cont = document.querySelector(".areas-container");
   cont.innerHTML = (data || [])
-    .map(
-      (a) =>
-        `<button class="btn-area" onclick="abrirMenu('${a.nombre}')">🏷️ ${a.nombre}</button>`
-    )
+    .map(a => `<button class="btn-area" onclick="abrirMenu('${a.nombre}')">🏷️ ${a.nombre}</button>`)
     .join("");
 
-  // Si no hay áreas activas, muestra estado
   if (!data || data.length === 0) {
     cont.innerHTML = `<p class="estado-vacio">No hay áreas activas en este momento.</p>`;
   }
 }
 
-/* Abrir menú por área (solo disponibles y con stock) */
+/* Abrir menú de un área (solo disponibles y con stock) */
 async function abrirMenu(area) {
   areaActual = area;
-  categoriaActual =
-    document.getElementById("filtro-categoria")?.value || "";
+  categoriaActual = document.getElementById("filtro-categoria")?.value || "";
 
-  log.info("Abrir menú área", { area, categoriaActual });
-
-  let query = supabase
-    .from("menu_item")
+  let query = supabase.from("menu_item")
     .select("*")
     .contains("areas", [area])
     .contains("destinos", ["local"])
@@ -76,34 +64,22 @@ async function abrirMenu(area) {
   if (!productos || productos.length === 0) {
     body.innerHTML = `<p class="estado-vacio">No hay productos disponibles para esta área y categoría.</p>`;
   } else {
-    body.innerHTML = productos
-      .map(
-        (p) => `
+    body.innerHTML = productos.map(p => `
       <div class="producto-lineal">
         <div class="producto-info">
           <strong>${escapeHtml(p.nombre)}</strong>
-          ${Array.isArray(p.etiquetas) && p.etiquetas.length
-            ? `<span class="chip">${p.etiquetas.join(", ")}</span>`
-            : ""}
         </div>
         <div class="producto-acciones">
-          <button class="btn-info" onclick="mostrarDescripcion('${escapeHtml(
-            p.descripcion || ""
-          )}', '${escapeHtml(p.imagen_url || "")}', '${escapeHtml(
-            p.nombre || "Producto"
-          )}')">ℹ️</button>
+          <button class="btn-info" onclick="mostrarDescripcion('${escapeHtml(p.descripcion || "")}', '${escapeHtml(p.imagen_url || "")}', '${escapeHtml(p.nombre || "Producto")}')">ℹ️</button>
           <span class="precio">${Number(p.precio).toFixed(2)} CUP</span>
         </div>
-      </div>`
-      )
-      .join("");
+      </div>
+    `).join("");
   }
 
   setModal("modal-menu", true);
 }
-function cerrarModal() {
-  setModal("modal-menu", false);
-}
+function cerrarModal() { setModal("modal-menu", false); }
 
 /* Descripción de producto */
 function mostrarDescripcion(descripcion, imagenUrl, nombre = "Producto") {
@@ -111,43 +87,23 @@ function mostrarDescripcion(descripcion, imagenUrl, nombre = "Producto") {
   const titulo = document.getElementById("modal-descripcion-titulo");
   titulo.textContent = nombre || "Descripción";
 
-  const img =
-    imagenUrl && imagenUrl !== ""
-      ? `<img src="${imagenUrl}" alt="Imagen de ${nombre}" class="img-producto" />`
-      : "";
-  const txt =
-    descripcion && descripcion !== ""
-      ? `<p class="texto-descripcion">${descripcion}</p>`
-      : `<p class="texto-descripcion estado-vacio">Sin descripción disponible.</p>`;
+  const img = imagenUrl ? `<img src="${imagenUrl}" alt="Imagen de ${nombre}" class="img-producto" />` : "";
+  const txt = descripcion ? `<p class="texto-descripcion">${descripcion}</p>` : `<p class="texto-descripcion estado-vacio">Sin descripción disponible.</p>`;
 
   body.innerHTML = `${img}${txt}`;
   setModal("modal-descripcion", true);
 }
-function cerrarModalDescripcion() {
-  setModal("modal-descripcion", false);
-}
+function cerrarModalDescripcion() { setModal("modal-descripcion", false); }
 
-/* Admin: abrir/cerrar login y áreas */
-function abrirLogin() {
-  setModal("modal-login", true);
-}
-function cerrarLogin() {
-  setModal("modal-login", false);
-}
-function cerrarAreas() {
-  setModal("modal-areas", false);
-}
+/* Login administración */
+function abrirLogin() { setModal("modal-login", true); }
+function cerrarLogin() { setModal("modal-login", false); }
+function cerrarAreas() { setModal("modal-areas", false); }
 
-/* Admin: login básico para habilitar control de áreas */
 function loginAdmin() {
   const user = document.getElementById("admin-user").value.trim();
   const pass = document.getElementById("admin-pass").value.trim();
-
-  // Puedes reemplazar por tu lógica real (RPC/roles); esto habilita rápido
-  if (
-    (user === "admin" && pass === "1234") ||
-    (user === "gerente" && pass === "1234")
-  ) {
+  if ((user === "admin" && pass === "1234") || (user === "gerente" && pass === "1234")) {
     cerrarLogin();
     cargarPanelAreas();
     setModal("modal-areas", true);
@@ -156,43 +112,28 @@ function loginAdmin() {
   }
 }
 
-/* Admin: cargar y togglear áreas en tiempo real */
+/* Panel de áreas */
 async function cargarPanelAreas() {
   const { data: areas, error } = await supabase.from("areas_estado").select("*");
   if (error) return log.err("Cargar panel áreas", error);
-  log.info("Panel áreas", areas);
 
   const cont = document.getElementById("lista-areas");
-  cont.innerHTML = (areas || [])
-    .map(
-      (a) => `
+  cont.innerHTML = (areas || []).map(a => `
     <div class="area-control">
       <div class="area-label">${a.nombre}</div>
       <label class="switch">
         <input type="checkbox" ${a.activo ? "checked" : ""} onchange="toggleArea('${a.nombre}', this.checked)" />
         <span class="slider"></span>
       </label>
-    </div>`
-    )
-    .join("");
+    </div>
+  `).join("");
 }
 
 async function toggleArea(nombre, estado) {
-  log.info("Toggle área", { nombre, estado });
-  const { error } = await supabase
-    .from("areas_estado")
-    .update({ activo: estado })
-    .eq("nombre", nombre);
+  const { error } = await supabase.from("areas_estado").update({ activo: estado }).eq("nombre", nombre);
   if (error) return log.err("Actualizar área", error);
-
-  // Refrescar vista cliente tras cambio
   await mostrarAreasCliente();
-
-  // Si el área actual se desactiva, cerrar modal
-  if (areaActual === nombre && !estado) {
-    cerrarModal();
-    areaActual = "";
-  }
+  if (areaActual === nombre && !estado) { cerrarModal(); areaActual = ""; }
 }
 
 /* Captación WhatsApp */
@@ -200,12 +141,7 @@ async function unirseWhatsApp() {
   const nombre = document.getElementById("cliente-nombre").value.trim();
   const telefono = document.getElementById("cliente-telefono").value.trim();
   if (!nombre || !telefono) return alert("Completa nombre y teléfono.");
-  log.info("Cliente WhatsApp", { nombre, telefono });
-
-  const { error } = await supabase
-    .from("clientes_whatsapp")
-    .insert([{ nombre, telefono }]);
-
+  const { error } = await supabase.from("clientes_whatsapp").insert([{ nombre, telefono }]);
   if (error) return log.err("Insertar cliente WhatsApp", error);
   alert("¡Gracias! Te contactaremos por WhatsApp.");
   document.getElementById("cliente-nombre").value = "";
@@ -217,14 +153,8 @@ async function guardarCriterio() {
   const nombre = document.getElementById("criterio-nombre").value.trim();
   const contacto = document.getElementById("criterio-contacto").value.trim();
   const criterio = document.getElementById("criterio-texto").value.trim();
-  if (!nombre || !contacto || !criterio)
-    return alert("Completa todos los campos.");
-  log.info("Criterio servicio", { nombre, contacto, criterio });
-
-  const { error } = await supabase
-    .from("criterios_servicio")
-    .insert([{ nombre, contacto, criterio }]);
-
+  if (!nombre || !contacto || !criterio) return alert("Completa todos los campos.");
+  const { error } = await supabase.from("criterios_servicio").insert([{ nombre, contacto, criterio }]);
   if (error) return log.err("Insertar criterio servicio", error);
   alert("¡Gracias por tu opinión!");
   document.getElementById("criterio-nombre").value = "";
@@ -232,20 +162,16 @@ async function guardarCriterio() {
   document.getElementById("criterio-texto").value = "";
 }
 
-/* Filtro de categoría reactivo */
+/* Filtro categoría */
 function onCategoriaChange() {
   categoriaActual = document.getElementById("filtro-categoria")?.value || "";
   if (areaActual) abrirMenu(areaActual);
 }
 
-/* Seguridad: escapar HTML */
+/* Escapar HTML */
 function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
 }
 
 /* Bootstrap */
@@ -255,7 +181,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (selectCat) selectCat.addEventListener("change", onCategoriaChange);
 });
 
-/* Exponer funciones globales para HTML inline */
+/* Exponer funciones globales */
 window.abrirMenu = abrirMenu;
 window.cerrarModal = cerrarModal;
 window.mostrarDescripcion = mostrarDescripcion;
