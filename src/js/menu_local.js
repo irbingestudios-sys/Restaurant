@@ -1,63 +1,60 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 
-/* ==========
-   Supabase (igual que FOCSA, anon, sin auth de navegador)
-   ========== */
+/* Supabase (igual que FOCSA, anon) */
 const supabase = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
 );
 
-/* ==========
-   Estado UI
-   ========== */
+/* Estado */
 let areaActual = "";
 let categoriaActual = "";
 
-/* ==========
-   Utilidades de log y UI
-   ========== */
-function logInfo(etiqueta, dato) {
-  console.log(`[menu_local] ${etiqueta}:`, dato);
-}
-function logError(etiqueta, error) {
-  console.error(`[menu_local][ERROR] ${etiqueta}:`, error);
-}
-function setModalVisible(id, visible) {
+/* Utilidades de log */
+const log = {
+  info: (m, d) => console.log(`[menu_local] ${m}`, d ?? ""),
+  err: (m, e) => console.error(`[menu_local][ERROR] ${m}`, e),
+};
+
+/* Modal visibility helper */
+function setModal(id, visible) {
   const el = document.getElementById(id);
   if (!el) return;
   el.style.display = visible ? "flex" : "none";
   el.setAttribute("aria-hidden", visible ? "false" : "true");
 }
 
-/* ==========
-   Render de áreas para cliente (solo activas)
-   ========== */
+/* Render áreas activas para cliente */
 async function mostrarAreasCliente() {
-  const { data: areas, error } = await supabase
+  const { data, error } = await supabase
     .from("areas_estado")
     .select("*")
     .eq("activo", true);
-  if (error) return logError("Cargar áreas activas", error);
-  logInfo("Áreas activas", areas);
 
-  const contenedor = document.querySelector(".areas-container");
-  contenedor.innerHTML = (areas || [])
+  if (error) return log.err("Cargar áreas activas", error);
+  log.info("Áreas activas", data);
+
+  const cont = document.querySelector(".areas-container");
+  cont.innerHTML = (data || [])
     .map(
       (a) =>
         `<button class="btn-area" onclick="abrirMenu('${a.nombre}')">🏷️ ${a.nombre}</button>`
     )
     .join("");
+
+  // Si no hay áreas activas, muestra estado
+  if (!data || data.length === 0) {
+    cont.innerHTML = `<p class="estado-vacio">No hay áreas activas en este momento.</p>`;
+  }
 }
 
-/* ==========
-   Abrir menú de un área (solo disponibles y con stock)
-   ========== */
+/* Abrir menú por área (solo disponibles y con stock) */
 async function abrirMenu(area) {
   areaActual = area;
-  categoriaActual = document.getElementById("filtro-categoria")?.value || "";
+  categoriaActual =
+    document.getElementById("filtro-categoria")?.value || "";
 
-  logInfo("Abrir menú área", { area, categoriaActual });
+  log.info("Abrir menú área", { area, categoriaActual });
 
   let query = supabase
     .from("menu_item")
@@ -67,31 +64,33 @@ async function abrirMenu(area) {
     .eq("disponible", true)
     .gt("stock", 0);
 
-  if (categoriaActual) {
-    query = query.eq("categoria", categoriaActual);
-  }
+  if (categoriaActual) query = query.eq("categoria", categoriaActual);
 
   const { data: productos, error } = await query;
-  if (error) return logError(`Cargar productos área ${area}`, error);
+  if (error) return log.err(`Productos área ${area}`, error);
 
-  logInfo(`Productos área ${area}`, productos);
-
-  const cuerpo = document.getElementById("modal-productos");
+  const body = document.getElementById("modal-productos");
   document.getElementById("modal-titulo").textContent = `Menú de ${area}`;
 
   if (!productos || productos.length === 0) {
-    cuerpo.innerHTML = `<p class="estado-vacio">No hay productos disponibles en esta área y categoría.</p>`;
+    body.innerHTML = `<p class="estado-vacio">No hay productos disponibles para esta área y categoría.</p>`;
   } else {
-    cuerpo.innerHTML = productos
+    body.innerHTML = productos
       .map(
         (p) => `
       <div class="producto-lineal">
         <div class="producto-info">
-          <strong>${p.nombre}</strong>
-          ${p.etiquetas?.length ? `<span class="chip">${p.etiquetas.join(", ")}</span>` : ""}
+          <strong>${escapeHtml(p.nombre)}</strong>
+          ${Array.isArray(p.etiquetas) && p.etiquetas.length
+            ? `<span class="chip">${p.etiquetas.join(", ")}</span>`
+            : ""}
         </div>
         <div class="producto-acciones">
-          <button class="btn-info" onclick="mostrarDescripcion('${escapeHtml(p.descripcion || "")}', '${escapeHtml(p.imagen_url || "")}', '${escapeHtml(p.nombre)}')">ℹ️</button>
+          <button class="btn-info" onclick="mostrarDescripcion('${escapeHtml(
+            p.descripcion || ""
+          )}', '${escapeHtml(p.imagen_url || "")}', '${escapeHtml(
+            p.nombre || "Producto"
+          )}')">ℹ️</button>
           <span class="precio">${Number(p.precio).toFixed(2)} CUP</span>
         </div>
       </div>`
@@ -99,50 +98,75 @@ async function abrirMenu(area) {
       .join("");
   }
 
-  setModalVisible("modal-menu", true);
+  setModal("modal-menu", true);
+}
+function cerrarModal() {
+  setModal("modal-menu", false);
 }
 
-/* ==========
-   Descripción de producto (segundo modal)
-   ========== */
+/* Descripción de producto */
 function mostrarDescripcion(descripcion, imagenUrl, nombre = "Producto") {
   const body = document.getElementById("modal-descripcion-body");
   const titulo = document.getElementById("modal-descripcion-titulo");
   titulo.textContent = nombre || "Descripción";
 
-  const imagen = imagenUrl
-    ? `<img src="${imagenUrl}" alt="Imagen de ${nombre}" class="img-producto" />`
-    : "";
+  const img =
+    imagenUrl && imagenUrl !== ""
+      ? `<img src="${imagenUrl}" alt="Imagen de ${nombre}" class="img-producto" />`
+      : "";
+  const txt =
+    descripcion && descripcion !== ""
+      ? `<p class="texto-descripcion">${descripcion}</p>`
+      : `<p class="texto-descripcion estado-vacio">Sin descripción disponible.</p>`;
 
-  const texto = descripcion
-    ? `<p class="texto-descripcion">${descripcion}</p>`
-    : `<p class="texto-descripcion estado-vacio">Sin descripción disponible.</p>`;
-
-  body.innerHTML = `${imagen}${texto}`;
-  setModalVisible("modal-descripcion", true);
-}
-
-function cerrarModal() {
-  setModalVisible("modal-menu", false);
+  body.innerHTML = `${img}${txt}`;
+  setModal("modal-descripcion", true);
 }
 function cerrarModalDescripcion() {
-  setModalVisible("modal-descripcion", false);
+  setModal("modal-descripcion", false);
 }
 
-/* ==========
-   Panel de administración (roles autorizados)
-   ========== */
+/* Admin: abrir/cerrar login y áreas */
+function abrirLogin() {
+  setModal("modal-login", true);
+}
+function cerrarLogin() {
+  setModal("modal-login", false);
+}
+function cerrarAreas() {
+  setModal("modal-areas", false);
+}
+
+/* Admin: login básico para habilitar control de áreas */
+function loginAdmin() {
+  const user = document.getElementById("admin-user").value.trim();
+  const pass = document.getElementById("admin-pass").value.trim();
+
+  // Puedes reemplazar por tu lógica real (RPC/roles); esto habilita rápido
+  if (
+    (user === "admin" && pass === "1234") ||
+    (user === "gerente" && pass === "1234")
+  ) {
+    cerrarLogin();
+    cargarPanelAreas();
+    setModal("modal-areas", true);
+  } else {
+    alert("Credenciales incorrectas");
+  }
+}
+
+/* Admin: cargar y togglear áreas en tiempo real */
 async function cargarPanelAreas() {
   const { data: areas, error } = await supabase.from("areas_estado").select("*");
-  if (error) return logError("Cargar panel áreas", error);
-  logInfo("Panel áreas", areas);
+  if (error) return log.err("Cargar panel áreas", error);
+  log.info("Panel áreas", areas);
 
-  const contenedor = document.getElementById("lista-areas");
-  contenedor.innerHTML = (areas || [])
+  const cont = document.getElementById("lista-areas");
+  cont.innerHTML = (areas || [])
     .map(
       (a) => `
     <div class="area-control">
-      <label>${a.nombre}</label>
+      <div class="area-label">${a.nombre}</div>
       <label class="switch">
         <input type="checkbox" ${a.activo ? "checked" : ""} onchange="toggleArea('${a.nombre}', this.checked)" />
         <span class="slider"></span>
@@ -153,77 +177,67 @@ async function cargarPanelAreas() {
 }
 
 async function toggleArea(nombre, estado) {
-  logInfo("Toggle área", { nombre, estado });
+  log.info("Toggle área", { nombre, estado });
   const { error } = await supabase
     .from("areas_estado")
     .update({ activo: estado })
     .eq("nombre", nombre);
-  if (error) return logError("Actualizar estado área", error);
-  logInfo("Área actualizada", nombre);
+  if (error) return log.err("Actualizar área", error);
+
+  // Refrescar vista cliente tras cambio
+  await mostrarAreasCliente();
+
+  // Si el área actual se desactiva, cerrar modal
+  if (areaActual === nombre && !estado) {
+    cerrarModal();
+    areaActual = "";
+  }
 }
 
-/* ==========
-   Captación de cliente (WhatsApp)
-   ========== */
+/* Captación WhatsApp */
 async function unirseWhatsApp() {
-  const nombre = document.getElementById("cliente-nombre").value?.trim();
-  const telefono = document.getElementById("cliente-telefono").value?.trim();
+  const nombre = document.getElementById("cliente-nombre").value.trim();
+  const telefono = document.getElementById("cliente-telefono").value.trim();
+  if (!nombre || !telefono) return alert("Completa nombre y teléfono.");
+  log.info("Cliente WhatsApp", { nombre, telefono });
 
-  if (!nombre || !telefono) {
-    alert("Por favor, completa nombre y teléfono.");
-    return;
-  }
-
-  logInfo("Insertar cliente WhatsApp", { nombre, telefono });
   const { error } = await supabase
     .from("clientes_whatsapp")
     .insert([{ nombre, telefono }]);
 
-  if (error) return logError("Insertar cliente WhatsApp", error);
-  alert("¡Gracias! Te contactaremos para unirte al grupo de WhatsApp.");
+  if (error) return log.err("Insertar cliente WhatsApp", error);
+  alert("¡Gracias! Te contactaremos por WhatsApp.");
   document.getElementById("cliente-nombre").value = "";
   document.getElementById("cliente-telefono").value = "";
 }
 
-/* ==========
-   Criterio de servicio
-   ========== */
+/* Criterio de servicio */
 async function guardarCriterio() {
-  const nombre = document.getElementById("criterio-nombre").value?.trim();
-  const contacto = document.getElementById("criterio-contacto").value?.trim();
-  const criterio = document.getElementById("criterio-texto").value?.trim();
+  const nombre = document.getElementById("criterio-nombre").value.trim();
+  const contacto = document.getElementById("criterio-contacto").value.trim();
+  const criterio = document.getElementById("criterio-texto").value.trim();
+  if (!nombre || !contacto || !criterio)
+    return alert("Completa todos los campos.");
+  log.info("Criterio servicio", { nombre, contacto, criterio });
 
-  if (!nombre || !contacto || !criterio) {
-    alert("Por favor, completa todos los campos.");
-    return;
-  }
-
-  logInfo("Insertar criterio servicio", { nombre, contacto, criterio });
   const { error } = await supabase
     .from("criterios_servicio")
     .insert([{ nombre, contacto, criterio }]);
 
-  if (error) return logError("Insertar criterio servicio", error);
-  alert("¡Gracias por tu opinión! Nos ayuda a mejorar.");
+  if (error) return log.err("Insertar criterio servicio", error);
+  alert("¡Gracias por tu opinión!");
   document.getElementById("criterio-nombre").value = "";
   document.getElementById("criterio-contacto").value = "";
   document.getElementById("criterio-texto").value = "";
 }
 
-/* ==========
-   Filtro por categoría reactivo dentro del modal del área actual
-   ========== */
+/* Filtro de categoría reactivo */
 function onCategoriaChange() {
-  const select = document.getElementById("filtro-categoria");
-  categoriaActual = select?.value || "";
-  if (areaActual) {
-    abrirMenu(areaActual);
-  }
+  categoriaActual = document.getElementById("filtro-categoria")?.value || "";
+  if (areaActual) abrirMenu(areaActual);
 }
 
-/* ==========
-   Seguridad: escapar HTML en strings
-   ========== */
+/* Seguridad: escapar HTML */
 function escapeHtml(str) {
   return String(str)
     .replace(/&/g, "&amp;")
@@ -233,41 +247,22 @@ function escapeHtml(str) {
     .replace(/'/g, "&#039;");
 }
 
-/* ==========
-   Bootstrap del módulo (control por rol)
-   ========== */
+/* Bootstrap */
 document.addEventListener("DOMContentLoaded", async () => {
-  // Vincular cambio de categoría
+  mostrarAreasCliente();
   const selectCat = document.getElementById("filtro-categoria");
   if (selectCat) selectCat.addEventListener("change", onCategoriaChange);
-
-  // Intentar obtener rol (si RPC existe). Si no, degradar a cliente.
-  let rol = "cliente";
-  try {
-    const { data: perfil, error } = await supabase.rpc("obtener_perfil_seguro");
-    if (error) logError("RPC obtener_perfil_seguro", error);
-    rol = perfil?.[0]?.rol || "cliente";
-  } catch (e) {
-    logError("RPC perfil (catch)", e);
-  }
-  logInfo("Rol detectado", rol);
-
-  if (["super_admin", "admin", "gerente"].includes(rol)) {
-    document.getElementById("panel-areas").style.display = "block";
-    cargarPanelAreas();
-    mostrarAreasCliente(); // También mostrar al pie las áreas vistas por cliente para validar
-  } else {
-    mostrarAreasCliente();
-  }
 });
 
-/* ==========
-   Exponer funciones al ámbito global para uso en HTML inline
-   ========== */
+/* Exponer funciones globales para HTML inline */
 window.abrirMenu = abrirMenu;
 window.cerrarModal = cerrarModal;
 window.mostrarDescripcion = mostrarDescripcion;
 window.cerrarModalDescripcion = cerrarModalDescripcion;
+window.abrirLogin = abrirLogin;
+window.cerrarLogin = cerrarLogin;
+window.loginAdmin = loginAdmin;
+window.cerrarAreas = cerrarAreas;
+window.toggleArea = toggleArea;
 window.unirseWhatsApp = unirseWhatsApp;
 window.guardarCriterio = guardarCriterio;
-window.toggleArea = toggleArea;
