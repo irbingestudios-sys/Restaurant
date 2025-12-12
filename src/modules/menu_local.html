@@ -16,8 +16,8 @@
     </header>
 
     <!-- Filtros por categoría -->
-    <section id="filtros" aria-label="Filtros del menú">
-      <label for="filtro-categoria" class="label-filtro">Categoría:</label>
+    <section id="filtros">
+      <label for="filtro-categoria">Categoría:</label>
       <select id="filtro-categoria">
         <option value="">Todas</option>
         <option value="panes">Panes</option>
@@ -28,55 +28,55 @@
     </section>
 
     <!-- Áreas dinámicas -->
-    <section class="areas-container" aria-label="Áreas activas"></section>
+    <section class="areas-container"></section>
 
-    <!-- Modal genérico de menú por área -->
-    <div id="modal-menu" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modal-titulo">
+    <!-- Modal menú por área -->
+    <div id="modal-menu" class="modal">
       <div class="modal-content">
-        <div class="modal-header">
-          <h3 id="modal-titulo"></h3>
-          <button class="btn-cerrar" onclick="cerrarModal()" aria-label="Cerrar">✖</button>
-        </div>
-        <div id="modal-productos" class="modal-body"></div>
+        <h3 id="modal-titulo"></h3>
+        <div id="modal-productos"></div>
+        <button onclick="cerrarModal()">Cerrar</button>
       </div>
     </div>
 
-    <!-- Modal de descripción del producto -->
-    <div id="modal-descripcion" class="modal" aria-hidden="true" role="dialog" aria-labelledby="modal-descripcion-titulo">
+    <!-- Botón acceso administración -->
+    <button id="btn-admin" onclick="abrirLogin()">Acceso administración</button>
+
+    <!-- Modal login -->
+    <div id="modal-login" class="modal">
       <div class="modal-content">
-        <div class="modal-header">
-          <h3 id="modal-descripcion-titulo">Descripción</h3>
-          <button class="btn-cerrar" onclick="cerrarModalDescripcion()" aria-label="Cerrar">✖</button>
-        </div>
-        <div id="modal-descripcion-body" class="modal-body"></div>
+        <h3>🔑 Acceso administración</h3>
+        <input type="text" id="admin-user" placeholder="Usuario" />
+        <input type="password" id="admin-pass" placeholder="Contraseña" />
+        <button onclick="loginAdmin()">Entrar</button>
+        <button onclick="cerrarLogin()">Cancelar</button>
       </div>
     </div>
 
-    <!-- Panel de administración (roles autorizados) -->
-    <section id="panel-areas" style="display:none;" aria-label="Control de áreas">
-      <h3>⚙️ Control de Áreas</h3>
-      <div id="lista-areas" class="panel-grid"></div>
-    </section>
+    <!-- Modal control de áreas -->
+    <div id="modal-areas" class="modal">
+      <div class="modal-content">
+        <h3>⚙️ Control de Áreas</h3>
+        <div id="lista-areas"></div>
+        <button onclick="cerrarAreas()">Cerrar</button>
+      </div>
+    </div>
 
     <!-- Captación de cliente -->
-    <section id="whatsapp-invitacion" aria-label="Captación de clientes para WhatsApp">
-      <h3>📲 Únete al grupo de WhatsApp de La Casona</h3>
-      <div class="form-grid">
-        <input type="text" id="cliente-nombre" placeholder="Tu nombre" />
-        <input type="tel" id="cliente-telefono" placeholder="+53..." />
-        <button class="btn-primario" onclick="unirseWhatsApp()">Unirme al grupo</button>
-      </div>
+    <section id="whatsapp-invitacion">
+      <h3>📲 Únete al grupo de WhatsApp</h3>
+      <input type="text" id="cliente-nombre" placeholder="Tu nombre" />
+      <input type="tel" id="cliente-telefono" placeholder="+53..." />
+      <button onclick="unirseWhatsApp()">Unirme al grupo</button>
     </section>
 
     <!-- Criterio de servicio -->
-    <section id="criterio-servicio" aria-label="Emitir criterio del servicio">
+    <section id="criterio-servicio">
       <h3>📝 Emitir criterio del servicio</h3>
-      <div class="form-grid">
-        <input type="text" id="criterio-nombre" placeholder="Tu nombre" />
-        <input type="text" id="criterio-contacto" placeholder="Teléfono o correo" />
-        <textarea id="criterio-texto" placeholder="Escribe tu opinión..." rows="4"></textarea>
-        <button class="btn-secundario" onclick="guardarCriterio()">Enviar criterio</button>
-      </div>
+      <input type="text" id="criterio-nombre" placeholder="Tu nombre" />
+      <input type="text" id="criterio-contacto" placeholder="Teléfono o correo" />
+      <textarea id="criterio-texto" placeholder="Escribe tu opinión..."></textarea>
+      <button onclick="guardarCriterio()">Enviar criterio</button>
     </section>
 
     <footer>
