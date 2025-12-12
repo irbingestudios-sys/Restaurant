@@ -43,17 +43,20 @@ async function abrirMenu(area) {
   categoriaActual = document.getElementById("filtro-categoria")?.value || "";
   log.info("Abrir menú área", { area, categoriaActual });
 
+  // Ajuste: tolerar stock como texto o numeric
   let query = db.from("menu_item")
     .select("*")
     .contains("areas", [area])
     .contains("destinos", ["local"])
     .eq("disponible", true)
-    .gt("stock", 0);
+    .neq("stock", "0"); // en vez de .gt("stock", 0)
 
   if (categoriaActual) query = query.eq("categoria", categoriaActual);
 
   const { data: productos, error } = await query;
   if (error) return log.err("Error al cargar productos", error);
+
+  console.log("[menu_local][DEBUG] Productos recibidos:", productos);
 
   const body = document.getElementById("modal-productos");
   document.getElementById("modal-titulo").textContent = `Menú de ${area}`;
@@ -64,11 +67,12 @@ async function abrirMenu(area) {
     body.innerHTML = productos.map(p => `
       <div class="producto-lineal">
         <div class="producto-info">
-          <strong>${escapeHtml(p.nombre)}</strong>
+          <strong>${escapeHtml(p.nombre || "Sin nombre")}</strong>
         </div>
         <div class="producto-acciones">
           <button class="btn-info" onclick="mostrarDescripcion('${escapeHtml(p.descripcion || "")}', '${escapeHtml(p.imagen_url || "")}', '${escapeHtml(p.nombre || "Producto")}')">ℹ️</button>
-          <span class="precio">${Number(p.precio).toFixed(2)} CUP</span>
+          <span class="precio">${p.precio ? Number(p.precio).toFixed(2) : "N/D"} CUP</span>
+          <span class="stock">${parseInt(p.stock) > 0 ? `Stock: ${p.stock}` : "Agotado"}</span>
         </div>
       </div>
     `).join("");
