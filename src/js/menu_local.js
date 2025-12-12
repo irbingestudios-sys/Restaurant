@@ -44,11 +44,11 @@ async function abrirMenu(area) {
   categoriaActual = document.getElementById("modal-filtro-categoria")?.value || "";
   log.info("Abrir menú área", { area, categoriaActual });
 
-  const { data: productos, error } = await db.rpc("menu_items_filtrados", {
-    area: area,
-    destino: "local",
-    categoria: categoriaActual || null
-  });
+  const { data: productos, error } = await db.rpc("menu_items_by_area_destino", {
+  area: area,
+  destino: "local",
+  categoria: categoriaActual || null
+});
 
   if (error) return log.err("Error al cargar productos", error);
 
