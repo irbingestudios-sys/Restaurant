@@ -1,6 +1,6 @@
 /* ========== Supabase Inicialización ========== */
 console.log("[menu_local] Inicializando Supabase...");
-const client = supabase.createClient(
+const db = supabase.createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
 );
@@ -24,7 +24,7 @@ function setModal(id, visible) {
 /* ========== Áreas Cliente ========== */
 async function mostrarAreasCliente() {
   log.info("Cargando áreas activas...");
-  const { data, error } = await supabase.from("areas_estado").select("*").eq("activo", true);
+  const { data, error } = await db.from("areas_estado").select("*").eq("activo", true);
   if (error) return log.err("Error al cargar áreas activas", error);
 
   const cont = document.querySelector(".areas-container");
@@ -43,7 +43,7 @@ async function abrirMenu(area) {
   categoriaActual = document.getElementById("filtro-categoria")?.value || "";
   log.info("Abrir menú área", { area, categoriaActual });
 
-  let query = supabase.from("menu_item")
+  let query = db.from("menu_item")
     .select("*")
     .contains("areas", [area])
     .contains("destinos", ["local"])
@@ -114,7 +114,7 @@ function loginAdmin() {
 
 async function cargarPanelAreas() {
   log.info("Cargando panel de áreas...");
-  const { data: areas, error } = await supabase.from("areas_estado").select("*");
+  const { data: areas, error } = await db.from("areas_estado").select("*");
   if (error) return log.err("Error al cargar panel áreas", error);
 
   const cont = document.getElementById("lista-areas");
@@ -131,7 +131,7 @@ async function cargarPanelAreas() {
 
 async function toggleArea(nombre, estado) {
   log.info("Toggle área", { nombre, estado });
-  const { error } = await supabase.from("areas_estado").update({ activo: estado }).eq("nombre", nombre);
+  const { error } = await db.from("areas_estado").update({ activo: estado }).eq("nombre", nombre);
   if (error) return log.err("Error al actualizar área", error);
 
   await mostrarAreasCliente();
@@ -145,7 +145,7 @@ async function unirseWhatsApp() {
   if (!nombre || !telefono) return alert("Completa nombre y teléfono.");
   log.info("Cliente WhatsApp", { nombre, telefono });
 
-  const { error } = await supabase.from("clientes_whatsapp").insert([{ nombre, telefono }]);
+  const { error } = await db.from("clientes_whatsapp").insert([{ nombre, telefono }]);
   if (error) return log.err("Error al insertar cliente WhatsApp", error);
 
   alert("¡Gracias! Te contactaremos por WhatsApp.");
@@ -161,7 +161,7 @@ async function guardarCriterio() {
   if (!nombre || !contacto || !criterio) return alert("Completa todos los campos.");
   log.info("Guardar criterio servicio", { nombre, contacto, criterio });
 
-  const { error } = await supabase.from("criterios_servicio").insert([{ nombre, contacto, criterio }]);
+  const { error } = await db.from("criterios_servicio").insert([{ nombre, contacto, criterio }]);
   if (error) return log.err("Error al insertar criterio servicio", error);
 
   alert("¡Gracias por tu opinión!");
