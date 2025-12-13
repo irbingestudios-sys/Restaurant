@@ -39,44 +39,76 @@ async function mostrarAreasCliente() {
 
 /* ========== Menú por Área (RPC + filtro categoría en modal) ========== */
 async function abrirMenu(area) {
-  areaActual = area;
-  // Toma la categoría desde el select del modal (si existe)
-  categoriaActual = document.getElementById("modal-filtro-categoria")?.value || "";
-  log.info("Abrir menú área", { area, categoriaActual });
+  try {
+    areaActual = area;
 
-  const { data: productos, error } = await db.rpc("menu_items_by_area_destino", {
-  area: area,
-  destino: "local",
-  categoria: categoriaActual || null
-});
+    // Leer categoría seleccionada en el modal
+    categoriaActual = document.getElementById("modal-filtro-categoria")?.value || "";
+    log.info("[abrirMenu] Iniciando carga del menú", { area, categoriaActual });
 
-  if (error) return log.err("Error al cargar productos", error);
+    // Llamada RPC
+    const { data: productos, error } = await db.rpc("menu_items_by_area_destino", {
+      area,
+      destino: "local",
+      categoria: categoriaActual || null
+    });
 
-  console.log("[menu_local][DEBUG] Productos recibidos:", productos);
+    if (error) {
+      log.err("[abrirMenu] Error en RPC menu_items_by_area_destino", error);
+      return;
+    }
 
-  const body = document.getElementById("modal-productos");
-  document.getElementById("modal-titulo").textContent = `Menú de ${area}`;
+    log.info("[abrirMenu] Productos recibidos", { cantidad: productos?.length || 0 });
+    console.debug("[menu_local][DEBUG] Productos:", productos);
 
-  if (!productos || productos.length === 0) {
-    body.innerHTML = `<p class="estado-vacio">No hay productos disponibles para esta área y categoría.</p>`;
-  } else {
-    body.innerHTML = productos.map(p => `
-      <div class="producto-lineal">
-        <div class="producto-info">
-          <strong>${escapeHtml(p.nombre || "Sin nombre")}</strong>
+    // Construcción del modal
+    const body = document.getElementById("modal-productos");
+    document.getElementById("modal-titulo").textContent = `Menú de ${area}`;
+
+    if (!productos || productos.length === 0) {
+      log.warn("[abrirMenu] No hay productos para esta área/categoría");
+      body.innerHTML = `
+        <p class="estado-vacio">
+          No hay productos disponibles para esta área y categoría.
+        </p>`;
+    } else {
+      body.innerHTML = productos.map(p => `
+        <div class="producto-lineal">
+          <div class="producto-info">
+            <strong>${escapeHtml(p.nombre || "Sin nombre")}</strong>
+          </div>
+          <div class="producto-acciones">
+            <button class="btn-info"
+              onclick="mostrarDescripcion(
+                '${escapeHtml(p.descripcion || "")}',
+                '${escapeHtml(p.imagen_url || "")}',
+                '${escapeHtml(p.nombre || "Producto")}'
+              )">ℹ️</button>
+
+            <span class="precio">
+              ${p.precio ? Number(p.precio).toFixed(2) : "N/D"} CUP
+            </span>
+
+            <span class="stock">
+              ${parseInt(p.stock) > 0 ? `Stock: ${p.stock}` : "Agotado"}
+            </span>
+          </div>
         </div>
-        <div class="producto-acciones">
-          <button class="btn-info" onclick="mostrarDescripcion('${escapeHtml(p.descripcion || "")}', '${escapeHtml(p.imagen_url || "")}', '${escapeHtml(p.nombre || "Producto")}')">ℹ️</button>
-          <span class="precio">${p.precio ? Number(p.precio).toFixed(2) : "N/D"} CUP</span>
-          <span class="stock">${parseInt(p.stock) > 0 ? `Stock: ${p.stock}` : "Agotado"}</span>
-        </div>
-      </div>
-    `).join("");
+      `).join("");
+    }
+
+    log.info("[abrirMenu] Mostrando modal del menú");
+    setModal("modal-menu", true);
+
+  } catch (e) {
+    log.err("[abrirMenu] Excepción inesperada", e);
   }
-
-  setModal("modal-menu", true);
 }
-function cerrarModal() { setModal("modal-menu", false); }
+
+function cerrarModal() {
+  log.info("[cerrarModal] Cerrando modal del menú");
+  setModal("modal-menu", false);
+}
 
 /* ========== Descripción Producto ========== */
 function mostrarDescripcion(descripcion, imagenUrl, nombre = "Producto") {
