@@ -6,14 +6,20 @@ const { createClient } = supabase; // del CDN @supabase/supabase-js@2
 const dbPublic = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw",
-  { auth: { persistSession: false, autoRefreshToken: false } }
+  {
+    auth: { persistSession: false, autoRefreshToken: false },
+    storageKey: "public-session"   // 🔑 clave separada para evitar conflicto
+  }
 );
 
 // Cliente autenticado (session) para panel admin
 const dbAuth = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw",
-  { auth: { persistSession: true, autoRefreshToken: true } }
+  {
+    auth: { persistSession: true, autoRefreshToken: true },
+    storageKey: "auth-session"     // 🔑 clave distinta para sesiones admin
+  }
 );
 
 /* ========== Estado Global ========== */
