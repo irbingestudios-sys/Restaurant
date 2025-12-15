@@ -131,6 +131,17 @@
 
   <!-- Supabase global -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Inicialización correcta de Supabase -->
+  <script>
+    const { createClient } = supabase;
+    window.db = createClient(
+      "https://qeqltwrkubtyrmgvgaai.supabase.co",
+      "TU_ANON_KEY_REAL_DEL_PANEL"
+    );
+    console.log("[menu_local] Supabase inicializado correctamente ✔️");
+  </script>
+
   <!-- Script principal -->
   <script src="https://irbingestudios-sys.github.io/Restaurant/src/js/menu_local.js"></script>
 </body>
