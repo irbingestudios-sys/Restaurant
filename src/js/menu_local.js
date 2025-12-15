@@ -1,19 +1,18 @@
 /* ========== Supabase Inicialización ========== */
 console.log("[menu_local] Inicializando Supabase...");
-const db = supabase.createClient(
-  "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw"
-);
+const db = window.db; // Instancia creada en el HTML con createClient
 
 /* ========== Estado Global ========== */
 let areaActual = "";
-let categoriaActual = ""; // se toma del select dentro del modal
+let categoriaActual = ""; // Se toma del select dentro del modal
 
 /* ========== Utilidades ========== */
 const log = {
   info: (m, d) => console.log(`[menu_local][INFO] ${m}`, d ?? ""),
   err: (m, e) => console.error(`[menu_local][ERROR] ${m}`, e),
+  warn: (m, d) => console.warn(`[menu_local][WARN] ${m}`, d ?? "")
 };
+
 function setModal(id, visible) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -24,7 +23,11 @@ function setModal(id, visible) {
 /* ========== Áreas Cliente ========== */
 async function mostrarAreasCliente() {
   log.info("Cargando áreas activas...");
-  const { data, error } = await db.from("areas_estado").select("*").eq("activo", true);
+  const { data, error } = await db
+    .from("areas_estado")
+    .select("*")
+    .eq("activo", true);
+
   if (error) return log.err("Error al cargar áreas activas", error);
 
   const cont = document.querySelector(".areas-container");
@@ -46,7 +49,7 @@ async function abrirMenu(area) {
     categoriaActual = document.getElementById("modal-filtro-categoria")?.value || "";
     log.info("[abrirMenu] Iniciando carga del menú", { area, categoriaActual });
 
-    // Llamada RPC
+    // Llamada RPC (Postgres function: menu_items_by_area_destino)
     const { data: productos, error } = await db.rpc("menu_items_by_area_destino", {
       area,
       destino: "local",
@@ -117,18 +120,29 @@ function mostrarDescripcion(descripcion, imagenUrl, nombre = "Producto") {
   const titulo = document.getElementById("modal-descripcion-titulo");
   titulo.textContent = nombre || "Descripción";
 
-  const img = imagenUrl ? `<img src="${imagenUrl}" alt="Imagen de ${nombre}" class="img-producto" />` : "";
-  const txt = descripcion ? `<p class="texto-descripcion">${descripcion}</p>` : `<p class="texto-descripcion estado-vacio">Sin descripción disponible.</p>`;
+  const img = imagenUrl ? `<img src="${imagenUrl}" alt="Imagen de ${escapeHtml(nombre)}" class="img-producto" />` : "";
+  const txt = descripcion
+    ? `<p class="texto-descripcion">${escapeHtml(descripcion)}</p>`
+    : `<p class="texto-descripcion estado-vacio">Sin descripción disponible.</p>`;
 
   body.innerHTML = `${img}${txt}`;
   setModal("modal-descripcion", true);
 }
-function cerrarModalDescripcion() { setModal("modal-descripcion", false); }
+function cerrarModalDescripcion() {
+  log.info("[cerrarModalDescripcion] Cerrando modal de descripción");
+  setModal("modal-descripcion", false);
+}
 
 /* ========== Administración: Login y Panel Áreas ========== */
-function abrirLogin() { setModal("modal-login", true); }
-function cerrarLogin() { setModal("modal-login", false); }
-function cerrarAreas() { setModal("modal-areas", false); }
+function abrirLogin() {
+  setModal("modal-login", true);
+}
+function cerrarLogin() {
+  setModal("modal-login", false);
+}
+function cerrarAreas() {
+  setModal("modal-areas", false);
+}
 
 function loginAdmin() {
   const user = document.getElementById("admin-user").value.trim();
@@ -152,9 +166,9 @@ async function cargarPanelAreas() {
   const cont = document.getElementById("lista-areas");
   cont.innerHTML = (areas || []).map(a => `
     <div class="area-control">
-      <div class="area-label">${a.nombre}</div>
+      <div class="area-label">${escapeHtml(a.nombre)}</div>
       <label class="switch">
-        <input type="checkbox" ${a.activo ? "checked" : ""} onchange="toggleArea('${a.nombre}', this.checked)" />
+        <input type="checkbox" ${a.activo ? "checked" : ""} onchange="toggleArea('${escapeHtml(a.nombre)}', this.checked)" />
         <span class="slider"></span>
       </label>
     </div>
@@ -216,7 +230,7 @@ function escapeHtml(str) {
 document.addEventListener("DOMContentLoaded", async () => {
   log.info("DOM cargado, inicializando...");
   mostrarAreasCliente();
-  // Se elimina el listener del filtro global (ya no existe fuera del modal)
+  // Filtro de categoría se maneja dentro del modal (no hay listener global)
 });
 
 /* ========== Exponer funciones globales ========== */
