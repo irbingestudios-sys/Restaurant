@@ -216,3 +216,28 @@ input[type="text"], input[type="tel"], input[type="password"], select {
 
 /* Footer */
 footer { text-align: center; color: var(--muted); padding: 16px; }
+/* Ajustes específicos para el modal de login */
+#modal-login .form-grid-narrow {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#modal-login input[type="text"],
+#modal-login input[type="password"] {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+}
+
+#modal-login .btn-primario {
+  width: 100%;
+  font-weight: 600;
+}
+
+#modal-login .nota-login {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
