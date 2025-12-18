@@ -142,11 +142,14 @@ async function loginAdmin() {
   }
   log.info("[Acceso Admin] Login correcto, obteniendo usuario…");
 
+  // 🔎 AQUÍ es donde debes poner el log completo del usuario
   const { data: userData, error: userError } = await dbAuth.auth.getUser();
   if (userError) {
     log.err("[Acceso Admin] Error al obtener usuario", userError);
     return;
   }
+  log.info("[Acceso Admin] Datos completos de usuario", userData); // <-- ESTE ES EL LOG CLAVE
+
   const role = userData?.user?.app_metadata?.role || userData?.user?.user_metadata?.role;
   log.info("[Acceso Admin] Rol detectado", role);
 
