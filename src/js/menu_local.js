@@ -116,35 +116,63 @@ function mostrarDescripcion(descripcion, imagenUrl, nombre = "Producto") {
 function cerrarModalDescripcion() { setModal("modal-descripcion", false); }
 
 /* ========== Administración: Login y Panel Áreas (usa dbAuth) ========== */
-function abrirLogin() { setModal("modal-login", true); }
-function cerrarLogin() { setModal("modal-login", false); }
-function cerrarAreas() { setModal("modal-areas", false); }
+function abrirLogin() { 
+  log.info("[Acceso Admin] Abriendo modal login"); 
+  setModal("modal-login", true); 
+}
+function cerrarLogin() { 
+  log.info("[Acceso Admin] Cerrando modal login"); 
+  setModal("modal-login", false); 
+}
+function cerrarAreas() { 
+  log.info("[Acceso Admin] Cerrando panel áreas"); 
+  setModal("modal-areas", false); 
+}
 
 async function loginAdmin() {
   const email = document.getElementById("admin-user").value.trim();
   const password = document.getElementById("admin-pass").value.trim();
+  log.info("[Acceso Admin] Intentando login", { email });
 
   const { data, error } = await dbAuth.auth.signInWithPassword({ email, password });
-  if (error) { alert("Credenciales incorrectas"); return; }
+  if (error) {
+    log.err("[Acceso Admin] Error en signInWithPassword", error);
+    alert("Credenciales incorrectas");
+    return;
+  }
+  log.info("[Acceso Admin] Login correcto, obteniendo usuario…");
 
-  const { data: userData } = await dbAuth.auth.getUser();
+  const { data: userData, error: userError } = await dbAuth.auth.getUser();
+  if (userError) {
+    log.err("[Acceso Admin] Error al obtener usuario", userError);
+    return;
+  }
   const role = userData?.user?.app_metadata?.role || userData?.user?.user_metadata?.role;
-  const rolesPermitidos = ["admin", "gerente", "super_admin"];
+  log.info("[Acceso Admin] Rol detectado", role);
 
+  const rolesPermitidos = ["admin", "gerente", "super_admin"];
   if (!rolesPermitidos.includes(role)) {
+    log.warn("[Acceso Admin] Rol no autorizado", role);
     alert("Acceso no autorizado para este rol");
     await dbAuth.auth.signOut();
     return;
   }
 
+  log.info("[Acceso Admin] Rol autorizado, cargando panel áreas…");
   cerrarLogin();
   await cargarPanelAreas();
   setModal("modal-areas", true);
 }
 
 async function cargarPanelAreas() {
+  log.info("[Acceso Admin] Cargando áreas desde Supabase…");
   const { data: areas, error } = await dbAuth.from("areas_estado").select("*");
-  if (error) return log.err("Error al cargar panel áreas", error);
+  if (error) {
+    log.err("[Acceso Admin] Error al cargar áreas", error);
+    return;
+  }
+  log.info("[Acceso Admin] Áreas cargadas", areas);
+
   const cont = document.getElementById("lista-areas");
   cont.innerHTML = (areas || []).map(a => `
     <div class="area-control">
@@ -157,12 +185,20 @@ async function cargarPanelAreas() {
 }
 
 async function toggleArea(nombre, estado) {
+  log.info("[Acceso Admin] Actualizando área", { nombre, estado });
   const { error } = await dbAuth.from("areas_estado").update({ activo: estado }).eq("nombre", nombre);
-  if (error) return log.err("Error al actualizar área", error);
-  await mostrarAreasCliente(); // usa dbPublic
-  if (areaActual === nombre && !estado) { cerrarModal(); areaActual = ""; }
-}
+  if (error) {
+    log.err("[Acceso Admin] Error al actualizar área", error);
+    return;
+  }
+  log.info("[Acceso Admin] Área actualizada correctamente", { nombre, estado });
 
+  await mostrarAreasCliente(); // usa dbPublic
+  if (areaActual === nombre && !estado) { 
+    cerrarModal(); 
+    areaActual = ""; 
+  }
+}
 /* ========== Captación WhatsApp (usa dbPublic) ========== */
 async function unirseWhatsApp() {
   const nombre = document.getElementById("cliente-nombre").value.trim();
