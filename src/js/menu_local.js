@@ -69,6 +69,7 @@ async function abrirMenu(area) {
   try {
     areaActual = area;
     categoriaActual = document.getElementById("modal-filtro-categoria")?.value || "";
+
     log.info("[abrirMenu] Iniciando carga del menú", { area, categoriaActual });
 
     const { data: productos, error } = await dbPublic.rpc("menu_items_by_area_destino", {
@@ -76,31 +77,64 @@ async function abrirMenu(area) {
       destino: "local",
       categoria: categoriaActual || null
     });
+
     if (error) return log.err("[abrirMenu] Error en RPC menu_items_by_area_destino", error);
 
     const body = document.getElementById("modal-productos");
-    document.getElementById("modal-titulo").textContent = `Menú de ${area}`;
 
-    if (!productos || productos.length === 0) {
+    // Obtener horario desde la tabla areas_estado
+    const { data: areaData, error: areaError } = await dbPublic
+      .from("areas_estado")
+      .select("horario")
+      .eq("nombre", area)
+      .single();
+
+    const titulo = document.getElementById("modal-titulo");
+    const areaUpper = area.toUpperCase();
+    titulo.textContent = `MENU ${areaUpper}`;
+    if (areaData?.horario) {
+      titulo.textContent += `\n${areaData.horario}`;
+    }
+
+    // Ordenar productos por categoría y nombre
+    const productosOrdenados = (productos || []).sort((a, b) => {
+      const catA = (a.categoria || "").toLowerCase();
+      const catB = (b.categoria || "").toLowerCase();
+      if (catA < catB) return -1;
+      if (catA > catB) return 1;
+      const nomA = (a.nombre || "").toLowerCase();
+      const nomB = (b.nombre || "").toLowerCase();
+      return nomA.localeCompare(nomB);
+    });
+
+    if (!productosOrdenados.length) {
       body.innerHTML = `<p class="estado-vacio">No hay productos disponibles para esta área y categoría.</p>`;
     } else {
-      body.innerHTML = productos.map(p => `
-        <div class="producto-lineal">
-          <div class="producto-info"><strong>${escapeHtml(p.nombre || "Sin nombre")}</strong></div>
-          <div class="producto-acciones">
-            <button class="btn-info"
-              onclick="mostrarDescripcion(
-                '${escapeHtml(p.descripcion || "")}',
-                '${escapeHtml(p.imagen_url || "")}',
-                '${escapeHtml(p.nombre || "Producto")}'
-              )">ℹ️</button>
-            <span class="precio">${p.precio ? Number(p.precio).toFixed(2) : "N/D"} CUP</span>
-            <span class="stock">${parseInt(p.stock) > 0 ? `Stock: ${p.stock}` : "Agotado"}</span>
-          </div>
-        </div>`).join("");
+      body.innerHTML = productosOrdenados.map(p => {
+        const nombre = escapeHtml(p.nombre || "Sin nombre").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        const descripcion = escapeHtml(p.descripcion || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+        return `
+          <div class="producto-lineal">
+            <div class="producto-info"><strong>${nombre}</strong></div>
+            <div class="producto-acciones">
+              <button class="btn-info"
+                onclick="mostrarDescripcion(
+                  '${descripcion}',
+                  '${escapeHtml(p.imagen_url || "")}',
+                  '${nombre}'
+                )">ℹ️</button>
+              <span class="precio">${p.precio ? Number(p.precio).toFixed(2) : "N/D"} CUP</span>
+              <!-- Stock oculto -->
+            </div>
+          </div>`;
+      }).join("");
     }
+
     setModal("modal-menu", true);
-  } catch (e) { log.err("[abrirMenu] Excepción inesperada", e); }
+  } catch (e) {
+    log.err("[abrirMenu] Excepción inesperada", e);
+  }
 }
 function cerrarModal() { setModal("modal-menu", false); }
 
@@ -169,22 +203,45 @@ async function loginAdmin() {
 
 async function cargarPanelAreas() {
   log.info("[Acceso Admin] Cargando áreas desde Supabase…");
+
   const { data: areas, error } = await dbAuth.from("areas_estado").select("*");
   if (error) {
     log.err("[Acceso Admin] Error al cargar áreas", error);
     return;
   }
+
   log.info("[Acceso Admin] Áreas cargadas", areas);
 
   const cont = document.getElementById("lista-areas");
+
   cont.innerHTML = (areas || []).map(a => `
     <div class="area-control">
-      <div class="area-label">${escapeHtml(a.nombre)}</div>
+      <div class="area-label">${escapeHtml(a.nombre.toUpperCase())}</div>
       <label class="switch">
         <input type="checkbox" ${a.activo ? "checked" : ""} onchange="toggleArea('${escapeHtml(a.nombre)}', this.checked)" />
         <span class="slider"></span>
       </label>
+      <input type="text" class="input-horario" 
+        value="${escapeHtml(a.horario || "")}" 
+        placeholder="Horario de trabajo"
+        onchange="updateHorario('${escapeHtml(a.nombre)}', this.value)" />
     </div>`).join("");
+}
+async function updateHorario(nombre, horario) {
+  log.info("[Acceso Admin] Actualizando horario", { nombre, horario });
+
+  const { error } = await dbAuth
+    .from("areas_estado")
+    .update({ horario })
+    .eq("nombre", nombre);
+
+  if (error) {
+    log.err("[Acceso Admin] Error al actualizar horario", error);
+    alert("No se pudo actualizar el horario.");
+    return;
+  }
+
+  log.info("[Acceso Admin] Horario actualizado correctamente");
 }
 
 /* ========== Administración: toggleArea con RPC ========== */
