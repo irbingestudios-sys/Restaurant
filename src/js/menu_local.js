@@ -1,16 +1,28 @@
 /* ========== Supabase Inicialización ========== */
 console.log("[menu_local] Inicializando Supabase...");
+
 const { createClient } = supabase; // del CDN @supabase/supabase-js@2
 
 // Cliente público (anon) para lecturas abiertas
 const dbPublic = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw",
+  "SUPABASE_ANON_KEY", // ⚠️ solo anon key
   {
     auth: { persistSession: false, autoRefreshToken: false },
-    storageKey: "public-session"   // 🔑 clave separada para evitar conflicto
+    storageKey: "public-session"
   }
 );
+
+// Cliente autenticado para panel admin (usa anon key pero con sesión persistente)
+const dbAuth = createClient(
+  "https://qeqltwrkubtyrmgvgaai.supabase.co",
+  "SUPABASE_ANON_KEY", // ⚠️ también anon key
+  {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+    storageKey: "auth-session"
+  }
+);
+
 
 // Cliente autenticado (session) para panel admin
 const dbAuth = createClient(
@@ -186,6 +198,7 @@ async function cargarPanelAreas() {
     </div>`).join("");
 }
 
+/* ========== Administración: toggleArea con RPC ========== */
 async function toggleArea(nombre, estado) {
   const nombreNorm = nombre.trim().toLowerCase();
   log.info("[Acceso Admin] Actualizando área", { nombre: nombreNorm, estado });
@@ -226,6 +239,7 @@ async function toggleArea(nombre, estado) {
     areaActual = "";
   }
 }
+
 /* ========== Captación WhatsApp (usa dbPublic) ========== */
 async function unirseWhatsApp() {
   const nombre = document.getElementById("cliente-nombre").value.trim();
