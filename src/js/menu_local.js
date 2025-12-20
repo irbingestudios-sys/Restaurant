@@ -142,13 +142,12 @@ async function loginAdmin() {
   }
   log.info("[Acceso Admin] Login correcto, obteniendo usuario…");
 
-  // 🔎 AQUÍ es donde debes poner el log completo del usuario
   const { data: userData, error: userError } = await dbAuth.auth.getUser();
   if (userError) {
     log.err("[Acceso Admin] Error al obtener usuario", userError);
     return;
   }
-  log.info("[Acceso Admin] Datos completos de usuario", userData); // <-- ESTE ES EL LOG CLAVE
+  log.info("[Acceso Admin] Datos completos de usuario", userData);
 
   const role = userData?.user?.app_metadata?.role || userData?.user?.user_metadata?.role;
   log.info("[Acceso Admin] Rol detectado", role);
@@ -189,12 +188,30 @@ async function cargarPanelAreas() {
 
 async function toggleArea(nombre, estado) {
   log.info("[Acceso Admin] Actualizando área", { nombre, estado });
+
   const { error } = await dbAuth.from("areas_estado").update({ activo: estado }).eq("nombre", nombre);
   if (error) {
     log.err("[Acceso Admin] Error al actualizar área", error);
+    alert("No se pudo actualizar el área en la base.");
     return;
   }
   log.info("[Acceso Admin] Área actualizada correctamente", { nombre, estado });
+
+  // 🔎 Verificación directa en base
+  const { data: verificacion, error: errorVerificacion } = await dbAuth
+    .from("areas_estado")
+    .select("*")
+    .eq("nombre", nombre);
+
+  if (errorVerificacion) {
+    log.err("[Acceso Admin] Error al verificar estado post-update", errorVerificacion);
+  } else {
+    log.info("[Acceso Admin] Estado actual en base tras update", verificacion);
+    if (verificacion?.length && verificacion[0].activo !== estado) {
+      log.warn("[Acceso Admin] El área no refleja el cambio en la base", verificacion[0]);
+      alert(`⚠️ El área "${nombre}" no se actualizó en la base. Estado actual: ${verificacion[0].activo}`);
+    }
+  }
 
   await mostrarAreasCliente(); // usa dbPublic
   if (areaActual === nombre && !estado) { 
