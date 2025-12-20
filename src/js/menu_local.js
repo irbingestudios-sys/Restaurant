@@ -6,7 +6,7 @@ const { createClient } = supabase; // del CDN @supabase/supabase-js@2
 // Cliente público (anon) para lecturas abiertas
 const dbPublic = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "SUPABASE_ANON_KEY", // ⚠️ solo anon key
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw", // ⚠️ solo anon key
   {
     auth: { persistSession: false, autoRefreshToken: false },
     storageKey: "public-session"
@@ -16,21 +16,10 @@ const dbPublic = createClient(
 // Cliente autenticado para panel admin (usa anon key pero con sesión persistente)
 const dbAuth = createClient(
   "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "SUPABASE_ANON_KEY", // ⚠️ también anon key
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw", // ⚠️ también anon key
   {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
     storageKey: "auth-session"
-  }
-);
-
-
-// Cliente autenticado (session) para panel admin
-const dbAuth = createClient(
-  "https://qeqltwrkubtyrmgvgaai.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlcWx0d3JrdWJ0eXJtZ3ZnYWFpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIyMjY1MjMsImV4cCI6MjA3NzgwMjUyM30.Yfdjj6IT0KqZqOtDfWxytN4lsK2KOBhIAtFEfBaVRAw",
-  {
-    auth: { persistSession: true, autoRefreshToken: true },
-    storageKey: "auth-session"     // 🔑 clave distinta para sesiones admin
   }
 );
 
