@@ -187,36 +187,43 @@ async function cargarPanelAreas() {
 }
 
 async function toggleArea(nombre, estado) {
-  log.info("[Acceso Admin] Actualizando área", { nombre, estado });
+  const nombreNorm = nombre.trim().toLowerCase();
+  log.info("[Acceso Admin] Actualizando área", { nombre: nombreNorm, estado });
 
-  const { error } = await dbAuth.from("areas_estado").update({ activo: estado }).eq("nombre", nombre);
+  // Usando RPC para bypass RLS
+  const { data, error } = await dbAuth.rpc("toggle_area", {
+    p_nombre: nombreNorm,
+    p_estado: estado
+  });
+
   if (error) {
-    log.err("[Acceso Admin] Error al actualizar área", error);
-    alert("No se pudo actualizar el área en la base.");
+    log.err("[Acceso Admin] Error en RPC toggle_area", error);
+    alert("No se pudo actualizar el área (RPC).");
     return;
   }
-  log.info("[Acceso Admin] Área actualizada correctamente", { nombre, estado });
 
-  // 🔎 Verificación directa en base
+  log.info("[Acceso Admin] Resultado RPC toggle_area", data);
+
+  // Verificación directa en base
   const { data: verificacion, error: errorVerificacion } = await dbAuth
     .from("areas_estado")
     .select("*")
-    .eq("nombre", nombre);
+    .eq("nombre", nombreNorm);
 
   if (errorVerificacion) {
     log.err("[Acceso Admin] Error al verificar estado post-update", errorVerificacion);
   } else {
-    log.info("[Acceso Admin] Estado actual en base tras update", verificacion);
+    log.info("[Acceso Admin] Estado actual en base tras RPC", verificacion);
     if (verificacion?.length && verificacion[0].activo !== estado) {
       log.warn("[Acceso Admin] El área no refleja el cambio en la base", verificacion[0]);
-      alert(`⚠️ El área "${nombre}" no se actualizó en la base. Estado actual: ${verificacion[0].activo}`);
+      alert(`⚠️ El área "${nombreNorm}" no se actualizó. Estado actual: ${verificacion[0].activo}`);
     }
   }
 
-  await mostrarAreasCliente(); // usa dbPublic
-  if (areaActual === nombre && !estado) { 
-    cerrarModal(); 
-    areaActual = ""; 
+  await mostrarAreasCliente();
+  if (areaActual === nombreNorm && !estado) {
+    cerrarModal();
+    areaActual = "";
   }
 }
 /* ========== Captación WhatsApp (usa dbPublic) ========== */
