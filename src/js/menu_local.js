@@ -215,17 +215,19 @@ async function cargarPanelAreas() {
   const cont = document.getElementById("lista-areas");
 
   cont.innerHTML = (areas || []).map(a => `
-    <div class="area-control">
+  <div class="area-control">
+    <div class="area-header">
       <div class="area-label">${escapeHtml(a.nombre.toUpperCase())}</div>
       <label class="switch">
         <input type="checkbox" ${a.activo ? "checked" : ""} onchange="toggleArea('${escapeHtml(a.nombre)}', this.checked)" />
         <span class="slider"></span>
       </label>
-      <input type="text" class="input-horario" 
-        value="${escapeHtml(a.horario || "")}" 
-        placeholder="Horario de trabajo"
-        onchange="updateHorario('${escapeHtml(a.nombre)}', this.value)" />
-    </div>`).join("");
+    </div>
+    <input type="text" class="input-horario" 
+      value="${escapeHtml(a.horario || "")}" 
+      placeholder="Horario de trabajo"
+      onchange="updateHorario('${escapeHtml(a.nombre)}', this.value)" />
+  </div>`).join("");
 }
 async function updateHorario(nombre, horario) {
   log.info("[Acceso Admin] Actualizando horario", { nombre, horario });
